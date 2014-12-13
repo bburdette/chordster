@@ -21,6 +21,7 @@ SongChord
   duration Int 
 Song
   name Text
+  tempo Int
   
   
 

@@ -5,6 +5,7 @@ import Import
 newSongForm :: Form Song 
 newSongForm = renderDivs $ Song
   <$> areq textField "Name" Nothing
+  <*> areq intField "Tempo" Nothing
 
 getAddSongR :: Handler Html
 getAddSongR = do 
@@ -13,6 +14,7 @@ getAddSongR = do
     <h1> Song
     <form method=post enctype=#{enctype}>
       ^{widget}
+      <input type=submit value="OK">
     |]
 
 postAddSongR :: Handler Html

@@ -13,6 +13,7 @@ postSongR = error "Not yet implemented: postSongR"
 songForm :: Maybe Song -> Form Song 
 songForm mbseq = renderDivs $ Song
   <$> areq textField "Name" (fmap songName mbseq)
+  <*> areq intField "Tempo" (fmap songTempo mbseq)
 
 getSongR :: SongId -> Handler Html
 getSongR sid = do
@@ -22,6 +23,7 @@ getSongR sid = do
     <h1> Song
     <form method=post enctype=#{enctype}>
       ^{widget}
+      <input type=submit value="OK">
     |]
 
 postSongR :: SongId -> Handler Html 
