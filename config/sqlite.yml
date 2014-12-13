@@ -1,0 +1,20 @@
+Default: &defaults
+  database: chordster.sqlite3
+  poolsize: 10
+
+Development:
+  <<: *defaults
+
+Testing:
+  database: chordster_test.sqlite3
+  <<: *defaults
+
+Staging:
+  database: chordster_staging.sqlite3
+  poolsize: 100
+  <<: *defaults
+
+Production:
+  database: chordster_production.sqlite3
+  poolsize: 100
+  <<: *defaults
