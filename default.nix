@@ -4,7 +4,7 @@
 , httpConduit, monadControl, monadLogger, persistent
 , persistentSqlite, persistentTemplate, resourcet, shakespeare
 , text, transformers, waiExtra, waiLogger, warp, yaml, yesod
-, yesodAuth, yesodCore, yesodForm, yesodStatic, yesodTest
+, yesodBin, yesodAuth, yesodCore, yesodForm, yesodStatic, yesodTest
 }:
 
 cabal.mkDerivation (self: {
@@ -13,6 +13,7 @@ cabal.mkDerivation (self: {
   src=./.;
   isLibrary = true;
   isExecutable = true;
+  buildTools = [ yesodBin ];
   buildDepends = [
     aeson conduit dataDefault fastLogger hjsmin httpConduit
     monadControl monadLogger persistent persistentSqlite
