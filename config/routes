@@ -8,3 +8,5 @@
 /songs SongsR GET POST
 /addsong/ AddSongR GET POST
 /song/#SongId SongR GET POST
+/chords/ ChordsR GET POST
+/chord/#ChordId ChordR GET POST

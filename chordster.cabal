@@ -23,6 +23,8 @@ library
                      Handler.Songs
                      Handler.AddSong
                      Handler.Song
+                     Handler.Chords
+                     Handler.Chord
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
