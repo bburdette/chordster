@@ -11,13 +11,15 @@ Email
 Note
   numer Int
   denom Int
-  noteset NoteSetId
-NoteSet
+  chord ChordId 
+Chord
   name Text
+SongChord
+  song SongId
+  chord ChordId
   seqnum Int
   duration Int 
-  sequence Sequence
-Sequence
+Song
   name Text
   
   

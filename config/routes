@@ -5,6 +5,6 @@
 /robots.txt RobotsR GET
 
 / HomeR GET POST
-/sequences SequencesR GET POST
-/addsequence/ AddSequenceR GET POST
-/sequence/#SequenceId SequenceR GET POST
+/songs SongsR GET POST
+/addsong/ AddSongR GET POST
+/song/#SongId SongR GET POST

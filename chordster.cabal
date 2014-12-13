@@ -20,9 +20,9 @@ library
                      Settings.StaticFiles
                      Settings.Development
                      Handler.Home
-                     Handler.Sequences
-                     Handler.AddSequence
-                     Handler.Sequence
+                     Handler.Songs
+                     Handler.AddSong
+                     Handler.Song
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
