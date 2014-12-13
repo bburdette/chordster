@@ -9,7 +9,8 @@ getSequencesR = do
     <h1> Sequences
     <ul> 
     $forall Entity sid seq <- sequences
-       <li> #{show sid}  #{show (sequenceName seq)}
+       <li> 
+          <a href=@{SequenceR sid}>  #{sequenceName seq}
   |]
 
 postSequencesR :: Handler Html

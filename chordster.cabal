@@ -22,6 +22,7 @@ library
                      Handler.Home
                      Handler.Sequences
                      Handler.AddSequence
+                     Handler.Sequence
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

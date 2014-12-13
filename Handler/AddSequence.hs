@@ -20,7 +20,7 @@ postAddSequenceR = do
   ((res, projectWidget),enctype) <- runFormPost newSequenceForm
   case res of 
     FormSuccess newseq -> do
-      seqid <- runDB $ insert newseq 
+      _ <- runDB $ insert newseq 
       redirect SequencesR
     _ -> defaultLayout [whamlet|fale!|]
 
