@@ -8,5 +8,18 @@ Email
     user UserId Maybe
     verkey Text Maybe
     UniqueEmail email
+Note
+  numer Int
+  denom Int
+  noteset NoteSetId
+NoteSet
+  name Text
+  seqnum Int
+  duration Int 
+  sequence Sequence
+Sequence
+  name Text
+  
+  
 
  -- By default this file is used in Model.hs (which is imported by Foundation.hs)
