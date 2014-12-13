@@ -6,3 +6,4 @@
 
 / HomeR GET POST
 /sequences SequencesR GET POST
+/addsequence/ AddSequenceR GET POST
