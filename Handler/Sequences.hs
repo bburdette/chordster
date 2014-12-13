@@ -3,7 +3,14 @@ module Handler.Sequences where
 import Import
 
 getSequencesR :: Handler Html
-getSequencesR = error "Not yet implemented: getSequencesR"
+getSequencesR = do
+  sequences <- runDB $ selectList [] []
+  defaultLayout $ [whamlet|
+    <h1> Sequences
+    <ul> 
+    $forall Entity sid seq <- sequences
+       <li> #{show sid}  #{show (sequenceName seq)}
+  |]
 
 postSequencesR :: Handler Html
 postSequencesR = error "Not yet implemented: postSequencesR"

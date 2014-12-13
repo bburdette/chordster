@@ -1,13 +1,13 @@
 User
-    ident Text
-    password Text Maybe
-    UniqueUser ident
-    deriving Typeable
+  ident Text
+  password Text Maybe
+  UniqueUser ident
+  deriving Typeable
 Email
-    email Text
-    user UserId Maybe
-    verkey Text Maybe
-    UniqueEmail email
+  email Text
+  user UserId Maybe
+  verkey Text Maybe
+  UniqueEmail email
 Note
   numer Int
   denom Int
