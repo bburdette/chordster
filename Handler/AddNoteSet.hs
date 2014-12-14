@@ -5,11 +5,12 @@ import Handler.NoteSet
 
 getAddNoteSetR :: Handler Html
 getAddNoteSetR = do 
-  (ncks,etype) <- generateFormPost $ noteChecks (noteArray 12) Nothing
+  (ndf,etype) <- generateFormPost $ ndForm Nothing
   defaultLayout $ [whamlet|
     <h1> Chord type
     <form method=post enctype=#{etype}>
-      ^{ncks} 
+      ^{ndf}
+      <input type=submit value="OK"> 
     |]
 
 postAddNoteSetR :: Handler Html
