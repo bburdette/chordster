@@ -12,8 +12,13 @@ Note
   numer Int
   denom Int
   chord ChordId 
+NoteSet
+  name Text
 Chord
   name Text
+  numer Int
+  denom Int
+  noteset NoteSetId
 SongChord
   song SongId
   chord ChordId

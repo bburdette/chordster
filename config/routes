@@ -10,3 +10,6 @@
 /song/#SongId SongR GET POST
 /chords/ ChordsR GET POST
 /chord/#ChordId ChordR GET POST
+/chordtypes/ NoteSetsR GET POST
+/chordtype/#NoteSetId NoteSetR GET POST
+/addchordtype/ AddNoteSetR GET POST
