@@ -44,7 +44,8 @@ getNoteSetR nsid = do
     <h1>Chord Type
     <form method=post enctype=#{etype}>
       ^{ndform}
-      <input type=submit value="OK">
+      <input type=submit name="save" value="save changes">
+      <input type=submit name="delete" value="delete">
     |]
   
 postNoteSetR :: NoteSetId -> Handler Html
@@ -52,13 +53,30 @@ postNoteSetR nsid = do
   ((res,widg),enctype) <- runFormPost $ ndForm Nothing
   case res of 
     FormSuccess nsdata -> do 
-      _ <- runDB $ replace nsid $ NoteSet (name nsdata)
-      runDB $ deleteWhere [NoteNoteset ==. nsid]
-      let indices = (notes nsdata)
-      _ <- mapM (\i -> do 
-        runDB $ insert $ Note i (denom nsdata) nsid)
-        indices
-      redirect NoteSetsR
-    _ -> error "error!"
+      sav <- lookupPostParam "save"
+      del <- lookupPostParam "delete"
+      case (sav,del) of 
+        (Just _, _) -> do
+          _ <- runDB $ replace nsid $ NoteSet (name nsdata)
+          runDB $ deleteWhere [NoteNoteset ==. nsid]
+          let indices = (notes nsdata)
+          _ <- mapM (\i -> do 
+            runDB $ insert $ Note i (denom nsdata) nsid)
+            indices
+          redirect NoteSetsR
+        (_, Just _) -> do
+          runDB $ deleteWhere [NoteNoteset ==. nsid]
+          runDB $ deleteWhere [NoteSetId ==. nsid]
+          redirect NoteSetsR
+        _ -> do 
+          error "error1!"
+    FormFailure blah -> do
+      defaultLayout $ [whamlet|
+        #{show blah} 
+        |]
+    FormMissing -> do 
+      error "missing"
+        
+      --error "error2!"
 
 
