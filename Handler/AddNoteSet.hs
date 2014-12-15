@@ -14,4 +14,16 @@ getAddNoteSetR = do
     |]
 
 postAddNoteSetR :: Handler Html
-postAddNoteSetR = error "Not yet implemented: postAddNoteSetR"
+postAddNoteSetR = do
+  ((res,widg),enctype) <- runFormPost $ ndForm Nothing
+  case res of 
+    FormSuccess nsdata -> do 
+      nsid <- runDB $ insert $ NoteSet (name nsdata)
+      let indices = (notes nsdata)
+      _ <- mapM (\i -> do 
+        runDB $ insert $ Note i (denom nsdata) nsid)
+        indices
+      redirect NoteSetsR
+    _ -> error "error!"
+
+           

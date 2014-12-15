@@ -11,7 +11,7 @@ Email
 Note
   numer Int
   denom Int
-  chord ChordId 
+  noteset NoteSetId 
 NoteSet
   name Text
 Chord
