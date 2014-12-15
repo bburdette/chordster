@@ -14,14 +14,14 @@ Note
   noteset NoteSetId 
 NoteSet
   name Text
-Chord
+ChordRoot
   name Text
   numer Int
   denom Int
-  noteset NoteSetId
 SongChord
   song SongId
-  chord ChordId
+  chordroot ChordRootId
+  noteset NoteSetId
   seqnum Int
   duration Int 
 Song

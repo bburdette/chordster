@@ -23,11 +23,12 @@ library
                      Handler.Songs
                      Handler.AddSong
                      Handler.Song
-                     Handler.Chords
-                     Handler.Chord
                      Handler.NoteSets
                      Handler.NoteSet
                      Handler.AddNoteSet
+                     Handler.ChordRoot
+                     Handler.ChordRoots
+                     Handler.AddChordRoot
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

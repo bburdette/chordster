@@ -3,3 +3,4 @@
 <ol>
   <li> <a href=@{SongsR}> Songs
   <li> <a href=@{NoteSetsR}> Chord Types
+  <li> <a href=@{ChordRootsR}> Root notes

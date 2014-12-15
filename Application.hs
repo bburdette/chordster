@@ -30,11 +30,12 @@ import Handler.Home
 import Handler.Songs
 import Handler.AddSong
 import Handler.Song
-import Handler.Chords
-import Handler.Chord
 import Handler.NoteSets
 import Handler.NoteSet
 import Handler.AddNoteSet
+import Handler.ChordRoot
+import Handler.ChordRoots
+import Handler.AddChordRoot
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
