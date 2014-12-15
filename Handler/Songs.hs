@@ -11,6 +11,7 @@ getSongsR = do
     $forall Entity sid seq <- songs
        <li> 
           <a href=@{SongR sid}>  #{songName seq}
+  <a href=@{AddSongR}>Add new song
   |]
 
 postSongsR :: Handler Html
