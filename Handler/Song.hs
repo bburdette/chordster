@@ -3,12 +3,12 @@ module Handler.Song where
 import Import
 
 songForm :: Maybe Song -> Form Song 
-songForm mbsong = renderDivs $ Song
+songForm mbsong = renderTable $ Song
   <$> areq textField "Name" (fmap songName mbsong)
   <*> areq intField "Tempo" (fmap songTempo mbsong)
 
 songChordForm :: Maybe SongChord -> SongId -> Int -> [(Text,Key ChordRoot)] -> [(Text,Key NoteSet)] -> Form SongChord
-songChordForm mbsc sid seqnum chordroots notesets = renderDivs $ SongChord 
+songChordForm mbsc sid seqnum chordroots notesets = renderTable $ SongChord 
   <$> pure (maybe sid songChordSong mbsc)
   <*> areq (selectFieldList chordroots) "Root Note" (songChordChordroot <$> mbsc)
   <*> areq (selectFieldList notesets) "Chord Type" (songChordNoteset <$> mbsc)
@@ -24,6 +24,9 @@ getSongR sid = do
   notesets <- runDB $ selectList [] [] 
   let rootz = map (\(Entity crid cr) -> (chordRootName cr, crid)) chordroots
       nsetz = map (\(Entity nsid ns) -> (noteSetName ns, nsid)) notesets 
+  chordforms <- mapM (\(Entity cid ch) -> 
+                       generateFormPost $ songChordForm (Just ch) sid (length chordz) rootz nsetz)
+                     chordz
   (scwidget,scetype) <- 
     generateFormPost $ songChordForm Nothing sid (length chordz) rootz nsetz 
   defaultLayout $ [whamlet|
@@ -31,29 +34,14 @@ getSongR sid = do
     <form method=post enctype=#{enctype}>
       ^{swidget}
       <input type=submit name="oksong" value="OK">
-    <table class=song>
-      <tr>
-        <th> Sequence 
-        <th> Root
-        <th> Chord
-        <th> Beats
-      $forall Entity scid songchord <- chordz
-        <tr>
-          <td> #{show (songChordSeqnum songchord)} 
-          <td> #{show (songChordChordroot songchord)}
-          <td> #{show (songChordNoteset songchord)}
-          <td> #{show (songChordDuration songchord)}
-    <form method=post enctype=#{enctype}>
+   $forall (widget,etype) <- chordforms
+      <form method=post enctype=#{etype}>
+        ^{widget}
+        <input type=submit name="edchord" value="ed chord">
+   <form method=post enctype=#{enctype}>
       ^{scwidget}
       <input type=submit name="addchord" value="add chord">
    |]
-
-{-
-          <td> #{show (songChordSeqnum songchord)} 
-          <td> #{show (songChordChordroot songchord)}
-          <td> #{show (songChordNoteset songchord)}
-          <td> #{show (songChordDuration songchord)}
--} 
 
 postSongR :: SongId -> Handler Html 
 postSongR sid = do 
