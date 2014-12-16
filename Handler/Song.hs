@@ -24,7 +24,8 @@ getSongR sid = do
   notesets <- runDB $ selectList [] [] 
   let rootz = map (\(Entity crid cr) -> (chordRootName cr, crid)) chordroots
       nsetz = map (\(Entity nsid ns) -> (noteSetName ns, nsid)) notesets 
-  (scwidget,scetype) <- generateFormPost $ songChordForm Nothing sid (length chordz) rootz nsetz 
+  (scwidget,scetype) <- 
+    generateFormPost $ songChordForm Nothing sid (length chordz) rootz nsetz 
   defaultLayout $ [whamlet|
     <h1> Song
     <form method=post enctype=#{enctype}>
