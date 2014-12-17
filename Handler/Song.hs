@@ -1,6 +1,7 @@
 module Handler.Song where
 
 import Import
+import Control.Monad
 
 songForm :: Maybe Song -> Form Song 
 songForm mbsong = renderTable $ Song
@@ -24,9 +25,11 @@ getSongR sid = do
   notesets <- runDB $ selectList [] [] 
   let rootz = map (\(Entity crid cr) -> (chordRootName cr, crid)) chordroots
       nsetz = map (\(Entity nsid ns) -> (noteSetName ns, nsid)) notesets 
-  chordforms <- mapM (\(Entity cid ch) -> 
-                       generateFormPost $ songChordForm (Just ch) sid (length chordz) rootz nsetz)
-                     chordz
+  chordforms <- mapM (\(Entity cid ch) ->
+                    liftM (\fp -> (cid, fp))
+                      (generateFormPost $ 
+                        songChordForm (Just ch) sid (length chordz) rootz nsetz))
+                  chordz
   (scwidget,scetype) <- 
     generateFormPost $ songChordForm Nothing sid (length chordz) rootz nsetz 
   defaultLayout $ [whamlet|
@@ -34,11 +37,11 @@ getSongR sid = do
     <form method=post enctype=#{enctype}>
       ^{swidget}
       <input type=submit name="oksong" value="OK">
-   $forall (widget,etype) <- chordforms
+    $forall (scid, (widget,etype)) <- chordforms
       <form method=post enctype=#{etype}>
         ^{widget}
-        <input type=submit name="edchord" value="ed chord">
-   <form method=post enctype=#{enctype}>
+        <input type=submit name=#{show scid} value="ed chord">
+    <form method=post enctype=#{enctype}>
       ^{scwidget}
       <input type=submit name="addchord" value="add chord">
    |]
