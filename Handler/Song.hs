@@ -17,11 +17,11 @@ data Scf = Scf
     noteset :: NoteSetId,
     seqnum :: Int,
     duration :: Int,
-    scid :: Key SongChord
+    scid :: Maybe (Key SongChord)
   } 
  deriving Show
 
-toScf :: SongChordId -> SongChord -> Scf
+toScf :: Maybe SongChordId -> SongChord -> Scf
 toScf sc_id sc = 
   Scf {
     song = songChordSong sc, 
@@ -32,7 +32,7 @@ toScf sc_id sc =
     scid = sc_id 
     }
 
-fromScf :: Scf -> (SongChordId, SongChord)
+fromScf :: Scf -> (Maybe SongChordId, SongChord)
 fromScf scf = 
   ((scid scf),
    SongChord {
@@ -43,14 +43,14 @@ fromScf scf =
     songChordDuration = duration scf
    })
   
-scfForm :: Scf -> [(Text,Key ChordRoot)] -> [(Text,Key NoteSet)] -> Form Scf
-scfForm scf chordroots notesets = renderTable $ Scf 
-  <$> pure (song scf)
-  <*> areq (selectFieldList chordroots) "Root Note" (Just (chordroot scf))
-  <*> areq (selectFieldList notesets) "Chord Type" (Just (noteset scf))
-  <*> pure (seqnum scf)
-  <*> areq intField "Duration (beats)" (Just (duration scf))
-  <*> pure (scid scf)
+scfForm :: Maybe Scf -> SongId -> Int -> [(Text,Key ChordRoot)] -> [(Text,Key NoteSet)] -> Form Scf
+scfForm mbscf sid seqnum chordroots notesets = renderTable $ Scf 
+  <$> pure (maybe sid song mbscf)
+  <*> areq (selectFieldList chordroots) "Root Note" (chordroot <$> mbscf)
+  <*> areq (selectFieldList notesets) "Chord Type" (noteset <$> mbscf)
+  <*> pure seqnum
+  <*> areq intField "Duration (beats)" (duration <$> mbscf)
+  <*> pure (maybe Nothing scid mbscf)
 
 songChordForm :: Maybe SongChord -> SongId -> Int -> [(Text,Key ChordRoot)] -> [(Text,Key NoteSet)] -> Form SongChord
 songChordForm mbsc sid seqnum chordroots notesets = renderTable $ SongChord 
@@ -72,7 +72,7 @@ getSongR sid = do
   chordforms <- mapM (\(Entity scid sc) ->
                     liftM (\fp -> (scid, fp))
                       (generateFormPost $ 
-                        scfForm (toScf scid sc) rootz nsetz))
+                        scfForm (Just $ toScf (Just scid) sc) sid (length chordz) rootz nsetz))
                   chordz
   (scwidget,scetype) <- 
     generateFormPost $ songChordForm Nothing sid (length chordz) rootz nsetz 
@@ -118,26 +118,29 @@ postSongR sid = do
           redirect (SongR sid)
         _ -> defaultLayout [whamlet|meh!|]
     (_, _, Just _) -> do 
-      schord <- runDB $ selectFirst [SongChordSong ==. sid] [Asc SongChordSeqnum]
+      chordz <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
       chordroots <- runDB $ selectList [] []
       notesets <- runDB $ selectList [] [] 
       let rootz = map (\(Entity crid cr) -> (chordRootName cr, crid)) chordroots
           nsetz = map (\(Entity nsid ns) -> (noteSetName ns, nsid)) notesets 
-      case schord of 
-        Just (Entity scid sc) -> do
-          ((res, widget),enctype) <- 
-            runFormPost $ scfForm (toScf scid sc) rootz nsetz 
-          case res of 
-            FormSuccess scf -> do
-              let (scid, sc) = fromScf scf
-              runDB $ replace scid sc
-              defaultLayout $ [whamlet|
-                <h1> #{show scid}
-                <br> #{show scf}
-                |]
-              -- redirect (SongR sid)
-            _ -> defaultLayout [whamlet|meh!|]
-        _ -> defaultLayout [whamlet|wot!|]
+      ((res, widget),enctype) <- 
+        runFormPost $ scfForm Nothing sid (length chordz) rootz nsetz 
+      case res of 
+        FormSuccess scf -> do
+          let (mbscid, sc) = fromScf scf
+          _ <- case (scid scf) of 
+            Nothing -> do 
+              runDB $ insert sc
+            Just sc_id -> do
+              runDB $ insert sc
+              -- runDB $ repsert sc_id sc 
+          -- res2 <- runDB $ insert songchord
+          defaultLayout $ [whamlet|
+            <h1> #{show mbscid}
+            <br> #{show scf}
+            |]
+          -- redirect (SongR sid)
+        _ -> defaultLayout [whamlet|meh!|]
     _ -> do
       redirect SongsR
 
