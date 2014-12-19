@@ -17,11 +17,11 @@ data Scf = Scf
     noteset :: NoteSetId,
     seqnum :: Int,
     duration :: Int,
-    scid :: Maybe (Key SongChord)
+    scid :: Text
   } 
  deriving Show
 
-toScf :: Maybe SongChordId -> SongChord -> Scf
+toScf :: SongChordId -> SongChord -> Scf
 toScf sc_id sc = 
   Scf {
     song = songChordSong sc, 
@@ -29,12 +29,12 @@ toScf sc_id sc =
     noteset = songChordNoteset sc, 
     seqnum = songChordSeqnum sc, 
     duration = songChordDuration sc, 
-    scid = sc_id 
+    scid = toPathPiece sc_id 
     }
 
-fromScf :: Scf -> (Maybe SongChordId, SongChord)
+fromScf :: Scf -> (Text, SongChord)
 fromScf scf = 
-  ((scid scf),
+  (scid scf,
    SongChord {
     songChordSong = song scf, 
     songChordChordroot = chordroot scf, 
@@ -48,9 +48,9 @@ scfForm mbscf sid seqnum chordroots notesets = renderTable $ Scf
   <$> pure (maybe sid song mbscf)
   <*> areq (selectFieldList chordroots) "Root Note" (chordroot <$> mbscf)
   <*> areq (selectFieldList notesets) "Chord Type" (noteset <$> mbscf)
-  <*> pure seqnum
+  <*> pure seqnum 
   <*> areq intField "Duration (beats)" (duration <$> mbscf)
-  <*> pure (maybe Nothing scid mbscf)
+  <*> areq hiddenField "meh" (scid <$> mbscf)
 
 songChordForm :: Maybe SongChord -> SongId -> Int -> [(Text,Key ChordRoot)] -> [(Text,Key NoteSet)] -> Form SongChord
 songChordForm mbsc sid seqnum chordroots notesets = renderTable $ SongChord 
@@ -72,7 +72,7 @@ getSongR sid = do
   chordforms <- mapM (\(Entity scid sc) ->
                     liftM (\fp -> (scid, fp))
                       (generateFormPost $ 
-                        scfForm (Just $ toScf (Just scid) sc) sid (length chordz) rootz nsetz))
+                        scfForm (Just $ toScf scid sc) sid (length chordz) rootz nsetz))
                   chordz
   (scwidget,scetype) <- 
     generateFormPost $ songChordForm Nothing sid (length chordz) rootz nsetz 
@@ -127,18 +127,23 @@ postSongR sid = do
         runFormPost $ scfForm Nothing sid (length chordz) rootz nsetz 
       case res of 
         FormSuccess scf -> do
-          let (mbscid, sc) = fromScf scf
-          _ <- case (scid scf) of 
+          let (mbsctext, sc) = fromScf scf
+              mbscid = fromPathPiece mbsctext :: Maybe (Key SongChord)
+          case mbscid of 
             Nothing -> do 
               runDB $ insert sc
+              redirect $ SongR sid
             Just sc_id -> do
-              runDB $ insert sc
-              -- runDB $ repsert sc_id sc 
-          -- res2 <- runDB $ insert songchord
+              -- runDB $ insert sc
+              -- here's the problem!
+              runDB $ replace sc_id sc 
+              redirect $ SongR sid
+      {-
           defaultLayout $ [whamlet|
             <h1> #{show mbscid}
+            <br> #{show sck}
             <br> #{show scf}
-            |]
+            |]  -}
           -- redirect (SongR sid)
         _ -> defaultLayout [whamlet|meh!|]
     _ -> do
