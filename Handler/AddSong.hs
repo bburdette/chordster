@@ -22,7 +22,7 @@ postAddSongR = do
   ((res, projectWidget),enctype) <- runFormPost newSongForm
   case res of 
     FormSuccess newseq -> do
-      _ <- runDB $ insert newseq 
-      redirect SongsR
+      sid <- runDB $ insert newseq 
+      redirect $ SongR sid
     _ -> defaultLayout [whamlet|fale!|]
 
