@@ -17,7 +17,7 @@ data Scf = Scf
     noteset :: NoteSetId,
     seqnum :: Int,
     duration :: Int,
-    scid :: Text
+    scid :: SongChordId
   } 
  deriving Show
 
@@ -29,10 +29,10 @@ toScf sc_id sc =
     noteset = songChordNoteset sc, 
     seqnum = songChordSeqnum sc, 
     duration = songChordDuration sc, 
-    scid = toPathPiece sc_id 
+    scid = sc_id 
     }
 
-fromScf :: Scf -> (Text, SongChord)
+fromScf :: Scf -> (SongChordId, SongChord)
 fromScf scf = 
   (scid scf,
    SongChord {
@@ -50,7 +50,7 @@ scfForm mbscf chordroots notesets = renderTable $ Scf
   <*> areq (selectFieldList notesets) "Chord Type" (noteset <$> mbscf)
   <*> areq hiddenField "" (seqnum <$> mbscf)
   <*> areq intField "Duration (beats)" (duration <$> mbscf)
-  <*> areq hiddenField "meh" (scid <$> mbscf)
+  <*> areq hiddenField "" (scid <$> mbscf)
 
 songChordForm :: Maybe SongChord -> SongId -> Int -> [(Text,Key ChordRoot)] -> [(Text,Key NoteSet)] -> Form SongChord
 songChordForm mbsc sid seqnum chordroots notesets = renderTable $ SongChord 
@@ -126,15 +126,9 @@ postSongR sid = do
         runFormPost $ scfForm Nothing rootz nsetz 
       case res of 
         FormSuccess scf -> do
-          let (mbsctext, sc) = fromScf scf
-              mbscid = fromPathPiece mbsctext :: Maybe (Key SongChord)
-          case mbscid of 
-            Nothing -> do 
-              runDB $ insert sc
-              redirect $ SongR sid
-            Just sc_id -> do
-              runDB $ replace sc_id sc 
-              redirect $ SongR sid
+          let (sc_id, sc) = fromScf scf
+          runDB $ replace sc_id sc 
+          redirect $ SongR sid
         _ -> defaultLayout [whamlet|meh!|]
     _ -> do
       redirect SongsR
