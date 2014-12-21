@@ -27,7 +27,12 @@ SongChord
 Song
   name Text
   tempo Int
-  
-  
+OSCDest
+  name Text
+  ip Text
+  port Int  
+  type Text  
+
+
 
  -- By default this file is used in Model.hs (which is imported by Foundation.hs)

@@ -30,6 +30,8 @@ library
                      Handler.ChordRoots
                      Handler.AddChordRoot
                      Handler.PlaySong
+                     Handler.OscDests
+                     Handler.DeleteOscDest
                      SongControl
 
     if flag(dev) || flag(library-only)

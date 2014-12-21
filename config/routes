@@ -15,3 +15,5 @@
 /chordroots ChordRootsR GET POST
 /addchordroot/ AddChordRootR GET POST
 /playsong/#SongId PlaySongR GET POST
+/OscDests/ OscDestsR GET POST
+/deleteOscDest/#OSCDestId DeleteOscDestR GET
