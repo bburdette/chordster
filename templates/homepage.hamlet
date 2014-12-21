@@ -4,3 +4,5 @@
   <li> <a href=@{SongsR}> Songs
   <li> <a href=@{NoteSetsR}> Chord Types
   <li> <a href=@{ChordRootsR}> Root notes
+  <li> <a href=@{OscDestsR}> OSC IP Addresses 
+
