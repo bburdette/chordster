@@ -41,12 +41,17 @@ scPsc sc = do
            notes = map (\(Entity nid note) -> fromIntegral (noteNumer note) % fromIntegral (noteDenom note)) notes
            }
 
--- pscs <- (makePscs chords)
+tempoToBeattime :: Int -> Int
+tempoToBeattime tempo =  
+  -- tempo is Beats per minute.
+  -- one minute in microseconds is...
+  let minute = 1000000 * 60 in 
+    div minute tempo
 
 playSong :: Song -> [PlaySongChord] -> [(String,Int)] -> IO ()
 playSong song chords dests = do
   cons <- mapM (\(ip,port) -> openUDP ip port) dests
-  playit cons (songTempo song) chords
+  playit cons ((tempoToBeattime . songTempo) song) chords
 
 chordnotes :: [Rational] -> [Int]
 chordnotes [] = []
