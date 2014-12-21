@@ -21,8 +21,30 @@ data PlaySongChord = PlaySongChord
   , notes :: [Rational]
   }
 
-playSong :: SongControl -> Song -> [PlaySongChord] -> [(String,Int)] -> IO ()
-playSong sc song chords dests = do
+makePscs :: [SongChord] -> Handler [Maybe PlaySongChord]
+makePscs scs = do
+  mapM scPsc scs
+
+scPsc :: SongChord -> Handler (Maybe PlaySongChord)
+scPsc sc = do
+    mbchroot <- runDB $ get (songChordChordroot sc) 
+    mbntst <- runDB $ get (songChordNoteset sc) 
+    notes <- runDB $ selectList [NoteNoteset ==. songChordNoteset sc] []
+    case (mbchroot, mbntst) of
+      (Nothing,_) -> return Nothing
+      (_,Nothing) -> return Nothing
+      (Just chr, Just ntst) -> 
+        return $ Just PlaySongChord {
+           songChord = sc, 
+           chordRoot = chr, 
+           name = (noteSetName ntst),
+           notes = map (\(Entity nid note) -> fromIntegral (noteNumer note) % fromIntegral (noteDenom note)) notes
+           }
+
+-- pscs <- (makePscs chords)
+
+playSong :: Song -> [PlaySongChord] -> [(String,Int)] -> IO ()
+playSong song chords dests = do
   cons <- mapM (\(ip,port) -> openUDP ip port) dests
   playit cons (songTempo song) chords
 
