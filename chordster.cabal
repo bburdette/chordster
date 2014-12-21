@@ -29,6 +29,8 @@ library
                      Handler.ChordRoot
                      Handler.ChordRoots
                      Handler.AddChordRoot
+                     Handler.PlaySong
+                     SongControl
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
@@ -78,6 +80,7 @@ library
                  , monad-logger                  >= 0.3        && < 0.4
                  , fast-logger                   >= 2.2        && < 2.3
                  , wai-logger                    >= 2.2        && < 2.3
+                 , hosc
 
     -- see https://github.com/yesodweb/yesod/issues/814
     if !os(windows)

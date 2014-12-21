@@ -14,3 +14,4 @@
 /chordroot/#ChordRootId ChordRootR GET POST
 /chordroots ChordRootsR GET POST
 /addchordroot/ AddChordRootR GET POST
+/playsong/#SongId PlaySongR GET POST
