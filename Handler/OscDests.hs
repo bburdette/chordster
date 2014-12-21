@@ -40,7 +40,6 @@ getOscDestsR = do
       <input type=submit value="add dest">
   |]
 
-
 postOscDestsR :: Handler Html
 postOscDestsR = do
   ((res,_),_) <- runFormPost $ oscDestForm Nothing

@@ -5,6 +5,7 @@ import Control.Concurrent
 import Sound.OSC.FD
 import Data.Ratio
 import Data.List
+import Control.Monad.Loops
 
 data SongControl = SongControl 
   {
@@ -51,7 +52,7 @@ tempoToBeattime tempo =
 playSong :: Song -> [PlaySongChord] -> [(String,Int)] -> IO ()
 playSong song chords dests = do
   cons <- mapM (\(ip,port) -> openUDP ip port) dests
-  playit cons ((tempoToBeattime . songTempo) song) chords
+  iterateWhile (\_ -> True) (playit cons ((tempoToBeattime . songTempo) song) chords)
 
 chordnotes :: [Rational] -> [Int]
 chordnotes [] = []
