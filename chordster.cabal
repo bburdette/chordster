@@ -33,6 +33,7 @@ library
                      Handler.OscDests
                      Handler.DeleteOscDest
                      SongControl
+                     PlaySong
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
