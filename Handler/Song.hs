@@ -81,6 +81,7 @@ getSongR sid = do
     <form method=post enctype=#{enctype}>
       ^{swidget}
       <input type=submit name="oksong" value="OK">
+      <input type=submit name="deletesong" value="delete song">
     $forall (scid, (widget,etype)) <- chordforms
       <form method=post enctype=#{etype}>
         ^{widget}
@@ -95,15 +96,20 @@ postSongR sid = do
   addc <- lookupPostParam "addchord"
   update <- lookupPostParam "updated"
   oksong <- lookupPostParam "oksong"
-  case (oksong,addc,update) of 
-    (Just _, _, _) -> do 
+  deletesong <- lookupPostParam "deletesong"
+  case (oksong,deletesong,addc,update) of 
+    (Just _, _, _, _) -> do 
       ((res, widget),enctype) <- runFormPost (songForm Nothing)
       case res of 
         FormSuccess song -> do
           res2 <- runDB $ replace sid song
-          redirect SongsR
+          redirect $ SongR sid
         _ -> defaultLayout [whamlet|fale!|]
-    (_, Just _, _) -> do 
+    (_, Just _, _, _) -> do 
+      runDB $ deleteWhere [SongChordSong ==. sid]
+      runDB $ delete sid
+      redirect SongsR
+    (_, _, Just _, _) -> do 
       chordz <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
       chordroots <- runDB $ selectList [] []
       notesets <- runDB $ selectList [] [] 
@@ -116,7 +122,7 @@ postSongR sid = do
           res2 <- runDB $ insert songchord
           redirect (SongR sid)
         _ -> defaultLayout [whamlet|meh!|]
-    (_, _, Just _) -> do 
+    (_, _, _, Just _) -> do 
       chordz <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
       chordroots <- runDB $ selectList [] []
       notesets <- runDB $ selectList [] [] 
