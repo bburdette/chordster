@@ -32,6 +32,8 @@ library
                      Handler.PlaySong
                      Handler.OscDests
                      Handler.DeleteOscDest
+                     Handler.ExportSong
+                     Handler.ImportSong
                      SongControl
                      PlaySong
 

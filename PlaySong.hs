@@ -3,10 +3,11 @@ module PlaySong where
 import Import
 import Control.Concurrent
 import Sound.OSC.FD
-import Data.Ratio
-import Data.List
 import Control.Monad.Loops
 import SongControl
+import Data.Ratio
+import Data.List
+import Data.Maybe
 
 data PlaySongChord = PlaySongChord
   { songChord :: SongChord
@@ -14,6 +15,24 @@ data PlaySongChord = PlaySongChord
   , name :: Text
   , notes :: [Rational]
   }
+  deriving Show
+
+data TextSong = TextSong 
+  { song :: Song
+  , chords :: [PlaySongChord]
+  }
+  deriving Show
+
+loadTextSong :: SongId -> Handler (Maybe TextSong)
+loadTextSong sid = do
+  mbsong <- runDB $ get sid
+  chords <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
+  pscs <- makePscs (map entityVal chords)
+  case mbsong of 
+    Nothing -> return Nothing
+    Just sng -> return $ Just $ TextSong sng (catMaybes pscs)
+  
+
 
 makePscs :: [SongChord] -> Handler [Maybe PlaySongChord]
 makePscs scs = do
@@ -53,12 +72,12 @@ setupLights lightcons = do
 
 setArrayColor :: UDP -> Int -> Int -> IO ()
 setArrayColor conn arrayindex color = do
- let tst = (Message "updatearray" [(d_put arrayindex)])
- sendOSC conn tst 
- _ <- mapM (\elt -> do 
+  let tst = (Message "updatearray" [(d_put arrayindex)])
+  sendOSC conn tst 
+  _ <- mapM (\elt -> do 
         sendOSC conn (Message "setpixel" [(d_put elt), (d_put color)]))
         [0..23::Int]
- return ()
+  return ()
 
 playSong :: Song -> [PlaySongChord] -> [(String,Int)] -> [(String,Int)] -> IO ()
 playSong song chords chorddests lightdests = do

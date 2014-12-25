@@ -17,3 +17,5 @@
 /playsong/#SongId PlaySongR GET POST
 /OscDests/ OscDestsR GET POST
 /deleteOscDest/#OSCDestId DeleteOscDestR GET
+/exportsong/#SongId ExportSongR GET
+/importsong/ ImportSongR GET POST

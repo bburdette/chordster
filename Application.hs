@@ -41,6 +41,8 @@ import Handler.AddChordRoot
 import Handler.PlaySong
 import Handler.OscDests
 import Handler.DeleteOscDest
+import Handler.ExportSong
+import Handler.ImportSong
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the

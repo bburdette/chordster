@@ -18,15 +18,18 @@ ChordRoot
   name Text
   numer Int
   denom Int
+  deriving Show
 SongChord
   song SongId
   chordroot ChordRootId
   noteset NoteSetId
   seqnum Int
-  duration Int 
+  duration Int
+  deriving Show 
 Song
   name Text
   tempo Int
+  deriving Show
 OSCDest
   name Text
   ip Text
