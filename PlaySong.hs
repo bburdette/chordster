@@ -42,10 +42,29 @@ tempoToBeattime tempo =
   let minute = 1000000 * 60 in 
     div minute tempo
 
+setupLights :: [UDP] -> IO ()
+setupLights lightcons = do 
+  -- send light flash msgs
+  _ <- mapM (\conn -> do 
+          setArrayColor conn 1 0 
+          setArrayColor conn 2 16711680)
+          lightcons
+  return ()
+
+setArrayColor :: UDP -> Int -> Int -> IO ()
+setArrayColor conn arrayindex color = do
+ let tst = (Message "updatearray" [(d_put arrayindex)])
+ sendOSC conn tst 
+ _ <- mapM (\elt -> do 
+        sendOSC conn (Message "setpixel" [(d_put elt), (d_put color)]))
+        [0..23::Int]
+ return ()
+
 playSong :: Song -> [PlaySongChord] -> [(String,Int)] -> [(String,Int)] -> IO ()
 playSong song chords chorddests lightdests = do
   chordcons <- mapM (\(ip,port) -> openUDP ip port) chorddests
   lightcons <- mapM (\(ip,port) -> openUDP ip port) lightdests
+  setupLights lightcons
   iterateWhile (\_ -> True) 
     (playit chordcons lightcons ((tempoToBeattime . songTempo) song) chords)
 
