@@ -2,7 +2,7 @@
 
 { cabal, hosc, aeson, conduit, dataDefault, fastLogger, hjsmin, hspec
 , httpConduit, monadControl, monadLogger, persistent
-, persistentSqlite, persistentTemplate, resourcet, shakespeare
+, persistentSqlite, persistentTemplate, prettyShow, resourcet, shakespeare
 , text, transformers, waiExtra, waiLogger, warp, yaml, yesod
 , yesodBin, yesodAuth, yesodCore, yesodForm, yesodStatic, yesodTest
 }:
@@ -17,7 +17,7 @@ cabal.mkDerivation (self: {
   buildDepends = [
     hosc aeson conduit dataDefault fastLogger hjsmin httpConduit
     monadControl monadLogger persistent persistentSqlite
-    persistentTemplate shakespeare text waiExtra waiLogger warp yaml
+    persistentTemplate prettyShow shakespeare text waiExtra waiLogger warp yaml
     yesod yesodAuth yesodCore yesodForm yesodStatic
   ];
   testDepends = [

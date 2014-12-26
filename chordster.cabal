@@ -87,6 +87,7 @@ library
                  , wai-logger                    >= 2.2        && < 2.3
                  , hosc
                  , monad-loops
+                 , pretty-show
 
     -- see https://github.com/yesodweb/yesod/issues/814
     if !os(windows)
