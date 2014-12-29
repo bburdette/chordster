@@ -36,6 +36,7 @@ library
                      Handler.ImportSong
                      SongControl
                      PlaySong
+                     ForkeyOpen
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
@@ -88,6 +89,9 @@ library
                  , hosc
                  , monad-loops
                  , pretty-show
+                 , transformers
+                 , resource-pool
+                 , mtl 
 
     -- see https://github.com/yesodweb/yesod/issues/814
     if !os(windows)

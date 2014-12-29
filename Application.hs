@@ -43,6 +43,8 @@ import Handler.OscDests
 import Handler.DeleteOscDest
 import Handler.ExportSong
 import Handler.ImportSong
+import ForkeyOpen
+
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
@@ -100,8 +102,12 @@ makeFoundation conf = do
         tempFoundation = mkFoundation $ error "connPool forced in tempFoundation"
         logFunc = messageLoggerSource tempFoundation logger
 
+    {-
     p <- flip runLoggingT logFunc
        $ createSqlitePool (sqlDatabase dbconf) (sqlPoolSize dbconf)
+    -}
+    p <- flip runLoggingT logFunc
+       $ forKeyCreateSqlitePool (sqlDatabase dbconf) (sqlPoolSize dbconf)
     let foundation = mkFoundation p
 
     -- Perform database migration using our application's logging settings.
