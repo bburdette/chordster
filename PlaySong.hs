@@ -87,13 +87,15 @@ playSong song chords chorddests lightdests = do
   iterateWhile (\_ -> True) 
     (playit chordcons lightcons ((tempoToBeattime . songTempo) song) chords)
 
-chordnotes :: [Rational] -> [Int]
-chordnotes [] = []
-chordnotes rats = 
-  let denom = denominator $ head rats
-      notes = map numerator rats
+
+chordnotes :: Int -> [Rational] -> [Int]
+chordnotes _ [] = []
+chordnotes den rats = 
+  let 
+      notes = map (\rat -> (fromIntegral (numerator rat)) * (quot den (fromIntegral (denominator rat)))) rats
     in
-  map fromInteger (denom : notes)
+  (den : notes)
+  --map fromInteger (den : notes)
   
 playit :: [UDP] -> [UDP] -> Int -> [PlaySongChord] -> IO ()
 playit ccons lcons beattime [] = return ()
@@ -101,7 +103,7 @@ playit ccons lcons beattime (psc:pscs) =
   -- on chord change, set the root and the scale.
   let rootmsg = Message "root" (map d_put [(chordRootNumer (chordRoot psc)), 
                                 (chordRootDenom (chordRoot psc))])
-      chordmsg = Message "scale" $ map d_put $ chordnotes $ notes psc
+      chordmsg = Message "scale" $ map d_put $ chordnotes 12 $ notes psc
     in do
   -- send root and scale msgs to all destinations.
   _ <- mapM (\conn -> do 
