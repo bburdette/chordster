@@ -11,7 +11,7 @@ data NsData = NsData
 
 noteArray :: Int -> [(Text,Int)]
 noteArray count = 
-  map (\i -> (makename i, i)) [1..count]
+  map (\i -> (makename i, i - 1)) [1..count]
   where makename i = T.append (T.pack " ") (T.pack (show i))
 
 ndForm :: Maybe NsData -> Form NsData
