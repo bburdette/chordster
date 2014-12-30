@@ -87,7 +87,6 @@ playSong song chords chorddests lightdests = do
   iterateWhile (\_ -> True) 
     (playit chordcons lightcons ((tempoToBeattime . songTempo) song) chords)
 
-
 chordnotes :: Int -> [Rational] -> [Int]
 chordnotes _ [] = []
 chordnotes den rats = 
@@ -95,7 +94,6 @@ chordnotes den rats =
       notes = map (\rat -> (fromIntegral (numerator rat)) * (quot den (fromIntegral (denominator rat)))) rats
     in
   (den : notes)
-  --map fromInteger (den : notes)
   
 playit :: [UDP] -> [UDP] -> Int -> [PlaySongChord] -> IO ()
 playit ccons lcons beattime [] = return ()
@@ -111,8 +109,8 @@ playit ccons lcons beattime (psc:pscs) =
           sendOSC conn chordmsg)
       ccons 
   -- delay N times for N beats, flashing the lights each time.  
-  let flashmsg1 = Message "fadeto" (map d_put [1::Int,100])
-      flashmsg2 = Message "fadeto" (map d_put [0::Int,100])
+  let flashmsg1 = Message "fadeto" (map d_put [1::Int,10])
+      flashmsg2 = Message "fadeto" (map d_put [0::Int,10])
   _ <- mapM (\_ -> do 
     -- send light flash msgs
     _ <- mapM (\conn -> do 
