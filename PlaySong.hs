@@ -31,8 +31,6 @@ loadTextSong sid = do
   case mbsong of 
     Nothing -> return Nothing
     Just sng -> return $ Just $ TextSong sng (catMaybes pscs)
-  
-
 
 makePscs :: [SongChord] -> Handler [Maybe PlaySongChord]
 makePscs scs = do
@@ -109,8 +107,8 @@ playit ccons lcons beattime (psc:pscs) =
           sendOSC conn chordmsg)
       ccons 
   -- delay N times for N beats, flashing the lights each time.  
-  let flashmsg1 = Message "fadeto" (map d_put [1::Int,10])
-      flashmsg2 = Message "fadeto" (map d_put [0::Int,10])
+  let flashmsg1 = Message "fadeto" (map d_put [0::Int,20])
+      flashmsg2 = Message "fadeto" (map d_put [1::Int,20])
   _ <- mapM (\_ -> do 
     -- send light flash msgs
     _ <- mapM (\conn -> do 
