@@ -1,8 +1,13 @@
 <h1>_{MsgHello}
 
 <ol>
-  <li> <a href=@{SongsR}> Songs
-  <li> <a href=@{NoteSetsR}> Chord Types
-  <li> <a href=@{ChordRootsR}> Root notes
-  <li> <a href=@{OscDestsR}> OSC IP Addresses 
+  <li> 
+    <a href=@{SongsR}> Songs
+  <li> 
+    <a href=@{NoteSetsR}> Chord Types
+  <li> 
+    <a href=@{ChordRootsR}> Root notes
+  <li> 
+    <a href=@{OscDestsR}> OSC IP Addresses 
+  <li ##{aDomId}>If you had javascript enabled then you wouldn't be seeing this.
 

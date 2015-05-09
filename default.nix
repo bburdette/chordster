@@ -15,7 +15,7 @@ cabal.mkDerivation (self: {
   isExecutable = true;
   buildTools = [ yesodBin ];
   buildDepends = [
-    hosc aeson conduit dataDefault fastLogger hjsmin httpConduit
+    aeson hosc conduit dataDefault fastLogger hjsmin httpConduit
     monadControl monadLogger persistent persistentSqlite
     persistentTemplate prettyShow shakespeare text waiExtra waiLogger warp yaml
     yesod yesodAuth yesodCore yesodForm yesodStatic

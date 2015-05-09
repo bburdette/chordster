@@ -41,11 +41,10 @@ getPlaySongR sid = do
       -- blam, start a thread for song playing.
       -- report back that there is a song playing, or something.
       -- track whatever it is so that it can be stopped later.  
-      defaultLayout $ [whamlet|
-        <h1> Song Playback: #{songName song}
-        <form method=post>
-          <input type=submit name="stop" value="stop">
-        |] 
+      defaultLayout $ do
+        aDomId <- newIdent
+        setTitle "Song Playback!"
+        $(widgetFile "playback")
 
 
 postPlaySongR :: SongId -> Handler Html

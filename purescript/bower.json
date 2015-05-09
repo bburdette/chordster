@@ -1,0 +1,31 @@
+{
+  "name": "purescript-book-chapter9",
+  "description": "2D Graphics",
+  "keywords": ["purescript"],
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "node_modules",
+    "output",
+    "tests",
+    "js",
+    "tmp",
+    "bower.json",
+    "Gruntfile.js",
+    "package.json"
+  ],
+  "dependencies": {
+    "purescript-arrays"                   : "*",
+    "purescript-tuples"                   : "*",
+    "purescript-monoid"                   : "*",
+    "purescript-either"                   : "*",
+    "purescript-canvas"                   : "~0.1.4",
+    "purescript-refs"                     : "*",
+    "purescript-control"                  : "*",
+    "purescript-foreign"                  : "~0.2.0",
+    "purescript-random"                   : "*",
+    "purescript-math"                     : "*",
+    "purescript-transformers"             : "*",
+    "purescript-foldable-traversable"     : "*"
+  }
+}
