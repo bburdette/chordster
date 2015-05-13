@@ -19,16 +19,6 @@ import Data.Conduit.Combinators
 import Data.Conduit
 import Conduit
 
-{-
-data App = App (TChan Text)
-
-instance Yesod App
-
-mkYesod "App" [parseRoutes|
-/ HomeR GET
-|]
--}
-
 chatApp :: WebSocketsT Handler ()
 chatApp = do
   sendTextData ("Welcome to the chat server, please enter your name." :: Text)
