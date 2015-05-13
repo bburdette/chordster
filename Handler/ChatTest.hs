@@ -2,17 +2,14 @@ module Handler.ChatTest where
 
 import Import
 import Yesod.WebSockets
-import qualified Data.Text.Lazy as TL
 import Control.Monad (forever)
 import Control.Monad.Trans.Reader
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
 import Data.Time
---import Conduit
 import Data.Monoid ((<>))
---import Control.Concurrent.STM.Lifted
-import Data.Text (Text)
+import qualified Data.Text as T
 
 import Data.Time
 import Data.Conduit.Combinators
@@ -21,7 +18,7 @@ import Conduit
 
 chatApp :: WebSocketsT Handler ()
 chatApp = do
-  sendTextData ("Welcome to the chat server, please enter your name." :: Text)
+  sendTextData ("Welcome to the chat server, please enter your name." :: T.Text)
   name <- receiveData 
   sendTextData $ "Welcome, " <> name
   app <- getYesod
@@ -31,8 +28,14 @@ chatApp = do
     dupTChan writeChan
   race_
     (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
-    (sourceWS $$ mapM_C (\msg ->
-      (liftIO . atomically) $ writeTChan writeChan $ name <> ": " <> msg))
+    (forever $ 
+      do
+        dt <- receiveData
+        (liftIO . atomically) $ 
+          writeTChan writeChan $ T.append name (T.append ": " dt))
+
+--    (sourceWS $$ mapM_C (\msg ->
+--      (liftIO . atomically) $ writeTChan writeChan $ name <> ": " <> msg))
 
 getChatTestR :: Handler Html
 getChatTestR = do
