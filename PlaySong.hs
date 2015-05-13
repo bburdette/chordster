@@ -8,6 +8,8 @@ import SongControl
 import Data.Ratio
 import Data.List
 import Data.Maybe
+import Control.Concurrent.STM.TChan
+import Control.Concurrent.STM
 
 data PlaySongChord = PlaySongChord
   { songChord :: SongChord
@@ -77,13 +79,13 @@ setArrayColor conn arrayindex color = do
         [0..23::Int]
   return ()
 
-playSong :: Song -> [PlaySongChord] -> [(String,Int)] -> [(String,Int)] -> IO ()
-playSong song chords chorddests lightdests = do
+playSong :: TChan Text -> Song -> [PlaySongChord] -> [(String,Int)] -> [(String,Int)] -> IO ()
+playSong textchan song chords chorddests lightdests = do
   chordcons <- mapM (\(ip,port) -> openUDP ip port) chorddests
   lightcons <- mapM (\(ip,port) -> openUDP ip port) lightdests
   setupLights lightcons
   iterateWhile (\_ -> True) 
-    (playit chordcons lightcons ((tempoToBeattime . songTempo) song) chords)
+    (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords)
 
 chordnotes :: Int -> [Rational] -> [Int]
 chordnotes _ [] = []
@@ -93,19 +95,21 @@ chordnotes den rats =
     in
   (den : notes)
   
-playit :: [UDP] -> [UDP] -> Int -> [PlaySongChord] -> IO ()
-playit ccons lcons beattime [] = return ()
-playit ccons lcons beattime (psc:pscs) = 
+playit :: TChan Text -> [UDP] -> [UDP] -> Int -> [PlaySongChord] -> IO ()
+playit textchan ccons lcons beattime [] = return ()
+playit textchan ccons lcons beattime (psc:pscs) = 
   -- on chord change, set the root and the scale.
   let rootmsg = Message "root" (map d_put [(chordRootNumer (chordRoot psc)), 
                                 (chordRootDenom (chordRoot psc))])
       chordmsg = Message "scale" $ map d_put $ chordnotes 12 $ notes psc
+      chordtext = (chordRootName (chordRoot psc)) <> (name psc)
     in do
   -- send root and scale msgs to all destinations.
   _ <- mapM (\conn -> do 
           sendOSC conn rootmsg
           sendOSC conn chordmsg)
       ccons 
+  (liftIO . atomically) $ writeTChan textchan chordtext 
   -- delay N times for N beats, flashing the lights each time.  
   let flashmsg1 = Message "fadeto" (map d_put [0::Int,20])
       flashmsg2 = Message "fadeto" (map d_put [1::Int,20])
@@ -118,5 +122,5 @@ playit ccons lcons beattime (psc:pscs) =
     -- delay for a beat.
     threadDelay beattime)
     (take (songChordDuration (songChord psc)) [0..])
-  playit ccons lcons beattime pscs
+  playit textchan ccons lcons beattime pscs
 

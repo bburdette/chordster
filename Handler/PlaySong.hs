@@ -40,7 +40,8 @@ getPlaySongR sid = do
                             (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
                           lightdests
       pscs <- makePscs (map entityVal chords)
-      threadid <- liftIO $ forkIO $ playSong song (catMaybes pscs) chordips lightips
+      threadid <- liftIO $ forkIO $ 
+        playSong (chatLine app) song (catMaybes pscs) chordips lightips
       oldid <- liftIO $ tryTakeMVar $ playThread $ songControl app
       case oldid of 
          Nothing -> return ()
