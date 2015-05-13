@@ -7,13 +7,21 @@ import qualified Data.Text as T
 import Control.Concurrent
 import Data.Maybe
 import PlaySong
+import Yesod.WebSockets
 {-
 meh :: MVar SongControl 
 meh <- newEmptyMVar
 -}
 
+playSongWs :: WebSocketsT Handler ()
+playSongWs = do 
+  wat <- receiveData 
+  sendTextData $ T.append "meh" wat
+
+
 getPlaySongR :: SongId -> Handler Html
 getPlaySongR sid = do
+  webSockets playSongWs
   app <- getYesod 
   mbsong <- runDB $ get sid
   chords <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
