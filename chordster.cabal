@@ -34,6 +34,7 @@ library
                      Handler.DeleteOscDest
                      Handler.ExportSong
                      Handler.ImportSong
+                     Handler.ChatTest
                      SongControl
                      PlaySong
                      ForkeyOpen
@@ -93,6 +94,9 @@ library
                  , transformers
                  , resource-pool
                  , mtl 
+                 , conduit-combinators
+                 , stm
+                 , time                          == 1.4.2
 
     -- see https://github.com/yesodweb/yesod/issues/814
     if !os(windows)

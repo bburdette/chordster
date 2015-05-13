@@ -19,6 +19,8 @@ import Text.Jasmine (minifym)
 import Text.Hamlet (hamletFile)
 import Yesod.Core.Types (Logger)
 import SongControl
+import Data.Text (Text)
+import Control.Concurrent.STM.TChan
 
 -- | The site argument for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -32,6 +34,7 @@ data App = App
     , persistConfig :: Settings.PersistConf
     , appLogger :: Logger
     , songControl :: SongControl
+    , chatLine :: TChan Text
     }
 
 instance HasHttpManager App where

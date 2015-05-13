@@ -19,3 +19,4 @@
 /deleteOscDest/#OSCDestId DeleteOscDestR GET
 /exportsong/#SongId ExportSongR GET
 /importsong/ ImportSongR GET POST
+/chattest/ ChatTestR GET POST

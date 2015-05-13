@@ -25,6 +25,8 @@ import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
 import SongControl
 import Control.Concurrent.MVar
+import Control.Concurrent.STM.TChan
+import Control.Monad.STM
 
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
@@ -43,6 +45,7 @@ import Handler.OscDests
 import Handler.DeleteOscDest
 import Handler.ExportSong
 import Handler.ImportSong
+import Handler.ChatTest
 import ForkeyOpen
 
 
@@ -88,6 +91,7 @@ makeFoundation conf = do
 
     mv <- newEmptyMVar
     let sctrl = SongControl { playThread = mv }
+    tc <- liftIO $ atomically newTChan
 
     let logger = Yesod.Core.Types.Logger loggerSet' getter
         mkFoundation p = App
@@ -98,6 +102,7 @@ makeFoundation conf = do
             , persistConfig = dbconf
             , appLogger = logger
             , songControl = sctrl 
+            , chatLine = tc
             }
         tempFoundation = mkFoundation $ error "connPool forced in tempFoundation"
         logFunc = messageLoggerSource tempFoundation logger
