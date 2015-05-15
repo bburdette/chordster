@@ -14,7 +14,11 @@ module.exports = function(grunt) {
       options: {
         modules: ["Main"]
       },
-      problem: {
+      chat: {
+      src: ["src/Chat.purs", "<%=srcFiles%>"],
+        dest: "../templates/chat.julius"
+      },
+       problem: {
       src: ["src/prob.purs", "<%=srcFiles%>"],
         dest: "dist/Main.js"
       },
@@ -44,6 +48,7 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks("grunt-purescript");
+  grunt.registerTask("chat", ["psc:chat"]);
   grunt.registerTask("rectangle", ["psc:rectangle"]);
   grunt.registerTask("problem", ["psc:problem", "dotPsci"]);
   grunt.registerTask("shapes",    ["psc:shapes"]);
