@@ -27,6 +27,7 @@
     "purescript-math"                     : "*",
     "purescript-transformers"             : "*",
     "purescript-foldable-traversable"     : "*",
-    "purescript-simple-dom"               : "*"
+    "purescript-simple-dom"               : "*",
+    "purescript-websocket"               : "*"
   }
 }

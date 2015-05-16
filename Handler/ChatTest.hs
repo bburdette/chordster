@@ -41,6 +41,12 @@ getChatTestR :: Handler Html
 getChatTestR = do
   webSockets chatApp
   defaultLayout $ do
+    aDomId <- newIdent
+    setTitle "chat test"
+    $(widgetFile "chat")
+
+{-
+  defaultLayout $ do
       [whamlet|
           <div #output>
           <form #form>
@@ -85,7 +91,7 @@ getChatTestR = do
               e.preventDefault();
           });
       |]
-
+-}
 
 postChatTestR :: Handler Html
 postChatTestR = error "Not yet implemented: postChatTestR"

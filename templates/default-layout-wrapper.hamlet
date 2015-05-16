@@ -22,7 +22,7 @@ $newline never
 
         <script>
           document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');
-    <body>
+    <body onLoad="PS.Main.enlode()">
         <div class="container">
             <header>
             <div id="main" role="main">

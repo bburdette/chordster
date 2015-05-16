@@ -15,7 +15,7 @@ module.exports = function(grunt) {
         modules: ["Main"]
       },
       chat: {
-      src: ["src/Chat.purs", "<%=srcFiles%>"],
+      src: ["src/Chat.purs", "src/WebSocket.purs", "<%=srcFiles%>"],
         dest: "../templates/chat.julius"
       },
        problem: {
