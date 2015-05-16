@@ -6,6 +6,7 @@ import Graphics.Canvas hiding (translate)
 import DOM
 import Debug.Trace
 import qualified WebSocket as WS
+import Data.String
 
 import Data.DOM.Simple.Types
 import Data.DOM.Simple.Element
@@ -23,27 +24,16 @@ foreign import documentUrl
     return document.URL;
   }""" :: forall eff . (Eff (dom :: DOM | eff) String)
 
-foreign import unsafeGetUrl
-  """
-  function unsafeGetUrl(doc) {
-    return function () {
-      return doc.URL;
-    };
-  }""" :: forall eff a. a -> (Eff (dom :: DOM | eff) String)
-
 enlode = do
-  trace "meh"
   doc <- document globalWindow
-  trace (show doc)
-  -- Just wut <- getElementById "notoutput" doc
-  -- trace "afterwut"
-  mboutput <- getElementById "output" doc
-  mbform <- getElementById "form" doc
-  mbinput <- getElementById "input" doc
+  Just output <- getElementById "output" doc
+  Just form <- getElementById "form" doc
+  Just input <- getElementById "input" doc
   wha <- documentUrl
-  wha <- unsafeGetUrl doc
-  let blah = "blahh" ++ wha
-  trace blah
+  let wswha = replace "https:" "wss:" (replace "http:" "ws:" wha)
+  trace wha
+  trace wswha
+  ws <- WS.mkWebSocket wswha
   docTitle <- title doc
   trace docTitle
        
