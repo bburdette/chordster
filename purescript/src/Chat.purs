@@ -26,6 +26,19 @@ foreign import documentUrl
     return document.URL;
   }""" :: forall eff . (Eff (dom :: DOM | eff) String)
 
+foreign import enmessage_impl 
+  """
+  function enmessage_impl (elt) {
+    return function (msg) {
+      return function () {
+        var p = document.createElement("p");
+        p.appendChild(document.createTextNode(msg));
+        elt.appendChild(p);
+        }
+      }
+    }
+  """ :: forall e. HTMLElement -> WS.Message -> Eff (ws :: WS.WebSocket, trace :: Trace | e) Unit
+
 foreign import setOnClick
   """
   function setOnClick(elt) { 
@@ -42,25 +55,15 @@ enlode = do
   Just input <- getElementById "input" doc
   wha <- documentUrl
   let wswha = replace "https:" "wss:" (replace "http:" "ws:" wha)
-  trace wha
-  trace wswha
   ws <- WS.mkWebSocket wswha
-  WS.onMessage ws enmessage
-  -- setOnClick input (inputclick input ws)
-  -- unsafeAddEventListener "submit" insub form
-  -- form.addEventListener "submit" ftn
+  WS.onMessage ws (enmessage output)
   unsafeAddEventListener "submit" (inputsubbed input ws) form
-  -- setOnClick input enclick 
   docTitle <- title doc
   trace docTitle
 
-enmessage :: forall e. WS.Message -> Eff (ws :: WS.WebSocket, trace :: Trace | e) Unit
-enmessage msg = do 
---      var p = document.createElement("p");
---      p.appendChild(document.createTextNode(e.data));
---      output.appendChild(p);
-  trace "enmessage with sock"
-  trace $ show msg
+enmessage :: forall e. HTMLElement -> WS.Message -> Eff (ws :: WS.WebSocket, trace :: Trace | e) Unit
+enmessage elt msg = do 
+  enmessage_impl elt msg
 
 inputsubbed :: forall eff. HTMLElement -> WS.Socket -> DOMEvent -> 
   Eff (dom :: DOM, ws :: WS.WebSocket, trace :: Trace | eff) Unit
@@ -69,28 +72,5 @@ inputsubbed input conn evt = do
   WS.send conn txmsg 
   setValue "" input
   preventDefault evt
-
-{-
-  var url = document.URL,
-      output = document.getElementById("output"),
-      form = document.getElementById("form"),
-      input = document.getElementById("input"),
-      conn;
-
-  url = url.replace("http:", "ws:").replace("https:", "wss:");
-  conn = new WebSocket(url);
-
-  conn.onmessage = function(e) {
-      var p = document.createElement("p");
-      p.appendChild(document.createTextNode(e.data));
-      output.appendChild(p);
-  };
-
-  form.addEventListener("submit", function(e){
-      conn.send(input.value);
-      input.value = "";
-      e.preventDefault();
-  });
--}
 
 

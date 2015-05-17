@@ -2,16 +2,8 @@
 var PS = PS || {};
 PS.Prelude = (function () {
     "use strict";
-    
-    function showStringImpl(s) {
-      return JSON.stringify(s);
-    }
-    ;
     var Semigroupoid = function ($less$less$less) {
         this["<<<"] = $less$less$less;
-    };
-    var Show = function (show) {
-        this.show = show;
     };
     var Functor = function ($less$dollar$greater) {
         this["<$>"] = $less$dollar$greater;
@@ -47,15 +39,6 @@ PS.Prelude = (function () {
     };
     var $less$times$greater = function (dict) {
         return dict["<*>"];
-    };
-    var $dollar = function (f) {
-        return function (x) {
-            return f(x);
-        };
-    };
-    var showString = new Show(showStringImpl);
-    var show = function (dict) {
-        return dict.show;
     };
     var semigroupoidArr = new Semigroupoid(function (f) {
         return function (g) {
@@ -94,7 +77,6 @@ PS.Prelude = (function () {
         Applicative: Applicative, 
         Apply: Apply, 
         Functor: Functor, 
-        Show: Show, 
         Semigroupoid: Semigroupoid, 
         ap: ap, 
         "return": $$return, 
@@ -102,12 +84,9 @@ PS.Prelude = (function () {
         liftA1: liftA1, 
         pure: pure, 
         "<*>": $less$times$greater, 
-        show: show, 
-        "$": $dollar, 
         ">>>": $greater$greater$greater, 
         "<<<": $less$less$less, 
-        semigroupoidArr: semigroupoidArr, 
-        showString: showString
+        semigroupoidArr: semigroupoidArr
     };
 })();
 var PS = PS || {};
@@ -676,9 +655,6 @@ PS.Data_DOM_Simple_Element = (function () {
     var setValue = function (dict) {
         return dict.setValue;
     };
-    var setAttribute = function (dict) {
-        return dict.setAttribute;
-    };
     var htmlElement = new Element(Data_DOM_Simple_Unsafe_Element.unsafeAppendChild, Data_DOM_Simple_Unsafe_Element.unsafeChildren, Data_DOM_Simple_Unsafe_Element.unsafeClassAdd, Data_DOM_Simple_Unsafe_Element.unsafeClassContains, Data_DOM_Simple_Unsafe_Element.unsafeClassRemove, Data_DOM_Simple_Unsafe_Element.unsafeClassToggle, Data_DOM_Simple_Unsafe_Element.unsafeContentWindow, Data_DOM_Simple_Unsafe_Element.unsafeGetAttribute, function (id) {
         return function (el) {
             return Prelude[">>="](Control_Monad_Eff.bindEff)(Data_DOM_Simple_Unsafe_Element.unsafeGetElementById(id)(el))(Prelude[">>>"](Prelude.semigroupoidArr)(Data_DOM_Simple_Unsafe_Utils.ensure)(Prelude["return"](Control_Monad_Eff.monadEff)));
@@ -695,7 +671,6 @@ PS.Data_DOM_Simple_Element = (function () {
         Element: Element, 
         setValue: setValue, 
         value: value, 
-        setAttribute: setAttribute, 
         getElementById: getElementById, 
         htmlElement: htmlElement
     };
@@ -872,10 +847,10 @@ PS.Main = (function () {
     var Data_DOM_Simple_Window = PS.Data_DOM_Simple_Window;
     var Data_DOM_Simple_Element = PS.Data_DOM_Simple_Element;
     var Data_String = PS.Data_String;
-    var Debug_Trace = PS.Debug_Trace;
     var WebSocket = PS.WebSocket;
     var Data_DOM_Simple_Unsafe_Events = PS.Data_DOM_Simple_Unsafe_Events;
     var Data_DOM_Simple_Document = PS.Data_DOM_Simple_Document;
+    var Debug_Trace = PS.Debug_Trace;
     var Data_DOM_Simple_Events = PS.Data_DOM_Simple_Events;
     var Data_Maybe = PS.Data_Maybe;
     var Control_Monad_Eff = PS.Control_Monad_Eff;
@@ -891,52 +866,27 @@ PS.Main = (function () {
     return document.URL;
   };
     
+  function enmessage_impl (elt) {
+    return function (msg) {
+      return function () {
+        var p = document.createElement("p");
+        p.appendChild(document.createTextNode(msg));
+        elt.appendChild(p);
+        }
+      }
+    }
+  ;
+    
   function setOnClick(elt) { 
     return function(evt) { 
       elt.onClick = evt;
     }
   }
   ;
-    var wut = function __do() {
-        var _61 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
-        var _60 = Data_DOM_Simple_Element.getElementById(Data_DOM_Simple_Document.htmlDocumentElement)("output")(_61)();
-        return (function () {
-            if (_60 instanceof Data_Maybe.Just) {
-                return function __do() {
-                    Data_DOM_Simple_Element.setAttribute(Data_DOM_Simple_Element.htmlElement)("meh")("blah")(_60.value0)();
-                    return "string";
-                };
-            };
-            if (_60 instanceof Data_Maybe.Nothing) {
-                return Prelude["return"](Control_Monad_Eff.monadEff)("string");
-            };
-            throw new Error("Failed pattern match");
-        })()();
-    };
-    var wat = function __do() {
-        var _59 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
-        var _58 = Data_DOM_Simple_Element.getElementById(Data_DOM_Simple_Document.htmlDocumentElement)("output")(_59)();
-        return (function () {
-            if (_58 instanceof Data_Maybe.Just) {
-                return Data_DOM_Simple_Element.setAttribute(Data_DOM_Simple_Element.htmlElement)("meh")("blah")(_58.value0);
-            };
-            throw new Error("Failed pattern match");
-        })()();
-    };
-    var meh = function (evt) {
-        return Debug_Trace.trace("blah");
-    };
-    var insub = function (evt) {
-        return function __do() {
-            Debug_Trace.trace("heer")();
-            return Data_DOM_Simple_Events.preventDefault(Data_DOM_Simple_Events.eventDOMEvent)(evt)();
-        };
-    };
     var inputsubbed = function (input) {
         return function (conn) {
             return function (evt) {
                 return function __do() {
-                    Debug_Trace.trace("heer")();
                     var _57 = Data_DOM_Simple_Element.value(Data_DOM_Simple_Element.htmlElement)(input)();
                     WebSocket.send(conn)(_57)();
                     Data_DOM_Simple_Element.setValue(Data_DOM_Simple_Element.htmlElement)("")(input)();
@@ -945,11 +895,9 @@ PS.Main = (function () {
             };
         };
     };
-    var ensub = Debug_Trace.trace("submit");
-    var enmessage = function (msg) {
-        return function __do() {
-            Debug_Trace.trace("enmessage with sock")();
-            return Debug_Trace.trace(Prelude.show(Prelude.showString)(msg))();
+    var enmessage = function (elt) {
+        return function (msg) {
+            return enmessage_impl(elt)(msg);
         };
     };
     var enlode = function __do() {
@@ -964,10 +912,8 @@ PS.Main = (function () {
                     return (function () {
                         var wswha = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_52));
                         return function __do() {
-                            Debug_Trace.trace(_52)();
-                            Debug_Trace.trace(wswha)();
                             var _51 = WebSocket.mkWebSocket(wswha)();
-                            WebSocket.onMessage(_51)(enmessage)();
+                            WebSocket.onMessage(_51)(enmessage(_55.value0))();
                             Data_DOM_Simple_Unsafe_Events.unsafeAddEventListener("submit")(inputsubbed(_53.value0)(_51))(_54.value0)();
                             var _50 = Data_DOM_Simple_Document.title(Data_DOM_Simple_Document.htmlDocument)(_56)();
                             return Debug_Trace.trace(_50)();
@@ -980,18 +926,12 @@ PS.Main = (function () {
         };
         throw new Error("Failed pattern match");
     };
-    var enclick = Debug_Trace.trace("click");
     return {
-        wut: wut, 
-        wat: wat, 
         inputsubbed: inputsubbed, 
-        insub: insub, 
-        meh: meh, 
         enmessage: enmessage, 
-        enclick: enclick, 
-        ensub: ensub, 
         enlode: enlode, 
         setOnClick: setOnClick, 
+        enmessage_impl: enmessage_impl, 
         documentUrl: documentUrl
     };
 })();
