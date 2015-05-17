@@ -8,6 +8,8 @@ import Debug.Trace
 import qualified WebSocket as WS
 import Data.String
 
+import Data.DOM.Simple.Unsafe.Events
+
 import Data.DOM.Simple.Types
 import Data.DOM.Simple.Element
 import Data.DOM.Simple.Document
@@ -24,6 +26,15 @@ foreign import documentUrl
     return document.URL;
   }""" :: forall eff . (Eff (dom :: DOM | eff) String)
 
+foreign import setOnClick
+  """
+  function setOnClick(elt) { 
+    return function(evt) { 
+      elt.onClick = evt;
+    }
+  }
+  """ :: forall eff a b. a -> b -> Eff (dom :: DOM | eff) Unit
+
 enlode = do
   doc <- document globalWindow
   Just output <- getElementById "output" doc
@@ -34,9 +45,31 @@ enlode = do
   trace wha
   trace wswha
   ws <- WS.mkWebSocket wswha
+  WS.onMessage ws enmessage
+  -- setOnClick input (inputclick input ws)
+  -- unsafeAddEventListener "submit" insub form
+  -- form.addEventListener "submit" ftn
+  unsafeAddEventListener "submit" (inputsubbed input ws) form
+  -- setOnClick input enclick 
   docTitle <- title doc
   trace docTitle
-       
+
+enmessage :: forall e. WS.Message -> Eff (ws :: WS.WebSocket, trace :: Trace | e) Unit
+enmessage msg = do 
+--      var p = document.createElement("p");
+--      p.appendChild(document.createTextNode(e.data));
+--      output.appendChild(p);
+  trace "enmessage with sock"
+  trace $ show msg
+
+inputsubbed :: forall eff. HTMLElement -> WS.Socket -> DOMEvent -> 
+  Eff (dom :: DOM, ws :: WS.WebSocket, trace :: Trace | eff) Unit
+inputsubbed input conn evt = do 
+  txmsg <- value input
+  WS.send conn txmsg 
+  setValue "" input
+  preventDefault evt
+
 {-
   var url = document.URL,
       output = document.getElementById("output"),
@@ -59,31 +92,5 @@ enlode = do
       e.preventDefault();
   });
 -}
-
-{-
-maign :: forall eff. Eff (dom :: DOM, trace :: Trace  | eff) Unit
-maign = do
-  d <- document globalWindow
-  addKeyboardEventListener KeypressEvent keypressEventHandler d
--}
-
-wat :: forall eff. Eff (dom :: DOM | eff) Unit
-wat = do
-  d <- document globalWindow
-  mboutput <- getElementById "output" d
-  case mboutput of 
-    Just output -> do
-      setAttribute "meh" "blah" output
-
-wut :: forall eff. Eff (dom :: DOM | eff) String
-wut = do
-  d <- document globalWindow
-  mboutput <- getElementById "output" d
-  case mboutput of 
-    Just output -> do
-      setAttribute "meh" "blah" output
-      return "string"
-    Nothing -> return "string"
-
 
 
