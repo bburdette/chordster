@@ -3,18 +3,9 @@ module Handler.ChatTest where
 import Import
 import Yesod.WebSockets
 import Control.Monad (forever)
-import Control.Monad.Trans.Reader
-import Control.Concurrent (threadDelay)
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
-import Data.Time
-import Data.Monoid ((<>))
 import qualified Data.Text as T
-
-import Data.Time
-import Data.Conduit.Combinators
-import Data.Conduit
-import Conduit
 
 chatApp :: WebSocketsT Handler ()
 chatApp = do
@@ -41,7 +32,6 @@ getChatTestR :: Handler Html
 getChatTestR = do
   webSockets chatApp
   defaultLayout $ do
-    aDomId <- newIdent
     setTitle "chat test"
     $(widgetFile "chat")
 
