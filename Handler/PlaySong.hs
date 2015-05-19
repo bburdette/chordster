@@ -8,10 +8,6 @@ import Control.Concurrent
 import Data.Maybe
 import PlaySong
 import Yesod.WebSockets
-{-
-meh :: MVar SongControl 
-meh <- newEmptyMVar
--}
 
 playSongWs :: WebSocketsT Handler ()
 playSongWs = do 

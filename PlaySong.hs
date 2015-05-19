@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module PlaySong where
 
 import Import
@@ -10,6 +13,7 @@ import Data.List
 import Data.Maybe
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
+import GHC.Generics
 
 data PlaySongChord = PlaySongChord
   { songChord :: SongChord
@@ -24,6 +28,28 @@ data TextSong = TextSong
   , chords :: [PlaySongChord]
   }
   deriving Show
+
+data WebSong = WebSong
+  { wsName :: Text
+  , wsChords :: [Text]
+  }
+  deriving (Show, Generic)
+
+instance ToJSON WebSong 
+
+tsToWebSong :: TextSong -> WebSong
+tsToWebSong ts = WebSong { 
+    wsName = songName (song ts)
+  , wsChords = (\psc -> name psc) <$> (chords ts)
+  }
+
+toWebSong :: Song -> [PlaySongChord] -> WebSong
+toWebSong song chords = WebSong { 
+    wsName = songName song 
+  , wsChords = (\psc -> chordRootName (chordRoot psc) <> " " <> name psc) 
+             <$> chords 
+  }
+
 
 loadTextSong :: SongId -> Handler (Maybe TextSong)
 loadTextSong sid = do
@@ -84,6 +110,9 @@ playSong textchan song chords chorddests lightdests = do
   chordcons <- mapM (\(ip,port) -> openUDP ip port) chorddests
   lightcons <- mapM (\(ip,port) -> openUDP ip port) lightdests
   setupLights lightcons
+  let websong = toWebSong song chords
+      wsjs = toJSON websong
+  (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
   iterateWhile (\_ -> True) 
     (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords)
 
