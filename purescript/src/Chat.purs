@@ -9,7 +9,6 @@ import qualified WebSocket as WS
 import Data.String
 
 import Data.DOM.Simple.Unsafe.Events
-
 import Data.DOM.Simple.Types
 import Data.DOM.Simple.Element
 import Data.DOM.Simple.Document

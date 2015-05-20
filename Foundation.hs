@@ -35,6 +35,7 @@ data App = App
     , appLogger :: Logger
     , songControl :: SongControl
     , chatLine :: TChan Text
+    , songLine :: TChan Text
     }
 
 instance HasHttpManager App where

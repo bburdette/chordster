@@ -92,6 +92,7 @@ makeFoundation conf = do
     mv <- newEmptyMVar
     let sctrl = SongControl { playThread = mv }
     tc <- liftIO $ atomically newTChan
+    sl <- liftIO $ atomically newTChan
 
     let logger = Yesod.Core.Types.Logger loggerSet' getter
         mkFoundation p = App
@@ -103,6 +104,7 @@ makeFoundation conf = do
             , appLogger = logger
             , songControl = sctrl 
             , chatLine = tc
+            , songLine = sl
             }
         tempFoundation = mkFoundation $ error "connPool forced in tempFoundation"
         logFunc = messageLoggerSource tempFoundation logger

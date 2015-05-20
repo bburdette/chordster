@@ -4,16 +4,20 @@ import Import
 import Control.Concurrent.MVar
 import SongControl
 import qualified Data.Text as T
+import Control.Monad (forever)
 import Control.Concurrent
+import Control.Concurrent.STM.TChan
+import Control.Concurrent.STM
 import Data.Maybe
 import PlaySong
 import Yesod.WebSockets
 
 playSongWs :: WebSocketsT Handler ()
 playSongWs = do 
-  wat <- receiveData 
-  sendTextData $ T.append "meh" wat
-
+  app <- getYesod
+  let writeChan = songLine app
+  readChan <- (liftIO . atomically) $ dupTChan writeChan
+  (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
 
 getPlaySongR :: SongId -> Handler Html
 getPlaySongR sid = do
@@ -37,7 +41,7 @@ getPlaySongR sid = do
                           lightdests
       pscs <- makePscs (map entityVal chords)
       threadid <- liftIO $ forkIO $ 
-        playSong (chatLine app) song (catMaybes pscs) chordips lightips
+        playSong (songLine app) song (catMaybes pscs) chordips lightips
       oldid <- liftIO $ tryTakeMVar $ playThread $ songControl app
       case oldid of 
          Nothing -> return ()

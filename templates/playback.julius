@@ -2,6 +2,17 @@
 var PS = PS || {};
 PS.Prelude = (function () {
     "use strict";
+    
+    function showStringImpl(s) {
+      return JSON.stringify(s);
+    }
+    ;
+    var Unit = function (x) {
+        return x;
+    };
+    var Show = function (show) {
+        this.show = show;
+    };
     var Functor = function ($less$dollar$greater) {
         this["<$>"] = $less$dollar$greater;
     };
@@ -32,6 +43,11 @@ PS.Prelude = (function () {
             return f(x);
         };
     };
+    var unit = {};
+    var showString = new Show(showStringImpl);
+    var show = function (dict) {
+        return dict.show;
+    };
     var pure = function (dict) {
         return dict.pure;
     };
@@ -57,24 +73,38 @@ PS.Prelude = (function () {
         };
     };
     return {
+        Unit: Unit, 
         Monad: Monad, 
         Bind: Bind, 
         Applicative: Applicative, 
         Apply: Apply, 
         Functor: Functor, 
+        Show: Show, 
+        unit: unit, 
         ap: ap, 
         "return": $$return, 
         ">>=": $greater$greater$eq, 
         liftA1: liftA1, 
         pure: pure, 
         "<*>": $less$times$greater, 
-        "$": $dollar
+        show: show, 
+        "$": $dollar, 
+        showString: showString
     };
 })();
 var PS = PS || {};
 PS.Data_Function = (function () {
     "use strict";
     var Prelude = PS.Prelude;
+    
+    function runFn2(fn) {
+      return function(a) {
+        return function(b) {
+          return fn(a, b);
+        };
+      };
+    }
+    ;
     
     function runFn3(fn) {
       return function(a) {
@@ -87,7 +117,8 @@ PS.Data_Function = (function () {
     }
     ;
     return {
-        runFn3: runFn3
+        runFn3: runFn3, 
+        runFn2: runFn2
     };
 })();
 var PS = PS || {};
@@ -134,6 +165,99 @@ PS.Control_Monad_Eff = (function () {
     };
 })();
 var PS = PS || {};
+PS.Data_DOM_Simple_Unsafe_Window = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var DOM = PS.DOM;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var Data_DOM_Simple_Types = PS.Data_DOM_Simple_Types;
+    
+  function unsafeDocument(win) {
+    return function () {
+      return win.document;
+    };
+  };
+    
+  function unsafeNavigator(win) {
+    return function () {
+      return win.navigator;
+    };
+  };
+    
+  function unsafeLocation(win) {
+    return function () {
+      return win.location;
+    };
+  };
+    
+  function unsafeSetTimeout(win) {
+    return function(delay) {
+      return function(func) {
+        return function() {
+          return win.setTimeout(func, delay);
+        };
+      };
+    };
+  };
+    
+  function unsafeSetInterval(win) {
+    return function(delay) {
+      return function(func) {
+        return function() {
+          return win.setInterval(func, delay);
+        };
+      };
+    };
+  };
+    
+  function unsafeClearTimeout(win) {
+    return function(timeout) {
+      return function() {
+        win.clearTimeout(timeout);
+      };
+    };
+  };
+    
+  function unsafeInnerWidth(win) {
+    return function() {
+      return win.innerWidth;
+    };
+  };
+    
+  function unsafeInnerHeight(win) {
+    return function() {
+      return win.innerHeight;
+    };
+  };
+    return {
+        unsafeInnerHeight: unsafeInnerHeight, 
+        unsafeInnerWidth: unsafeInnerWidth, 
+        unsafeClearTimeout: unsafeClearTimeout, 
+        unsafeSetInterval: unsafeSetInterval, 
+        unsafeSetTimeout: unsafeSetTimeout, 
+        unsafeLocation: unsafeLocation, 
+        unsafeNavigator: unsafeNavigator, 
+        unsafeDocument: unsafeDocument
+    };
+})();
+var PS = PS || {};
+PS.Debug_Trace = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    
+    function trace(s) {
+      return function() {
+        console.log(s);
+        return {};
+      };
+    }
+    ;
+    return {
+        trace: trace
+    };
+})();
+var PS = PS || {};
 PS.Data_Maybe = (function () {
     "use strict";
     var Prelude = PS.Prelude;
@@ -164,6 +288,60 @@ PS.Data_Maybe = (function () {
     };
 })();
 var PS = PS || {};
+PS.Data_String = (function () {
+    "use strict";
+    var Data_Function = PS.Data_Function;
+    var Data_Char = PS.Data_Char;
+    var Prelude = PS.Prelude;
+    var Data_String_Unsafe = PS.Data_String_Unsafe;
+    var Data_Maybe = PS.Data_Maybe;
+    
+    function replace(s1) {
+      return function(s2) {
+        return function(s3) {
+          return s3.replace(s1, s2);
+        };
+      };
+    }
+    ;
+    return {
+        replace: replace
+    };
+})();
+var PS = PS || {};
+PS.Data_DOM_Simple_Window = (function () {
+    "use strict";
+    var Data_DOM_Simple_Unsafe_Window = PS.Data_DOM_Simple_Unsafe_Window;
+    var Prelude = PS.Prelude;
+    var Data_String = PS.Data_String;
+    var Data_Array = PS.Data_Array;
+    var DOM = PS.DOM;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var Data_DOM_Simple_Types = PS.Data_DOM_Simple_Types;
+    var Data_Maybe = PS.Data_Maybe;
+    var globalWindow = window;;
+    var Window = function (clearTimeout, document, innerHeight, innerWidth, location, navigator, setInterval, setTimeout) {
+        this.clearTimeout = clearTimeout;
+        this.document = document;
+        this.innerHeight = innerHeight;
+        this.innerWidth = innerWidth;
+        this.location = location;
+        this.navigator = navigator;
+        this.setInterval = setInterval;
+        this.setTimeout = setTimeout;
+    };
+    var htmlWindow = new Window(Data_DOM_Simple_Unsafe_Window.unsafeClearTimeout, Data_DOM_Simple_Unsafe_Window.unsafeDocument, Data_DOM_Simple_Unsafe_Window.unsafeInnerHeight, Data_DOM_Simple_Unsafe_Window.unsafeInnerWidth, Data_DOM_Simple_Unsafe_Window.unsafeLocation, Data_DOM_Simple_Unsafe_Window.unsafeNavigator, Data_DOM_Simple_Unsafe_Window.unsafeSetInterval, Data_DOM_Simple_Unsafe_Window.unsafeSetTimeout);
+    var document = function (dict) {
+        return dict.document;
+    };
+    return {
+        Window: Window, 
+        globalWindow: globalWindow, 
+        document: document, 
+        htmlWindow: htmlWindow
+    };
+})();
+var PS = PS || {};
 PS.Graphics_Canvas = (function () {
     "use strict";
     var Data_Function = PS.Data_Function;
@@ -181,12 +359,26 @@ PS.Graphics_Canvas = (function () {
     };
   };
     function getContext2D(c) {  return function() {    return c.getContext('2d');  };};
+    function getCanvasWidth(canvas){  return function(){    return canvas.width;  };};;
+    function getCanvasHeight(canvas){  return function(){    return canvas.height;  };};;
     function setFillStyle(style) {  return function(ctx) {    return function() {      ctx.fillStyle = style;      return ctx;    };  };};
     function beginPath(ctx) {  return function() {    ctx.beginPath();    return ctx;  };};
     function fill(ctx) {  return function() {    ctx.fill();    return ctx;  };};
     function rect(ctx) {  return function(r) {    return function() {      ctx.rect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
+    function clearRect(ctx) {  return function(r) {    return function() {      ctx.clearRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
+    function strokeText(ctx) {  return function(text) {    return function(x) {      return function(y) {        return function() {          ctx.strokeText(text, x, y);          return ctx;        };      };    };  };};
     var getCanvasElementById = function (elId) {
         return getCanvasElementByIdImpl(elId, Data_Maybe.Just.create, Data_Maybe.Nothing.value);
+    };
+    var getCanvasDimensions = function (ce) {
+        return function __do() {
+            var _46 = getCanvasWidth(ce)();
+            var _45 = getCanvasHeight(ce)();
+            return {
+                width: _46, 
+                height: _45
+            };
+        };
     };
     var fillPath = function (ctx) {
         return function (path) {
@@ -199,30 +391,84 @@ PS.Graphics_Canvas = (function () {
         };
     };
     return {
+        strokeText: strokeText, 
+        clearRect: clearRect, 
         rect: rect, 
         fillPath: fillPath, 
         fill: fill, 
         beginPath: beginPath, 
         setFillStyle: setFillStyle, 
+        getCanvasDimensions: getCanvasDimensions, 
+        getCanvasHeight: getCanvasHeight, 
+        getCanvasWidth: getCanvasWidth, 
         getContext2D: getContext2D, 
         getCanvasElementById: getCanvasElementById
+    };
+})();
+var PS = PS || {};
+PS.WebSocket = (function () {
+    "use strict";
+    var Data_Function = PS.Data_Function;
+    var Prelude = PS.Prelude;
+    var Data_Tuple = PS.Data_Tuple;
+    var Data_Maybe = PS.Data_Maybe;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    
+  function mkWebSocket(url) {
+    return function() {
+      return new WebSocket(url)
+    }
+  }
+  ;
+    
+  function onMessageImpl(socket, callback) {
+    return function() {
+      socket.onmessage = function(msg) {
+        callback(msg.data)()
+      }
+    }
+  }
+  ;
+    var onMessage = function (socket) {
+        return function (callback) {
+            return onMessageImpl(socket, callback);
+        };
+    };
+    return {
+        onMessage: onMessage, 
+        onMessageImpl: onMessageImpl, 
+        mkWebSocket: mkWebSocket
     };
 })();
 var PS = PS || {};
 PS.Main = (function () {
     "use strict";
     var Prelude = PS.Prelude;
+    var Debug_Trace = PS.Debug_Trace;
     var Graphics_Canvas = PS.Graphics_Canvas;
+    var Data_DOM_Simple_Window = PS.Data_DOM_Simple_Window;
+    var Data_String = PS.Data_String;
+    var WebSocket = PS.WebSocket;
     var Control_Monad_Eff = PS.Control_Monad_Eff;
     var Data_Maybe = PS.Data_Maybe;
+    var Data_Foreign = PS.Data_Foreign;
+    var Data_Foreign_Class = PS.Data_Foreign_Class;
+    var DOM = PS.DOM;
+    
+  function documentUrl() {
+    return document.URL;
+  };
+    var WebSong = function (x) {
+        return x;
+    };
     var meh = function __do() {
-        var _55 = Graphics_Canvas.getCanvasElementById("canvas")();
+        var _59 = Graphics_Canvas.getCanvasElementById("canvas")();
         return (function () {
-            if (_55 instanceof Data_Maybe.Just) {
+            if (_59 instanceof Data_Maybe.Just) {
                 return function __do() {
-                    var _54 = Graphics_Canvas.getContext2D(_55.value0)();
-                    Graphics_Canvas.setFillStyle("#FF00FF")(_54)();
-                    return Graphics_Canvas.fillPath(_54)(Graphics_Canvas.rect(_54)({
+                    var _58 = Graphics_Canvas.getContext2D(_59.value0)();
+                    Graphics_Canvas.setFillStyle("#FF00FF")(_58)();
+                    return Graphics_Canvas.fillPath(_58)(Graphics_Canvas.rect(_58)({
                         x: 150, 
                         y: 150, 
                         w: 300, 
@@ -234,13 +480,13 @@ PS.Main = (function () {
         })()();
     };
     var main = function __do() {
-        var _51 = Graphics_Canvas.getCanvasElementById("canvas")();
+        var _57 = Graphics_Canvas.getCanvasElementById("canvas")();
         return (function () {
-            if (_51 instanceof Data_Maybe.Just) {
+            if (_57 instanceof Data_Maybe.Just) {
                 return function __do() {
-                    var _50 = Graphics_Canvas.getContext2D(_51.value0)();
-                    Graphics_Canvas.setFillStyle("#0000FF")(_50)();
-                    return Graphics_Canvas.fillPath(_50)(Graphics_Canvas.rect(_50)({
+                    var _56 = Graphics_Canvas.getContext2D(_57.value0)();
+                    Graphics_Canvas.setFillStyle("#0000FF")(_56)();
+                    return Graphics_Canvas.fillPath(_56)(Graphics_Canvas.rect(_56)({
                         x: 250, 
                         y: 150, 
                         w: 100, 
@@ -251,27 +497,55 @@ PS.Main = (function () {
             throw new Error("Failed pattern match");
         })()();
     };
-    var enlode = function __do() {
-        var _53 = Graphics_Canvas.getCanvasElementById("canvas")();
-        return (function () {
-            if (_53 instanceof Data_Maybe.Just) {
-                return function __do() {
-                    var _52 = Graphics_Canvas.getContext2D(_53.value0)();
-                    Graphics_Canvas.setFillStyle("#0000FF")(_52)();
-                    return Graphics_Canvas.fillPath(_52)(Graphics_Canvas.rect(_52)({
-                        x: 25, 
-                        y: 70, 
-                        w: 100, 
-                        h: 10
-                    }))();
-                };
+    var enmessage = function (canelt) {
+        return function (msg) {
+            return function __do() {
+                Debug_Trace.trace(Prelude.show(Prelude.showString)(msg))();
+                var _51 = Graphics_Canvas.getContext2D(canelt)();
+                var _50 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                return (function () {
+                    var wholerect = {
+                        h: _50.height, 
+                        w: _50.width, 
+                        x: 0, 
+                        y: 0
+                    };
+                    return function __do() {
+                        Graphics_Canvas.clearRect(_51)(wholerect)();
+                        Graphics_Canvas.strokeText(_51)(Prelude.show(Prelude.showString)(msg))(50)(100)();
+                        return Prelude.unit;
+                    };
+                })()();
             };
-            throw new Error("Failed pattern match");
+        };
+    };
+    var enlode = function __do() {
+        Debug_Trace.trace("enlode")();
+        var _55 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+        var _54 = documentUrl();
+        return (function () {
+            var wsurl = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_54));
+            return function __do() {
+                var _53 = WebSocket.mkWebSocket(wsurl)();
+                var _52 = Graphics_Canvas.getCanvasElementById("canvas")();
+                if (_52 instanceof Data_Maybe.Just) {
+                    WebSocket.onMessage(_53)(enmessage(_52.value0))();
+                    return Debug_Trace.trace("enlode end")();
+                };
+                throw new Error("Failed pattern match");
+            };
         })()();
     };
+    var blah = function (r) {
+        return Prelude.unit;
+    };
     return {
+        WebSong: WebSong, 
         meh: meh, 
+        main: main, 
         enlode: enlode, 
-        main: main
+        enmessage: enmessage, 
+        blah: blah, 
+        documentUrl: documentUrl
     };
 })();
