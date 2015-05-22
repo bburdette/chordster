@@ -37,6 +37,12 @@ data WebSong = WebSong
 
 instance ToJSON WebSong 
 
+data WsIndex = WsIndex { wiIndex :: Int }
+  deriving (Show, Generic)
+
+
+instance ToJSON WsIndex 
+
 tsToWebSong :: TextSong -> WebSong
 tsToWebSong ts = WebSong { 
     wsName = songName (song ts)
@@ -49,7 +55,6 @@ toWebSong song chords = WebSong {
   , wsChords = (\psc -> chordRootName (chordRoot psc) <> " " <> name psc) 
              <$> chords 
   }
-
 
 loadTextSong :: SongId -> Handler (Maybe TextSong)
 loadTextSong sid = do
@@ -114,7 +119,7 @@ playSong textchan song chords chorddests lightdests = do
       wsjs = toJSON websong
   (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
   iterateWhile (\_ -> True) 
-    (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords)
+    (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0)
 
 chordnotes :: Int -> [Rational] -> [Int]
 chordnotes _ [] = []
@@ -124,21 +129,23 @@ chordnotes den rats =
     in
   (den : notes)
   
-playit :: TChan Text -> [UDP] -> [UDP] -> Int -> [PlaySongChord] -> IO ()
-playit textchan ccons lcons beattime [] = return ()
-playit textchan ccons lcons beattime (psc:pscs) = 
+playit :: TChan Text -> [UDP] -> [UDP] -> Int -> [PlaySongChord] -> Int -> IO ()
+playit textchan ccons lcons beattime [] count = return ()
+playit textchan ccons lcons beattime (psc:pscs) count = 
   -- on chord change, set the root and the scale.
   let rootmsg = Message "root" (map d_put [(chordRootNumer (chordRoot psc)), 
                                 (chordRootDenom (chordRoot psc))])
       chordmsg = Message "scale" $ map d_put $ chordnotes 12 $ notes psc
-      chordtext = (chordRootName (chordRoot psc)) <> (name psc)
+      -- chordtext = (chordRootName (chordRoot psc)) <> (name psc)
+      wsi = WsIndex { wiIndex = count } 
+      wsijs = toJSON wsi
     in do
   -- send root and scale msgs to all destinations.
   _ <- mapM (\conn -> do 
           sendOSC conn rootmsg
           sendOSC conn chordmsg)
       ccons 
-  (liftIO . atomically) $ writeTChan textchan chordtext 
+  (liftIO . atomically) $ writeTChan textchan (toJsonText wsijs)
   -- delay N times for N beats, flashing the lights each time.  
   let flashmsg1 = Message "fadeto" (map d_put [0::Int,20])
       flashmsg2 = Message "fadeto" (map d_put [1::Int,20])
@@ -151,5 +158,5 @@ playit textchan ccons lcons beattime (psc:pscs) =
     -- delay for a beat.
     threadDelay beattime)
     (take (songChordDuration (songChord psc)) [0..])
-  playit textchan ccons lcons beattime pscs
+  playit textchan ccons lcons beattime pscs (count + 1)
 

@@ -3,12 +3,57 @@ var PS = PS || {};
 PS.Prelude = (function () {
     "use strict";
     
+    function cons(e) {
+      return function(l) {
+        return [e].concat(l);
+      };
+    }
+    ;
+    
     function showStringImpl(s) {
       return JSON.stringify(s);
     }
     ;
-    var Unit = function (x) {
-        return x;
+    
+    function showNumberImpl(n) {
+      return n.toString();
+    }
+    ;
+    
+    function refEq(r1) {
+      return function(r2) {
+        return r1 === r2;
+      };
+    }
+    ;
+    
+    function refIneq(r1) {
+      return function(r2) {
+        return r1 !== r2;
+      };
+    }
+    ;
+    
+    function boolAnd(b1) {
+      return function(b2) {
+        return b1 && b2;
+      };
+    }
+    ;
+    
+    function boolOr(b1) {
+      return function(b2) {
+        return b1 || b2;
+      };
+    }
+    ;
+    
+    function boolNot(b) {
+      return !b;
+    }
+    ;
+    var Semigroupoid = function ($less$less$less) {
+        this["<<<"] = $less$less$less;
     };
     var Show = function (show) {
         this.show = show;
@@ -32,22 +77,54 @@ PS.Prelude = (function () {
         this["__superclass_Prelude.Applicative_0"] = __superclass_Prelude$dotApplicative_0;
         this["__superclass_Prelude.Bind_1"] = __superclass_Prelude$dotBind_1;
     };
+    var Eq = function ($div$eq, $eq$eq) {
+        this["/="] = $div$eq;
+        this["=="] = $eq$eq;
+    };
+    var BoolLike = function ($amp$amp, not, $bar$bar) {
+        this["&&"] = $amp$amp;
+        this.not = not;
+        this["||"] = $bar$bar;
+    };
+    var $bar$bar = function (dict) {
+        return dict["||"];
+    };
     var $greater$greater$eq = function (dict) {
         return dict[">>="];
+    };
+    var $eq$eq = function (dict) {
+        return dict["=="];
+    };
+    var $less$greater = function (dict) {
+        return dict["<>"];
+    };
+    var $less$less$less = function (dict) {
+        return dict["<<<"];
     };
     var $less$times$greater = function (dict) {
         return dict["<*>"];
     };
+    var $less$dollar$greater = function (dict) {
+        return dict["<$>"];
+    };
+    var $colon = cons;
     var $dollar = function (f) {
         return function (x) {
             return f(x);
         };
     };
-    var unit = {};
     var showString = new Show(showStringImpl);
+    var showNumber = new Show(showNumberImpl);
     var show = function (dict) {
         return dict.show;
     };
+    var semigroupoidArr = new Semigroupoid(function (f) {
+        return function (g) {
+            return function (x) {
+                return f(g(x));
+            };
+        };
+    });
     var pure = function (dict) {
         return dict.pure;
     };
@@ -61,6 +138,15 @@ PS.Prelude = (function () {
             };
         };
     };
+    var flip = function (f) {
+        return function (b) {
+            return function (a) {
+                return f(a)(b);
+            };
+        };
+    };
+    var eqString = new Eq(refIneq, refEq);
+    var boolLikeBoolean = new BoolLike(boolAnd, boolNot, boolOr);
     var ap = function (__dict_Monad_16) {
         return function (f) {
             return function (a) {
@@ -73,23 +159,36 @@ PS.Prelude = (function () {
         };
     };
     return {
-        Unit: Unit, 
+        BoolLike: BoolLike, 
+        Eq: Eq, 
         Monad: Monad, 
         Bind: Bind, 
         Applicative: Applicative, 
         Apply: Apply, 
         Functor: Functor, 
         Show: Show, 
-        unit: unit, 
+        Semigroupoid: Semigroupoid, 
+        "<>": $less$greater, 
+        "||": $bar$bar, 
+        "==": $eq$eq, 
         ap: ap, 
         "return": $$return, 
         ">>=": $greater$greater$eq, 
         liftA1: liftA1, 
         pure: pure, 
         "<*>": $less$times$greater, 
+        "<$>": $less$dollar$greater, 
         show: show, 
+        cons: cons, 
+        ":": $colon, 
         "$": $dollar, 
-        showString: showString
+        "<<<": $less$less$less, 
+        flip: flip, 
+        semigroupoidArr: semigroupoidArr, 
+        showString: showString, 
+        showNumber: showNumber, 
+        eqString: eqString, 
+        boolLikeBoolean: boolLikeBoolean
     };
 })();
 var PS = PS || {};
@@ -116,7 +215,21 @@ PS.Data_Function = (function () {
       };
     }
     ;
+    
+    function runFn4(fn) {
+      return function(a) {
+        return function(b) {
+          return function(c) {
+            return function(d) {
+              return fn(a, b, c, d);
+            };
+          };
+        };
+      };
+    }
+    ;
     return {
+        runFn4: runFn4, 
         runFn3: runFn3, 
         runFn2: runFn2
     };
@@ -258,6 +371,124 @@ PS.Debug_Trace = (function () {
     };
 })();
 var PS = PS || {};
+PS.Control_Alt = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Alt = function ($less$bar$greater, __superclass_Prelude$dotFunctor_0) {
+        this["<|>"] = $less$bar$greater;
+        this["__superclass_Prelude.Functor_0"] = __superclass_Prelude$dotFunctor_0;
+    };
+    var $less$bar$greater = function (dict) {
+        return dict["<|>"];
+    };
+    return {
+        Alt: Alt, 
+        "<|>": $less$bar$greater
+    };
+})();
+var PS = PS || {};
+PS.Data_Either = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Control_Alt = PS.Control_Alt;
+    var Control_Extend = PS.Control_Extend;
+    var Left = (function () {
+        function Left(value0) {
+            this.value0 = value0;
+        };
+        Left.create = function (value0) {
+            return new Left(value0);
+        };
+        return Left;
+    })();
+    var Right = (function () {
+        function Right(value0) {
+            this.value0 = value0;
+        };
+        Right.create = function (value0) {
+            return new Right(value0);
+        };
+        return Right;
+    })();
+    var functorEither = new Prelude.Functor(function (f) {
+        return function (_106) {
+            if (_106 instanceof Left) {
+                return new Left(_106.value0);
+            };
+            if (_106 instanceof Right) {
+                return new Right(f(_106.value0));
+            };
+            throw new Error("Failed pattern match");
+        };
+    });
+    var either = function (f) {
+        return function (g) {
+            return function (_105) {
+                if (_105 instanceof Left) {
+                    return f(_105.value0);
+                };
+                if (_105 instanceof Right) {
+                    return g(_105.value0);
+                };
+                throw new Error("Failed pattern match");
+            };
+        };
+    };
+    var applyEither = new Prelude.Apply(function (_107) {
+        return function (r) {
+            if (_107 instanceof Left) {
+                return new Left(_107.value0);
+            };
+            if (_107 instanceof Right) {
+                return Prelude["<$>"](functorEither)(_107.value0)(r);
+            };
+            throw new Error("Failed pattern match");
+        };
+    }, function () {
+        return functorEither;
+    });
+    var bindEither = new Prelude.Bind(either(function (e) {
+        return function (_104) {
+            return new Left(e);
+        };
+    })(function (a) {
+        return function (f) {
+            return f(a);
+        };
+    }), function () {
+        return applyEither;
+    });
+    var applicativeEither = new Prelude.Applicative(function () {
+        return applyEither;
+    }, Right.create);
+    var monadEither = new Prelude.Monad(function () {
+        return applicativeEither;
+    }, function () {
+        return bindEither;
+    });
+    var altEither = new Control_Alt.Alt(function (_108) {
+        return function (r) {
+            if (_108 instanceof Left) {
+                return r;
+            };
+            return _108;
+        };
+    }, function () {
+        return functorEither;
+    });
+    return {
+        Left: Left, 
+        Right: Right, 
+        either: either, 
+        functorEither: functorEither, 
+        applyEither: applyEither, 
+        applicativeEither: applicativeEither, 
+        altEither: altEither, 
+        bindEither: bindEither, 
+        monadEither: monadEither
+    };
+})();
+var PS = PS || {};
 PS.Data_Maybe = (function () {
     "use strict";
     var Prelude = PS.Prelude;
@@ -285,6 +516,326 @@ PS.Data_Maybe = (function () {
     return {
         Nothing: Nothing, 
         Just: Just
+    };
+})();
+var PS = PS || {};
+PS.Data_Array = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Maybe = PS.Data_Maybe;
+    var Control_Alt = PS.Control_Alt;
+    var Control_Plus = PS.Control_Plus;
+    var Control_Alternative = PS.Control_Alternative;
+    var Control_MonadPlus = PS.Control_MonadPlus;
+    var Prelude_Unsafe = PS.Prelude_Unsafe;
+    function length (xs) {  return xs.length;};
+    function map (f) {  return function (arr) {    var l = arr.length;    var result = new Array(l);    for (var i = 0; i < l; i++) {      result[i] = f(arr[i]);    }    return result;  };};
+    function range (start) {  return function (end) {    var i = ~~start, e = ~~end;    var step = i > e ? -1 : 1;    var result = [i], n = 1;    while (i !== e) {      i += step;      result[n++] = i;    }    return result;  };};
+    function zipWith (f) {  return function (xs) {    return function (ys) {      var l = xs.length < ys.length ? xs.length : ys.length;      var result = new Array(l);      for (var i = 0; i < l; i++) {        result[i] = f(xs[i])(ys[i]);      }      return result;    };  };};
+    var functorArray = new Prelude.Functor(map);
+    return {
+        zipWith: zipWith, 
+        range: range, 
+        length: length, 
+        map: map, 
+        functorArray: functorArray
+    };
+})();
+var PS = PS || {};
+PS.Data_Foreign = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Function = PS.Data_Function;
+    var Data_Array = PS.Data_Array;
+    var Data_Either = PS.Data_Either;
+    
+  function parseJSONImpl(left, right, str) {
+    try {
+      return right(JSON.parse(str));
+    } catch (e) {
+      return left(e.toString());
+    }
+  }
+  ;
+    
+  function unsafeFromForeign(value) {
+    return value;
+  }
+  ;
+    
+  function typeOf(value) {
+    return typeof value;
+  }
+  ;
+    
+  function tagOf(value) {
+    return Object.prototype.toString.call(value).slice(8, -1);
+  }
+  ;
+    
+  function isNull(value) {
+    return value === null;
+  }
+  ;
+    
+  function isUndefined(value) {
+    return value === undefined;
+  }
+  ;
+    
+  var isArray = Array.isArray || function(value) {
+    return Object.prototype.toString.call(value) === '[object Array]';
+  };
+  ;
+    var TypeMismatch = (function () {
+        function TypeMismatch(value0, value1) {
+            this.value0 = value0;
+            this.value1 = value1;
+        };
+        TypeMismatch.create = function (value0) {
+            return function (value1) {
+                return new TypeMismatch(value0, value1);
+            };
+        };
+        return TypeMismatch;
+    })();
+    var ErrorAtIndex = (function () {
+        function ErrorAtIndex(value0, value1) {
+            this.value0 = value0;
+            this.value1 = value1;
+        };
+        ErrorAtIndex.create = function (value0) {
+            return function (value1) {
+                return new ErrorAtIndex(value0, value1);
+            };
+        };
+        return ErrorAtIndex;
+    })();
+    var ErrorAtProperty = (function () {
+        function ErrorAtProperty(value0, value1) {
+            this.value0 = value0;
+            this.value1 = value1;
+        };
+        ErrorAtProperty.create = function (value0) {
+            return function (value1) {
+                return new ErrorAtProperty(value0, value1);
+            };
+        };
+        return ErrorAtProperty;
+    })();
+    var JSONError = (function () {
+        function JSONError(value0) {
+            this.value0 = value0;
+        };
+        JSONError.create = function (value0) {
+            return new JSONError(value0);
+        };
+        return JSONError;
+    })();
+    var unsafeReadTagged = function (tag) {
+        return function (value) {
+            if (tagOf(value) === tag) {
+                return Prelude.pure(Data_Either.applicativeEither)(unsafeFromForeign(value));
+            };
+            return new Data_Either.Left(new TypeMismatch(tag, tagOf(value)));
+        };
+    };
+    var readString = unsafeReadTagged("String");
+    var readNumber = unsafeReadTagged("Number");
+    var readArray = function (value) {
+        if (isArray(value)) {
+            return Prelude.pure(Data_Either.applicativeEither)(unsafeFromForeign(value));
+        };
+        return new Data_Either.Left(new TypeMismatch("array", tagOf(value)));
+    };
+    var parseJSON = function (json) {
+        return parseJSONImpl(Prelude["<<<"](Prelude.semigroupoidArr)(Data_Either.Left.create)(JSONError.create), Data_Either.Right.create, json);
+    };
+    return {
+        TypeMismatch: TypeMismatch, 
+        ErrorAtIndex: ErrorAtIndex, 
+        ErrorAtProperty: ErrorAtProperty, 
+        JSONError: JSONError, 
+        readArray: readArray, 
+        readNumber: readNumber, 
+        readString: readString, 
+        isArray: isArray, 
+        isUndefined: isUndefined, 
+        isNull: isNull, 
+        tagOf: tagOf, 
+        typeOf: typeOf, 
+        unsafeReadTagged: unsafeReadTagged, 
+        unsafeFromForeign: unsafeFromForeign, 
+        parseJSON: parseJSON
+    };
+})();
+var PS = PS || {};
+PS.Data_Foreign_Index = (function () {
+    "use strict";
+    var Data_Function = PS.Data_Function;
+    var Data_Foreign = PS.Data_Foreign;
+    var Prelude = PS.Prelude;
+    var Data_Either = PS.Data_Either;
+    
+  function unsafeReadPropImpl(f, s, key, value) {
+    return value == null ? f : s(value[key]);
+  }
+  ;
+    
+  function unsafeHasOwnProperty(prop, value) {
+    return Object.prototype.hasOwnProperty.call(value, prop);
+  }
+  ;
+    
+  function unsafeHasProperty(prop, value) {
+    return prop in value;
+  }
+  ;
+    var Index = function ($bang, errorAt, hasOwnProperty, hasProperty) {
+        this["!"] = $bang;
+        this.errorAt = errorAt;
+        this.hasOwnProperty = hasOwnProperty;
+        this.hasProperty = hasProperty;
+    };
+    var $bang = function (dict) {
+        return dict["!"];
+    };
+    var unsafeReadProp = function (k) {
+        return function (value) {
+            return unsafeReadPropImpl(new Data_Either.Left(new Data_Foreign.TypeMismatch("object", Data_Foreign.typeOf(value))), Prelude.pure(Data_Either.applicativeEither), k, value);
+        };
+    };
+    var prop = unsafeReadProp;
+    var hasPropertyImpl = function (prop_1) {
+        return function (value) {
+            if (Data_Foreign.isNull(value)) {
+                return false;
+            };
+            if (Data_Foreign.isUndefined(value)) {
+                return false;
+            };
+            if (Data_Foreign.typeOf(value) === "object" || Data_Foreign.typeOf(value) === "function") {
+                return unsafeHasProperty(prop_1, value);
+            };
+            return false;
+        };
+    };
+    var hasOwnPropertyImpl = function (prop_1) {
+        return function (value) {
+            if (Data_Foreign.isNull(value)) {
+                return false;
+            };
+            if (Data_Foreign.isUndefined(value)) {
+                return false;
+            };
+            if (Data_Foreign.typeOf(value) === "object" || Data_Foreign.typeOf(value) === "function") {
+                return unsafeHasOwnProperty(prop_1, value);
+            };
+            return false;
+        };
+    };
+    var indexString = new Index(Prelude.flip(prop), Data_Foreign.ErrorAtProperty.create, hasOwnPropertyImpl, hasPropertyImpl);
+    var errorAt = function (dict) {
+        return dict.errorAt;
+    };
+    return {
+        Index: Index, 
+        errorAt: errorAt, 
+        "!": $bang, 
+        prop: prop, 
+        indexString: indexString
+    };
+})();
+var PS = PS || {};
+PS.Data_Monoid = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Array = PS.Data_Array;
+    var Data_Maybe = PS.Data_Maybe;
+    var mempty = function (dict) {
+        return dict.mempty;
+    };
+    return {
+        mempty: mempty
+    };
+})();
+var PS = PS || {};
+PS.Data_Foldable = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Monoid = PS.Data_Monoid;
+    var Control_Apply = PS.Control_Apply;
+    var Data_Monoid_First = PS.Data_Monoid_First;
+    var Data_Either = PS.Data_Either;
+    var Data_Maybe = PS.Data_Maybe;
+    var Data_Monoid_Additive = PS.Data_Monoid_Additive;
+    var Data_Monoid_Dual = PS.Data_Monoid_Dual;
+    var Data_Monoid_Last = PS.Data_Monoid_Last;
+    var Data_Monoid_Multiplicative = PS.Data_Monoid_Multiplicative;
+    var Data_Tuple = PS.Data_Tuple;
+    
+  function foldrArray(f) {
+    return function(z) {
+      return function(xs) {
+        var acc = z;
+        for (var i = xs.length - 1; i >= 0; --i) {
+          acc = f(xs[i])(acc);
+        }
+        return acc;
+      };
+    };
+  }
+  ;
+    
+  function foldlArray(f) {
+    return function(z) {
+      return function(xs) {
+        var acc = z;
+        for (var i = 0, len = xs.length; i < len; ++i) {
+          acc = f(acc)(xs[i]);
+        }
+        return acc;
+      };
+    };
+  }
+  ;
+    var Foldable = function (foldMap, foldl, foldr) {
+        this.foldMap = foldMap;
+        this.foldl = foldl;
+        this.foldr = foldr;
+    };
+    var foldr = function (dict) {
+        return dict.foldr;
+    };
+    var foldableArray = new Foldable(function (__dict_Monoid_292) {
+        return function (f) {
+            return function (xs) {
+                return foldr(foldableArray)(function (x) {
+                    return function (acc) {
+                        return Prelude["<>"](__dict_Monoid_292["__superclass_Prelude.Semigroup_0"]())(f(x))(acc);
+                    };
+                })(Data_Monoid.mempty(__dict_Monoid_292))(xs);
+            };
+        };
+    }, function (f) {
+        return function (z) {
+            return function (xs) {
+                return foldlArray(f)(z)(xs);
+            };
+        };
+    }, function (f) {
+        return function (z) {
+            return function (xs) {
+                return foldrArray(f)(z)(xs);
+            };
+        };
+    });
+    return {
+        Foldable: Foldable, 
+        foldlArray: foldlArray, 
+        foldrArray: foldrArray, 
+        foldr: foldr, 
+        foldableArray: foldableArray
     };
 })();
 var PS = PS || {};
@@ -339,6 +890,133 @@ PS.Data_DOM_Simple_Window = (function () {
         globalWindow: globalWindow, 
         document: document, 
         htmlWindow: htmlWindow
+    };
+})();
+var PS = PS || {};
+PS.Data_Traversable = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Array = PS.Data_Array;
+    var Data_Tuple = PS.Data_Tuple;
+    var Data_Either = PS.Data_Either;
+    var Data_Foldable = PS.Data_Foldable;
+    var Data_Maybe = PS.Data_Maybe;
+    var Data_Monoid_Additive = PS.Data_Monoid_Additive;
+    var Data_Monoid_Dual = PS.Data_Monoid_Dual;
+    var Data_Monoid_First = PS.Data_Monoid_First;
+    var Data_Monoid_Last = PS.Data_Monoid_Last;
+    var Data_Monoid_Multiplicative = PS.Data_Monoid_Multiplicative;
+    var Traversable = function (__superclass_Data$dotFoldable$dotFoldable_1, __superclass_Prelude$dotFunctor_0, sequence, traverse) {
+        this["__superclass_Data.Foldable.Foldable_1"] = __superclass_Data$dotFoldable$dotFoldable_1;
+        this["__superclass_Prelude.Functor_0"] = __superclass_Prelude$dotFunctor_0;
+        this.sequence = sequence;
+        this.traverse = traverse;
+    };
+    var traverse = function (dict) {
+        return dict.traverse;
+    };
+    var sequence = function (dict) {
+        return dict.sequence;
+    };
+    var traversableArray = new Traversable(function () {
+        return Data_Foldable.foldableArray;
+    }, function () {
+        return Data_Array.functorArray;
+    }, function (__dict_Applicative_340) {
+        return function (_361) {
+            if (_361.length === 0) {
+                return Prelude.pure(__dict_Applicative_340)([  ]);
+            };
+            if (_361.length >= 1) {
+                var _494 = _361.slice(1);
+                return Prelude["<*>"](__dict_Applicative_340["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_340["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(_361[0]))(sequence(traversableArray)(__dict_Applicative_340)(_494));
+            };
+            throw new Error("Failed pattern match");
+        };
+    }, function (__dict_Applicative_339) {
+        return function (f) {
+            return function (_360) {
+                if (_360.length === 0) {
+                    return Prelude.pure(__dict_Applicative_339)([  ]);
+                };
+                if (_360.length >= 1) {
+                    var _498 = _360.slice(1);
+                    return Prelude["<*>"](__dict_Applicative_339["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_339["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(f(_360[0])))(traverse(traversableArray)(__dict_Applicative_339)(f)(_498));
+                };
+                throw new Error("Failed pattern match");
+            };
+        };
+    });
+    return {
+        Traversable: Traversable, 
+        sequence: sequence, 
+        traverse: traverse, 
+        traversableArray: traversableArray
+    };
+})();
+var PS = PS || {};
+PS.Data_Foreign_Class = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Foreign = PS.Data_Foreign;
+    var Data_Traversable = PS.Data_Traversable;
+    var Data_Array = PS.Data_Array;
+    var Data_Foreign_Null = PS.Data_Foreign_Null;
+    var Data_Foreign_Undefined = PS.Data_Foreign_Undefined;
+    var Data_Foreign_NullOrUndefined = PS.Data_Foreign_NullOrUndefined;
+    var Data_Either = PS.Data_Either;
+    var Data_Foreign_Index = PS.Data_Foreign_Index;
+    var IsForeign = function (read) {
+        this.read = read;
+    };
+    var stringIsForeign = new IsForeign(Data_Foreign.readString);
+    var read = function (dict) {
+        return dict.read;
+    };
+    var readJSON = function (__dict_IsForeign_352) {
+        return function (json) {
+            return Prelude[">>="](Data_Either.bindEither)(Data_Foreign.parseJSON(json))(read(__dict_IsForeign_352));
+        };
+    };
+    var readWith = function (__dict_IsForeign_353) {
+        return function (f) {
+            return function (value) {
+                return Data_Either.either(Prelude["<<<"](Prelude.semigroupoidArr)(Data_Either.Left.create)(f))(Data_Either.Right.create)(read(__dict_IsForeign_353)(value));
+            };
+        };
+    };
+    var readProp = function (__dict_IsForeign_354) {
+        return function (__dict_Index_355) {
+            return function (prop) {
+                return function (value) {
+                    return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Index["!"](__dict_Index_355)(value)(prop))(readWith(__dict_IsForeign_354)(Data_Foreign_Index.errorAt(__dict_Index_355)(prop)));
+                };
+            };
+        };
+    };
+    var numberIsForeign = new IsForeign(Data_Foreign.readNumber);
+    var arrayIsForeign = function (__dict_IsForeign_359) {
+        return new IsForeign(function (value) {
+            var readElement = function (i) {
+                return function (value_1) {
+                    return readWith(__dict_IsForeign_359)(Data_Foreign.ErrorAtIndex.create(i))(value_1);
+                };
+            };
+            var readElements = function (arr) {
+                return Data_Traversable.sequence(Data_Traversable.traversableArray)(Data_Either.applicativeEither)(Data_Array.zipWith(readElement)(Data_Array.range(0)(Data_Array.length(arr)))(arr));
+            };
+            return Prelude[">>="](Data_Either.bindEither)(Data_Foreign.readArray(value))(readElements);
+        });
+    };
+    return {
+        IsForeign: IsForeign, 
+        readProp: readProp, 
+        readWith: readWith, 
+        readJSON: readJSON, 
+        read: read, 
+        stringIsForeign: stringIsForeign, 
+        numberIsForeign: numberIsForeign, 
+        arrayIsForeign: arrayIsForeign
     };
 })();
 var PS = PS || {};
@@ -444,6 +1122,8 @@ var PS = PS || {};
 PS.Main = (function () {
     "use strict";
     var Prelude = PS.Prelude;
+    var Data_Foreign_Class = PS.Data_Foreign_Class;
+    var Control_Alt = PS.Control_Alt;
     var Debug_Trace = PS.Debug_Trace;
     var Graphics_Canvas = PS.Graphics_Canvas;
     var Data_DOM_Simple_Window = PS.Data_DOM_Simple_Window;
@@ -452,23 +1132,65 @@ PS.Main = (function () {
     var Control_Monad_Eff = PS.Control_Monad_Eff;
     var Data_Maybe = PS.Data_Maybe;
     var Data_Foreign = PS.Data_Foreign;
-    var Data_Foreign_Class = PS.Data_Foreign_Class;
+    var Data_Either = PS.Data_Either;
     var DOM = PS.DOM;
+    var Data_Foreign_Index = PS.Data_Foreign_Index;
     
   function documentUrl() {
     return document.URL;
   };
+    var WsIndex = function (x) {
+        return x;
+    };
     var WebSong = function (x) {
         return x;
     };
+    var WmIndex = (function () {
+        function WmIndex(value0) {
+            this.value0 = value0;
+        };
+        WmIndex.create = function (value0) {
+            return new WmIndex(value0);
+        };
+        return WmIndex;
+    })();
+    var WmSong = (function () {
+        function WmSong(value0) {
+            this.value0 = value0;
+        };
+        WmSong.create = function (value0) {
+            return new WmSong(value0);
+        };
+        return WmSong;
+    })();
+    var wsIndexIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
+        return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.numberIsForeign)(Data_Foreign_Index.indexString)("wiIndex")(value))(function (_52) {
+            return Prelude["return"](Data_Either.monadEither)({
+                wiIndex: _52
+            });
+        });
+    });
+    var webSongIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
+        return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.stringIsForeign)(Data_Foreign_Index.indexString)("wsName")(value))(function (_51) {
+            return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.arrayIsForeign(Data_Foreign_Class.stringIsForeign))(Data_Foreign_Index.indexString)("wsChords")(value))(function (_50) {
+                return Prelude["return"](Data_Either.monadEither)({
+                    wsName: _51, 
+                    wsChords: _50
+                });
+            });
+        });
+    });
+    var webMessageIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
+        return Control_Alt["<|>"](Data_Either.altEither)(Prelude["<$>"](Data_Either.functorEither)(WmSong.create)(Data_Foreign_Class.read(webSongIsForeign)(value)))(Prelude["<$>"](Data_Either.functorEither)(WmIndex.create)(Data_Foreign_Class.read(wsIndexIsForeign)(value)));
+    });
     var meh = function __do() {
-        var _59 = Graphics_Canvas.getCanvasElementById("canvas")();
+        var _62 = Graphics_Canvas.getCanvasElementById("canvas")();
         return (function () {
-            if (_59 instanceof Data_Maybe.Just) {
+            if (_62 instanceof Data_Maybe.Just) {
                 return function __do() {
-                    var _58 = Graphics_Canvas.getContext2D(_59.value0)();
-                    Graphics_Canvas.setFillStyle("#FF00FF")(_58)();
-                    return Graphics_Canvas.fillPath(_58)(Graphics_Canvas.rect(_58)({
+                    var _61 = Graphics_Canvas.getContext2D(_62.value0)();
+                    Graphics_Canvas.setFillStyle("#FF00FF")(_61)();
+                    return Graphics_Canvas.fillPath(_61)(Graphics_Canvas.rect(_61)({
                         x: 150, 
                         y: 150, 
                         w: 300, 
@@ -480,13 +1202,13 @@ PS.Main = (function () {
         })()();
     };
     var main = function __do() {
-        var _57 = Graphics_Canvas.getCanvasElementById("canvas")();
+        var _60 = Graphics_Canvas.getCanvasElementById("canvas")();
         return (function () {
-            if (_57 instanceof Data_Maybe.Just) {
+            if (_60 instanceof Data_Maybe.Just) {
                 return function __do() {
-                    var _56 = Graphics_Canvas.getContext2D(_57.value0)();
-                    Graphics_Canvas.setFillStyle("#0000FF")(_56)();
-                    return Graphics_Canvas.fillPath(_56)(Graphics_Canvas.rect(_56)({
+                    var _59 = Graphics_Canvas.getContext2D(_60.value0)();
+                    Graphics_Canvas.setFillStyle("#0000FF")(_59)();
+                    return Graphics_Canvas.fillPath(_59)(Graphics_Canvas.rect(_59)({
                         x: 250, 
                         y: 150, 
                         w: 100, 
@@ -500,20 +1222,35 @@ PS.Main = (function () {
     var enmessage = function (canelt) {
         return function (msg) {
             return function __do() {
-                Debug_Trace.trace(Prelude.show(Prelude.showString)(msg))();
-                var _51 = Graphics_Canvas.getContext2D(canelt)();
-                var _50 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                Debug_Trace.trace(msg)();
+                var _54 = Graphics_Canvas.getContext2D(canelt)();
+                var _53 = Graphics_Canvas.getCanvasDimensions(canelt)();
                 return (function () {
                     var wholerect = {
-                        h: _50.height, 
-                        w: _50.width, 
+                        h: _53.height, 
+                        w: _53.width, 
                         x: 0, 
                         y: 0
                     };
                     return function __do() {
-                        Graphics_Canvas.clearRect(_51)(wholerect)();
-                        Graphics_Canvas.strokeText(_51)(Prelude.show(Prelude.showString)(msg))(50)(100)();
-                        return Prelude.unit;
+                        Graphics_Canvas.clearRect(_54)(wholerect)();
+                        Graphics_Canvas.strokeText(_54)(msg)(50)(100)();
+                        var wm = Data_Foreign_Class.readJSON(webMessageIsForeign)(msg);
+                        if (wm instanceof Data_Either.Right) {
+                            if (wm.value0 instanceof WmIndex) {
+                                Debug_Trace.trace("index")();
+                                return Debug_Trace.trace(Prelude.show(Prelude.showNumber)(wm.value0.value0.wiIndex))();
+                            };
+                            if (wm.value0 instanceof WmSong) {
+                                Debug_Trace.trace("song")();
+                                return Debug_Trace.trace(Prelude.show(Prelude.showString)(wm.value0.value0.wsName))();
+                            };
+                            throw new Error("Failed pattern match");
+                        };
+                        if (wm instanceof Data_Either.Left) {
+                            return Debug_Trace.trace("message read failed")();
+                        };
+                        throw new Error("Failed pattern match");
                     };
                 })()();
             };
@@ -521,31 +1258,33 @@ PS.Main = (function () {
     };
     var enlode = function __do() {
         Debug_Trace.trace("enlode")();
-        var _55 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
-        var _54 = documentUrl();
+        var _58 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+        var _57 = documentUrl();
         return (function () {
-            var wsurl = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_54));
+            var wsurl = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_57));
             return function __do() {
-                var _53 = WebSocket.mkWebSocket(wsurl)();
-                var _52 = Graphics_Canvas.getCanvasElementById("canvas")();
-                if (_52 instanceof Data_Maybe.Just) {
-                    WebSocket.onMessage(_53)(enmessage(_52.value0))();
+                var _56 = WebSocket.mkWebSocket(wsurl)();
+                var _55 = Graphics_Canvas.getCanvasElementById("canvas")();
+                if (_55 instanceof Data_Maybe.Just) {
+                    WebSocket.onMessage(_56)(enmessage(_55.value0))();
                     return Debug_Trace.trace("enlode end")();
                 };
                 throw new Error("Failed pattern match");
             };
         })()();
     };
-    var blah = function (r) {
-        return Prelude.unit;
-    };
     return {
+        WmIndex: WmIndex, 
+        WmSong: WmSong, 
+        WsIndex: WsIndex, 
         WebSong: WebSong, 
         meh: meh, 
         main: main, 
+        documentUrl: documentUrl, 
         enlode: enlode, 
         enmessage: enmessage, 
-        blah: blah, 
-        documentUrl: documentUrl
+        webSongIsForeign: webSongIsForeign, 
+        wsIndexIsForeign: wsIndexIsForeign, 
+        webMessageIsForeign: webMessageIsForeign
     };
 })();
