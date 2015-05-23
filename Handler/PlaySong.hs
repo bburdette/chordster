@@ -12,16 +12,28 @@ import Data.Maybe
 import PlaySong
 import Yesod.WebSockets
 
-playSongWs :: WebSocketsT Handler ()
-playSongWs = do 
+playSongWs :: SongId -> WebSocketsT Handler ()
+playSongWs sid = do 
   app <- getYesod
   let writeChan = songLine app
   readChan <- (liftIO . atomically) $ dupTChan writeChan
+  lift $ startSongThread sid
   (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
 
 getPlaySongR :: SongId -> Handler Html
 getPlaySongR sid = do
-  webSockets playSongWs
+  webSockets $ playSongWs sid
+  mbsong <- runDB $ get sid
+  case mbsong of 
+    (Just song) ->
+      defaultLayout $ do
+        aDomId <- newIdent
+        setTitle "Song Playback!"
+        $(widgetFile "playback")
+    Nothing -> error "song not found"
+ 
+startSongThread :: SongId -> Handler ()
+startSongThread sid = do
   app <- getYesod 
   mbsong <- runDB $ get sid
   chords <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
@@ -46,14 +58,11 @@ getPlaySongR sid = do
       case oldid of 
          Nothing -> return ()
          Just id -> lift $ killThread id 
-      res <- liftIO $ tryPutMVar (playThread $ songControl app) threadid
       -- blam, start a thread for song playing.
       -- report back that there is a song playing, or something.
       -- track whatever it is so that it can be stopped later.  
-      defaultLayout $ do
-        aDomId <- newIdent
-        setTitle "Song Playback!"
-        $(widgetFile "playback")
+      res <- liftIO $ tryPutMVar (playThread $ songControl app) threadid
+      return ()
 
 
 postPlaySongR :: SongId -> Handler Html

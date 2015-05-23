@@ -53,7 +53,7 @@ instance webMessageIsForeign :: IsForeign WebMessage where
 enmessage :: forall e. CanvasElement -> WS.Message 
   -> Eff (canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
 enmessage canelt msg = do 
-  trace msg
+  -- trace msg
   con2d <- getContext2D canelt
   candims <- getCanvasDimensions canelt
   let wholerect = { h: candims.height
@@ -61,16 +61,19 @@ enmessage canelt msg = do
                   , x: 0
                   , y: 0 }
   clearRect con2d wholerect 
-  strokeText con2d msg 50 100
   let wm = readJSON msg :: F WebMessage
   case wm of 
     Right wm -> case wm of 
-      WmIndex (WsIndex wi) -> do
-        trace "index" 
-        trace (show wi.wiIndex)
       WmSong (WebSong ws) -> do
-        trace "song" 
-        trace (show ws.wsName) 
+        -- trace "song" 
+        strokeText con2d msg 50 100
+        trace (ws.wsName ++ show ws.wsChords) 
+        return unit
+      WmIndex (WsIndex wi) -> do
+        -- trace "index" 
+        let meh = show wi.wiIndex
+        strokeText con2d meh 50 200
+        trace (show wi.wiIndex)
     Left _ -> do 
         trace "message read failed"
 

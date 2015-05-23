@@ -40,7 +40,6 @@ instance ToJSON WebSong
 data WsIndex = WsIndex { wiIndex :: Int }
   deriving (Show, Generic)
 
-
 instance ToJSON WsIndex 
 
 tsToWebSong :: TextSong -> WebSong

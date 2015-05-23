@@ -20,6 +20,17 @@ PS.Prelude = (function () {
     }
     ;
     
+    function showArrayImpl(f) {
+      return function(xs) {
+        var ss = [];
+        for (var i = 0, l = xs.length; i < l; i++) {
+          ss[i] = f(xs[i]);
+        }
+        return '[' + ss.join(',') + ']';
+      };
+    }
+    ;
+    
     function refEq(r1) {
       return function(r2) {
         return r1 === r2;
@@ -52,6 +63,16 @@ PS.Prelude = (function () {
       return !b;
     }
     ;
+    
+    function concatString(s1) {
+      return function(s2) {
+        return s1 + s2;
+      };
+    }
+    ;
+    var Unit = function (x) {
+        return x;
+    };
     var Semigroupoid = function ($less$less$less) {
         this["<<<"] = $less$less$less;
     };
@@ -86,6 +107,9 @@ PS.Prelude = (function () {
         this.not = not;
         this["||"] = $bar$bar;
     };
+    var Semigroup = function ($less$greater) {
+        this["<>"] = $less$greater;
+    };
     var $bar$bar = function (dict) {
         return dict["||"];
     };
@@ -108,15 +132,22 @@ PS.Prelude = (function () {
         return dict["<$>"];
     };
     var $colon = cons;
+    var $plus$plus = function (__dict_Semigroup_2) {
+        return $less$greater(__dict_Semigroup_2);
+    };
     var $dollar = function (f) {
         return function (x) {
             return f(x);
         };
     };
+    var unit = {};
     var showString = new Show(showStringImpl);
     var showNumber = new Show(showNumberImpl);
     var show = function (dict) {
         return dict.show;
+    };
+    var showArray = function (__dict_Show_3) {
+        return new Show(showArrayImpl(show(__dict_Show_3)));
     };
     var semigroupoidArr = new Semigroupoid(function (f) {
         return function (g) {
@@ -125,6 +156,7 @@ PS.Prelude = (function () {
             };
         };
     });
+    var semigroupString = new Semigroup(concatString);
     var pure = function (dict) {
         return dict.pure;
     };
@@ -159,6 +191,8 @@ PS.Prelude = (function () {
         };
     };
     return {
+        Unit: Unit, 
+        Semigroup: Semigroup, 
         BoolLike: BoolLike, 
         Eq: Eq, 
         Monad: Monad, 
@@ -168,6 +202,8 @@ PS.Prelude = (function () {
         Functor: Functor, 
         Show: Show, 
         Semigroupoid: Semigroupoid, 
+        unit: unit, 
+        "++": $plus$plus, 
         "<>": $less$greater, 
         "||": $bar$bar, 
         "==": $eq$eq, 
@@ -187,8 +223,10 @@ PS.Prelude = (function () {
         semigroupoidArr: semigroupoidArr, 
         showString: showString, 
         showNumber: showNumber, 
+        showArray: showArray, 
         eqString: eqString, 
-        boolLikeBoolean: boolLikeBoolean
+        boolLikeBoolean: boolLikeBoolean, 
+        semigroupString: semigroupString
     };
 })();
 var PS = PS || {};
@@ -1222,6 +1260,7 @@ PS.Main = (function () {
     var enmessage = function (canelt) {
         return function (msg) {
             return function __do() {
+                Debug_Trace.trace("gotmsg")();
                 Debug_Trace.trace(msg)();
                 var _54 = Graphics_Canvas.getContext2D(canelt)();
                 var _53 = Graphics_Canvas.getCanvasDimensions(canelt)();
@@ -1234,16 +1273,18 @@ PS.Main = (function () {
                     };
                     return function __do() {
                         Graphics_Canvas.clearRect(_54)(wholerect)();
-                        Graphics_Canvas.strokeText(_54)(msg)(50)(100)();
                         var wm = Data_Foreign_Class.readJSON(webMessageIsForeign)(msg);
                         if (wm instanceof Data_Either.Right) {
-                            if (wm.value0 instanceof WmIndex) {
-                                Debug_Trace.trace("index")();
-                                return Debug_Trace.trace(Prelude.show(Prelude.showNumber)(wm.value0.value0.wiIndex))();
-                            };
                             if (wm.value0 instanceof WmSong) {
                                 Debug_Trace.trace("song")();
-                                return Debug_Trace.trace(Prelude.show(Prelude.showString)(wm.value0.value0.wsName))();
+                                Graphics_Canvas.strokeText(_54)(msg)(50)(100)();
+                                Debug_Trace.trace(wm.value0.value0.wsName + Prelude.show(Prelude.showArray(Prelude.showString))(wm.value0.value0.wsChords))();
+                                return Prelude.unit;
+                            };
+                            if (wm.value0 instanceof WmIndex) {
+                                var meh_1 = Prelude.show(Prelude.showNumber)(wm.value0.value0.wiIndex);
+                                Graphics_Canvas.strokeText(_54)(meh_1)(50)(200)();
+                                return Debug_Trace.trace(Prelude.show(Prelude.showNumber)(wm.value0.value0.wiIndex))();
                             };
                             throw new Error("Failed pattern match");
                         };
