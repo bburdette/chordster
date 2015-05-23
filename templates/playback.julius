@@ -31,6 +31,27 @@ PS.Prelude = (function () {
     }
     ;
     
+    function numAdd(n1) {
+      return function(n2) {
+        return n1 + n2;
+      };
+    }
+    ;
+    
+    function numSub(n1) {
+      return function(n2) {
+        return n1 - n2;
+      };
+    }
+    ;
+    
+    function numMul(n1) {
+      return function(n2) {
+        return n1 * n2;
+      };
+    }
+    ;
+    
     function refEq(r1) {
       return function(r2) {
         return r1 === r2;
@@ -98,6 +119,16 @@ PS.Prelude = (function () {
         this["__superclass_Prelude.Applicative_0"] = __superclass_Prelude$dotApplicative_0;
         this["__superclass_Prelude.Bind_1"] = __superclass_Prelude$dotBind_1;
     };
+    var Semiring = function ($times, $plus, one, zero) {
+        this["*"] = $times;
+        this["+"] = $plus;
+        this.one = one;
+        this.zero = zero;
+    };
+    var Ring = function ($minus, __superclass_Prelude$dotSemiring_0) {
+        this["-"] = $minus;
+        this["__superclass_Prelude.Semiring_0"] = __superclass_Prelude$dotSemiring_0;
+    };
     var Eq = function ($div$eq, $eq$eq) {
         this["/="] = $div$eq;
         this["=="] = $eq$eq;
@@ -132,6 +163,9 @@ PS.Prelude = (function () {
         return dict["<$>"];
     };
     var $colon = cons;
+    var $minus = function (dict) {
+        return dict["-"];
+    };
     var $plus$plus = function (__dict_Semigroup_2) {
         return $less$greater(__dict_Semigroup_2);
     };
@@ -149,6 +183,7 @@ PS.Prelude = (function () {
     var showArray = function (__dict_Show_3) {
         return new Show(showArrayImpl(show(__dict_Show_3)));
     };
+    var semiringNumber = new Semiring(numMul, numAdd, 1, 0);
     var semigroupoidArr = new Semigroupoid(function (f) {
         return function (g) {
             return function (x) {
@@ -157,6 +192,9 @@ PS.Prelude = (function () {
         };
     });
     var semigroupString = new Semigroup(concatString);
+    var ringNumber = new Ring(numSub, function () {
+        return semiringNumber;
+    });
     var pure = function (dict) {
         return dict.pure;
     };
@@ -195,6 +233,8 @@ PS.Prelude = (function () {
         Semigroup: Semigroup, 
         BoolLike: BoolLike, 
         Eq: Eq, 
+        Ring: Ring, 
+        Semiring: Semiring, 
         Monad: Monad, 
         Bind: Bind, 
         Applicative: Applicative, 
@@ -207,6 +247,7 @@ PS.Prelude = (function () {
         "<>": $less$greater, 
         "||": $bar$bar, 
         "==": $eq$eq, 
+        "-": $minus, 
         ap: ap, 
         "return": $$return, 
         ">>=": $greater$greater$eq, 
@@ -224,6 +265,8 @@ PS.Prelude = (function () {
         showString: showString, 
         showNumber: showNumber, 
         showArray: showArray, 
+        semiringNumber: semiringNumber, 
+        ringNumber: ringNumber, 
         eqString: eqString, 
         boolLikeBoolean: boolLikeBoolean, 
         semigroupString: semigroupString
@@ -1083,6 +1126,7 @@ PS.Graphics_Canvas = (function () {
     function rect(ctx) {  return function(r) {    return function() {      ctx.rect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function clearRect(ctx) {  return function(r) {    return function() {      ctx.clearRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function strokeText(ctx) {  return function(text) {    return function(x) {      return function(y) {        return function() {          ctx.strokeText(text, x, y);          return ctx;        };      };    };  };};
+    function save(ctx) {  return function() {    ctx.save();    return ctx;  };};
     var getCanvasElementById = function (elId) {
         return getCanvasElementByIdImpl(elId, Data_Maybe.Just.create, Data_Maybe.Nothing.value);
     };
@@ -1107,6 +1151,7 @@ PS.Graphics_Canvas = (function () {
         };
     };
     return {
+        save: save, 
         strokeText: strokeText, 
         clearRect: clearRect, 
         rect: rect, 
@@ -1162,8 +1207,8 @@ PS.Main = (function () {
     var Prelude = PS.Prelude;
     var Data_Foreign_Class = PS.Data_Foreign_Class;
     var Control_Alt = PS.Control_Alt;
-    var Debug_Trace = PS.Debug_Trace;
     var Graphics_Canvas = PS.Graphics_Canvas;
+    var Debug_Trace = PS.Debug_Trace;
     var Data_DOM_Simple_Window = PS.Data_DOM_Simple_Window;
     var Data_String = PS.Data_String;
     var WebSocket = PS.WebSocket;
@@ -1260,8 +1305,6 @@ PS.Main = (function () {
     var enmessage = function (canelt) {
         return function (msg) {
             return function __do() {
-                Debug_Trace.trace("gotmsg")();
-                Debug_Trace.trace(msg)();
                 var _54 = Graphics_Canvas.getContext2D(canelt)();
                 var _53 = Graphics_Canvas.getCanvasDimensions(canelt)();
                 return (function () {
@@ -1271,28 +1314,39 @@ PS.Main = (function () {
                         x: 0, 
                         y: 0
                     };
-                    return function __do() {
-                        Graphics_Canvas.clearRect(_54)(wholerect)();
-                        var wm = Data_Foreign_Class.readJSON(webMessageIsForeign)(msg);
-                        if (wm instanceof Data_Either.Right) {
-                            if (wm.value0 instanceof WmSong) {
-                                Debug_Trace.trace("song")();
+                    var wm = Data_Foreign_Class.readJSON(webMessageIsForeign)(msg);
+                    if (wm instanceof Data_Either.Right) {
+                        if (wm.value0 instanceof WmSong) {
+                            return function __do() {
+                                Graphics_Canvas.clearRect(_54)(wholerect)();
                                 Graphics_Canvas.strokeText(_54)(msg)(50)(100)();
+                                Graphics_Canvas.save(_54)();
                                 Debug_Trace.trace(wm.value0.value0.wsName + Prelude.show(Prelude.showArray(Prelude.showString))(wm.value0.value0.wsChords))();
                                 return Prelude.unit;
                             };
-                            if (wm.value0 instanceof WmIndex) {
-                                var meh_1 = Prelude.show(Prelude.showNumber)(wm.value0.value0.wiIndex);
-                                Graphics_Canvas.strokeText(_54)(meh_1)(50)(200)();
+                        };
+                        if (wm.value0 instanceof WmIndex) {
+                            var tc = {
+                                x: 50, 
+                                y: 200
+                            };
+                            return function __do() {
+                                Graphics_Canvas.clearRect(_54)({
+                                    x: tc.x - 20, 
+                                    y: tc.y - 20, 
+                                    w: 200, 
+                                    h: 50
+                                })();
+                                Graphics_Canvas.strokeText(_54)(Prelude.show(Prelude.showNumber)(wm.value0.value0.wiIndex))(tc.x)(tc.y)();
                                 return Debug_Trace.trace(Prelude.show(Prelude.showNumber)(wm.value0.value0.wiIndex))();
                             };
-                            throw new Error("Failed pattern match");
-                        };
-                        if (wm instanceof Data_Either.Left) {
-                            return Debug_Trace.trace("message read failed")();
                         };
                         throw new Error("Failed pattern match");
                     };
+                    if (wm instanceof Data_Either.Left) {
+                        return Debug_Trace.trace("message read failed");
+                    };
+                    throw new Error("Failed pattern match");
                 })()();
             };
         };

@@ -60,19 +60,21 @@ enmessage canelt msg = do
                   , w: candims.width
                   , x: 0
                   , y: 0 }
-  clearRect con2d wholerect 
   let wm = readJSON msg :: F WebMessage
   case wm of 
     Right wm -> case wm of 
       WmSong (WebSong ws) -> do
         -- trace "song" 
+        clearRect con2d wholerect 
         strokeText con2d msg 50 100
+        -- save con2d   -- doesn't work across multiple calls to enmessage?
         trace (ws.wsName ++ show ws.wsChords) 
         return unit
       WmIndex (WsIndex wi) -> do
         -- trace "index" 
-        let meh = show wi.wiIndex
-        strokeText con2d meh 50 200
+        let tc = { x: 50, y: 200 }
+        clearRect con2d { x: tc.x - 20 , y: tc.y - 20, w: 200, h: 50 } 
+        strokeText con2d (show wi.wiIndex) tc.x tc.y
         trace (show wi.wiIndex)
     Left _ -> do 
         trace "message read failed"
