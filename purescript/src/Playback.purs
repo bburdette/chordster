@@ -7,17 +7,18 @@ import Data.Foreign
 import Data.Foreign.Class
 import Data.String
 import Data.Either
+import qualified Data.Array as A
 import Debug.Trace
 import Control.Alt
 import DOM
 import qualified WebSocket as WS
-
+import Control.Monad.Eff.Ref
 import Data.DOM.Simple.Window
 
 --  data structures we're receiving from haskell ----
 -- main data structure is WebMessage, which could be a websong or a wsindex.
 
-newtype WebSong = WebSong
+data WebSong = WebSong
   { wsName :: String
   , wsChords :: [String] 
   }
@@ -31,7 +32,7 @@ instance webSongIsForeign :: IsForeign WebSong where
       , wsChords: ch 
       }
 
-newtype WsIndex = WsIndex
+data WsIndex = WsIndex
   { wiIndex :: Number
   }
 
@@ -49,10 +50,11 @@ instance webMessageIsForeign :: IsForeign WebMessage where
     (WmSong <$> (read value :: F WebSong))
     <|> (WmIndex <$> (read value :: F WsIndex))
 
+-- forall t221. Control.Monad.Eff.Ref.RefVal Main.WebSong -> Graphics.Canvas.CanvasElement -> Prim.String -> Control.Monad.Eff.Eff (trace :: Debug.Trace.Trace, ref :: Control.Monad.Eff.Ref.Ref, canvas :: Graphics.Canvas.Canvas | t221) Prelude.Unit
+
 -- in this callback function we process a message from the websocket.
-enmessage :: forall e. CanvasElement -> WS.Message 
-  -> Eff (canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
-enmessage canelt msg = do 
+enmessage :: forall e. RefVal WebSong -> CanvasElement -> WS.Message -> Eff (ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
+enmessage songref canelt msg = do 
   -- trace msg
   con2d <- getContext2D canelt
   candims <- getCanvasDimensions canelt
@@ -60,27 +62,76 @@ enmessage canelt msg = do
                   , w: candims.width
                   , x: 0
                   , y: 0 }
+  trace "received msg: "
+  trace msg
   let wm = readJSON msg :: F WebMessage
   case wm of 
     Right wm -> case wm of 
       WmSong (WebSong ws) -> do
-        -- trace "song" 
+        -- trace "song"
+        writeRef songref (WebSong ws)
+        drawsong (WebSong ws) 0 canelt
+        trace (ws.wsName ++ show ws.wsChords) 
+        return unit
+        {-
         clearRect con2d wholerect 
         strokeText con2d msg 50 100
         -- save con2d   -- doesn't work across multiple calls to enmessage?
         trace (ws.wsName ++ show ws.wsChords) 
         return unit
+        -}
       WmIndex (WsIndex wi) -> do
-        -- trace "index" 
+        (WebSong song) <- readRef songref
+        drawsong (WebSong song) wi.wiIndex canelt
+        return unit
+        {-
+        -- trace "index"
         let tc = { x: 50, y: 200 }
         clearRect con2d { x: tc.x - 20 , y: tc.y - 20, w: 200, h: 50 } 
         strokeText con2d (show wi.wiIndex) tc.x tc.y
         trace (show wi.wiIndex)
+        -}
+      default -> do 
+        trace "message pattern match failed"
     Left _ -> do 
         trace "message read failed"
 
+drawsong :: forall e. WebSong -> Number -> CanvasElement
+  -> Eff (canvas :: Canvas, trace :: Trace | e) Unit
+drawsong (WebSong song) index canelt = do 
+  con2d <- getContext2D canelt
+  candims <- getCanvasDimensions canelt
+  let wholerect = { h: candims.height
+                  , w: candims.width
+                  , x: 0
+                  , y: 0 }
+  clearRect con2d wholerect 
+  -- trace $ show song.wsChords
+  strokeText con2d (song.wsName) (candims.width * 0.5) 25
+  let count = A.length song.wsChords
+  case count of 
+    0 -> return unit
+    _ -> do
+      let prev = song.wsChords A.!! ((index - 1) % count)
+          cur = song.wsChords A.!! (index % count)
+          next = song.wsChords A.!! ((index + 1) % count)
+          y = 100
+      case prev of 
+        Just pr -> do 
+          trace "bvlah"
+{-     
+      case (Tuple prev (Tuple cur next) of 
+        (Tuple (Just prev) (Tuple (Just cur) (Just next))) -> do 
+          strokeText con2d prev (candims.width * 0.25) y
+          strokeText con2d cur (candims.width * 0.5) y
+          strokeText con2d next (candims.width * 0.75) y
+          return unit 
+        _ -> do 
+          return unit 
+-}
 -- this function is called on page load.
 -- registers the onMessage callback.
+-- enlode :: forall e. Eff (ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
 enlode = do
   trace "enlode"
   doc <- document globalWindow
@@ -88,7 +139,9 @@ enlode = do
   let wsurl = replace "https:" "wss:" (replace "http:" "ws:" myurl)
   ws <- WS.mkWebSocket wsurl
   Just canvas <- getCanvasElementById "canvas"
-  WS.onMessage ws (enmessage canvas)
+  --songref <- newRef $ WebSong { wsName: "", wsChords: [] }
+  songref <- newRef $ WebSong { wsName: "", wsChords: [] }
+  WS.onMessage ws (enmessage songref canvas)
   trace "enlode end"
 
 -- boilerplate to get url for websockets.
