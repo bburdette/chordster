@@ -7,6 +7,7 @@ import Data.Foreign
 import Data.Foreign.Class
 import Data.String
 import Data.Either
+import Data.Tuple
 import qualified Data.Array as A
 import Debug.Trace
 import Control.Alt
@@ -49,8 +50,6 @@ instance webMessageIsForeign :: IsForeign WebMessage where
   read value = 
     (WmSong <$> (read value :: F WebSong))
     <|> (WmIndex <$> (read value :: F WsIndex))
-
--- forall t221. Control.Monad.Eff.Ref.RefVal Main.WebSong -> Graphics.Canvas.CanvasElement -> Prim.String -> Control.Monad.Eff.Eff (trace :: Debug.Trace.Trace, ref :: Control.Monad.Eff.Ref.Ref, canvas :: Graphics.Canvas.Canvas | t221) Prelude.Unit
 
 -- in this callback function we process a message from the websocket.
 enmessage :: forall e. RefVal WebSong -> CanvasElement -> WS.Message -> Eff (ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
@@ -112,23 +111,27 @@ drawsong (WebSong song) index canelt = do
   case count of 
     0 -> return unit
     _ -> do
-      let prev = song.wsChords A.!! ((index - 1) % count)
-          cur = song.wsChords A.!! (index % count)
-          next = song.wsChords A.!! ((index + 1) % count)
+      let prev = song.wsChords A.!! (mod (index - 1) count)
+          cur = song.wsChords A.!! (mod index count)
+          next = song.wsChords A.!! (mod (index + 1) count)
+          mod x y = let z = x % y in
+            if z < 0 then z + y else z
           y = 100
-      case prev of 
-        Just pr -> do 
-          trace "bvlah"
-{-     
-      case (Tuple prev (Tuple cur next) of 
+          toop = Tuple prev (Tuple cur next)
+      case toop of 
         (Tuple (Just prev) (Tuple (Just cur) (Just next))) -> do 
           strokeText con2d prev (candims.width * 0.25) y
           strokeText con2d cur (candims.width * 0.5) y
           strokeText con2d next (candims.width * 0.75) y
           return unit 
         _ -> do 
+          trace "prev/cur/next failed:"
+          trace $ "prev: " ++ show prev
+          trace $ "cur: " ++ show cur
+          trace $ "next: " ++ show next
           return unit 
--}
+
+
 -- this function is called on page load.
 -- registers the onMessage callback.
 -- enlode :: forall e. Eff (ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
