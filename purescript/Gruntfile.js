@@ -18,7 +18,7 @@ module.exports = function(grunt) {
         dest: "../templates/chat.julius"
       },
        playback: {
-      src: ["src/Playback.purs", "src/WebSocket.purs", "<%=srcFiles%>"],
+      src: ["src/Playback.purs", "src/Dims.purs", "src/WebSocket.purs", "<%=srcFiles%>"],
         dest: "../templates/playback.julius"
       },
     },
