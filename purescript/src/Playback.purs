@@ -52,7 +52,11 @@ instance webMessageIsForeign :: IsForeign WebMessage where
     <|> (WmIndex <$> (read value :: F WsIndex))
 
 -- in this callback function we process a message from the websocket.
-enmessage :: forall e. RefVal WebSong -> CanvasElement -> WS.Message -> Eff (ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
+enmessage :: forall e. RefVal WebSong -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
+      canvas :: Canvas, 
+      ws :: WS.WebSocket, 
+      dom :: DOM,
+      trace :: Trace | e) Unit
 enmessage songref canelt msg = do 
   -- trace msg
   con2d <- getContext2D canelt
@@ -96,9 +100,13 @@ enmessage songref canelt msg = do
         trace "message read failed"
 
 drawsong :: forall e. WebSong -> Number -> CanvasElement
-  -> Eff (canvas :: Canvas, trace :: Trace | e) Unit
+  -> Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
 drawsong (WebSong song) index canelt = do 
   con2d <- getContext2D canelt
+  globw <- innerWidth globalWindow
+  globh <- innerHeight globalWindow
+  setCanvasDimensions {height: globw, 
+                       width: globh } canelt  
   candims <- getCanvasDimensions canelt
   let wholerect = { h: candims.height
                   , w: candims.width
