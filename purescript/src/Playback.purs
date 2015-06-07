@@ -113,22 +113,12 @@ drawsong (WebSong song) index canelt = do
   mbmain <- getElementById "main" doc 
   case mbmain of 
     Just main -> do 
-      -- ehwot <- getAttribute "clientWidth" bod
-      ehwot <- getClientWidth bod 
-      trace $ "wot: " ++ (show ehwot)
       mainw <- getClientWidth main 
-      bodw <- getClientWidth main 
       bodh <- getOffsetHeight bod 
-      trace "postw"
-      -- window height == (body height - canvasheight) + canvasheight
       odims <- getCanvasDimensions canelt
       let canh = odims.height + globh - bodh 
           canw = mainw 
           -- canw = bodw - (globw - bodw) 
-      trace $ "canw stuff: " ++ (show canw) 
-        ++ " " ++ (show odims.width)
-        ++ " " ++ (show globw)
-        ++ " " ++ (show bodw) 
       setCanvasDimensions {height: canh, 
                            width: canw } canelt  
       -- get the dims again, just in case they didn't take.
@@ -138,7 +128,6 @@ drawsong (WebSong song) index canelt = do
                       , x: 0
                       , y: 0 }
       clearRect con2d wholerect 
-      -- trace $ show song.wsChords
       strokeText con2d (song.wsName) (candims.width * 0.5) 25
       let count = A.length song.wsChords
       case count of 
