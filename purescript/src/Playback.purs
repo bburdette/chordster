@@ -15,6 +15,9 @@ import DOM
 import qualified WebSocket as WS
 import Control.Monad.Eff.Ref
 import Data.DOM.Simple.Window
+import Data.DOM.Simple.Document
+import Data.DOM.Simple.Element
+import Dims
 
 --  data structures we're receiving from haskell ----
 -- main data structure is WebMessage, which could be a websong or a wsindex.
@@ -105,39 +108,61 @@ drawsong (WebSong song) index canelt = do
   con2d <- getContext2D canelt
   globw <- innerWidth globalWindow
   globh <- innerHeight globalWindow
-  setCanvasDimensions {height: globw, 
-                       width: globh } canelt  
-  candims <- getCanvasDimensions canelt
-  let wholerect = { h: candims.height
-                  , w: candims.width
-                  , x: 0
-                  , y: 0 }
-  clearRect con2d wholerect 
-  -- trace $ show song.wsChords
-  strokeText con2d (song.wsName) (candims.width * 0.5) 25
-  let count = A.length song.wsChords
-  case count of 
-    0 -> return unit
-    _ -> do
-      let prev = song.wsChords A.!! (mod (index - 1) count)
-          cur = song.wsChords A.!! (mod index count)
-          next = song.wsChords A.!! (mod (index + 1) count)
-          mod x y = let z = x % y in
-            if z < 0 then z + y else z
-          y = 100
-          toop = Tuple prev (Tuple cur next)
-      case toop of 
-        (Tuple (Just prev) (Tuple (Just cur) (Just next))) -> do 
-          strokeText con2d prev (candims.width * 0.25) y
-          strokeText con2d cur (candims.width * 0.5) y
-          strokeText con2d next (candims.width * 0.75) y
-          return unit 
-        _ -> do 
-          trace "prev/cur/next failed:"
-          trace $ "prev: " ++ show prev
-          trace $ "cur: " ++ show cur
-          trace $ "next: " ++ show next
-          return unit 
+  doc <- document globalWindow
+  bod <- body doc
+  mbmain <- getElementById "main" doc 
+  case mbmain of 
+    Just main -> do 
+      -- ehwot <- getAttribute "clientWidth" bod
+      ehwot <- getClientWidth bod 
+      trace $ "wot: " ++ (show ehwot)
+      mainw <- getClientWidth main 
+      bodw <- getClientWidth main 
+      bodh <- getOffsetHeight bod 
+      trace "postw"
+      -- window height == (body height - canvasheight) + canvasheight
+      odims <- getCanvasDimensions canelt
+      let canh = odims.height + globh - bodh 
+          canw = mainw 
+          -- canw = bodw - (globw - bodw) 
+      trace $ "canw stuff: " ++ (show canw) 
+        ++ " " ++ (show odims.width)
+        ++ " " ++ (show globw)
+        ++ " " ++ (show bodw) 
+      setCanvasDimensions {height: canh, 
+                           width: canw } canelt  
+      -- get the dims again, just in case they didn't take.
+      candims <- getCanvasDimensions canelt
+      let wholerect = { h: candims.height
+                      , w: candims.width
+                      , x: 0
+                      , y: 0 }
+      clearRect con2d wholerect 
+      -- trace $ show song.wsChords
+      strokeText con2d (song.wsName) (candims.width * 0.5) 25
+      let count = A.length song.wsChords
+      case count of 
+        0 -> return unit
+        _ -> do
+          let prev = song.wsChords A.!! (mod (index - 1) count)
+              cur = song.wsChords A.!! (mod index count)
+              next = song.wsChords A.!! (mod (index + 1) count)
+              mod x y = let z = x % y in
+                if z < 0 then z + y else z
+              y = 100
+              toop = Tuple prev (Tuple cur next)
+          case toop of 
+            (Tuple (Just prev) (Tuple (Just cur) (Just next))) -> do 
+              strokeText con2d prev (candims.width * 0.25) y
+              strokeText con2d cur (candims.width * 0.5) y
+              strokeText con2d next (candims.width * 0.75) y
+              return unit 
+            _ -> do 
+              trace "prev/cur/next failed:"
+              trace $ "prev: " ++ show prev
+              trace $ "cur: " ++ show cur
+              trace $ "next: " ++ show next
+              return unit 
 
 
 -- this function is called on page load.
