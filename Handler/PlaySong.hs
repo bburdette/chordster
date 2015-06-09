@@ -11,6 +11,7 @@ import Control.Concurrent.STM
 import Data.Maybe
 import PlaySong
 import Yesod.WebSockets
+import Text.Julius
 
 playSongWs :: SongId -> WebSocketsT Handler ()
 playSongWs sid = do 
@@ -24,6 +25,7 @@ getPlaySongR :: SongId -> Handler Html
 getPlaySongR sid = do
   webSockets $ playSongWs sid
   mbsong <- runDB $ get sid
+  let _ = $(juliusFileReload "templates/playback.julius")
   case mbsong of 
     (Just song) ->
       defaultLayout $ do
