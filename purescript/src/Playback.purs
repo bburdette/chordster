@@ -18,6 +18,9 @@ import Data.DOM.Simple.Window
 import Data.DOM.Simple.Document
 import Data.DOM.Simple.Element
 import Dims
+import Data.Date 
+import Data.Foldable
+import Data.Time
 
 --  data structures we're receiving from haskell ----
 -- main data structure is WebMessage, which could be a websong or a wsindex.
@@ -170,6 +173,48 @@ drawsong (WebSong song) index canelt = do
               -- trace $ "cur: " ++ show cur
               -- trace $ "next: " ++ show next
               return unit 
+
+-- compute milliseconds per beat
+tempoToBeatMs :: Number -> Milliseconds
+tempoToBeatMs tempo = 
+  if (tempo == 0) 
+    then Milliseconds 0
+    else  
+      -- tempo is Beats per minute.
+      -- one minute in milliseconds is...
+      let minute = 1000 * 60 in 
+        Milliseconds (minute / tempo)
+
+data AniChord = AniChord
+  { name :: String
+  , time :: Milliseconds 
+  }
+
+makeAniChords :: WebSong -> [AniChord]
+makeAniChords (WebSong ws) = 
+  snd $ foldl accum (Tuple (Milliseconds 0) []) ws.wsChords
+  where
+    beatms = tempoToBeatMs ws.wsTempo 
+    accum :: (Tuple Milliseconds [AniChord]) -> WebChord -> (Tuple Milliseconds [AniChord])
+    accum (Tuple time acs) (WebChord wc) = 
+      (Tuple (time + (Milliseconds wc.wcDuration) * beatms) 
+            (A.snoc acs 
+                    (AniChord { name: wc.wcName, time: time })))
+
+ 
+startAnimation (WebSong ws) = do 
+  begin <- nowEpochMilliseconds
+  let anichords = makeAniChords (WebSong ws)
+      beatms = tempoToBeatMs ws.wsTempo
+  animate begin beatms anichords 
+
+animate :: forall eff. Milliseconds -> Milliseconds -> [AniChord] -> 
+  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas | eff) Unit
+animate begin beatms acs = do 
+  -- yeah, animate!
+  -- get current time.
+  naiow <- nowEpochMilliseconds
+  return unit
 
 -- this function is called on page load.
 -- registers the onMessage callback.

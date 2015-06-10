@@ -16,6 +16,7 @@
   ],
   "dependencies": {
     "purescript-tuples"                   : "*",
+    "purescript-datetime"                 : "*",
     "purescript-strings"                  : "*",
     "purescript-monoid"                   : "*",
     "purescript-semirings"                : "*",
