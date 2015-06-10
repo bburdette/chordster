@@ -21,6 +21,7 @@ import Dims
 import Data.Date 
 import Data.Foldable
 import Data.Time
+import Data.Traversable
 
 --  data structures we're receiving from haskell ----
 -- main data structure is WebMessage, which could be a websong or a wsindex.
@@ -77,7 +78,8 @@ instance webMessageIsForeign :: IsForeign WebMessage where
 -- in this callback function we process a message from the websocket.
 enmessage :: forall e. RefVal WebSong -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
       canvas :: Canvas, 
-      ws :: WS.WebSocket, 
+      ws :: WS.WebSocket,
+      now :: Data.Date.Now,
       dom :: DOM,
       trace :: Trace | e) Unit
 enmessage songref canelt msg = do 
@@ -98,6 +100,7 @@ enmessage songref canelt msg = do
         writeRef songref (WebSong ws)
         drawsong (WebSong ws) 0 canelt
         -- trace (ws.wsName ++ show ws.wsChords) 
+        startAnimation canelt (WebSong ws)
         return unit
         {-
         clearRect con2d wholerect 
@@ -201,20 +204,56 @@ makeAniChords (WebSong ws) =
             (A.snoc acs 
                     (AniChord { name: wc.wcName, time: time })))
 
- 
-startAnimation (WebSong ws) = do 
+startAnimation canelt (WebSong ws) = do 
   begin <- nowEpochMilliseconds
   let anichords = makeAniChords (WebSong ws)
       beatms = tempoToBeatMs ws.wsTempo
-  animate begin beatms anichords 
+      songduration :: Milliseconds
+      songduration = foldl 
+          (\sum (WebChord wc) -> 
+            sum + (Milliseconds wc.wcDuration) * beatms) 
+          (Milliseconds 0) 
+          ws.wsChords 
+  setInterval globalWindow 40 
+    (animate canelt songduration begin beatms (Milliseconds 5000) anichords)
 
-animate :: forall eff. Milliseconds -> Milliseconds -> [AniChord] -> 
+msMod :: Milliseconds -> Milliseconds -> Milliseconds 
+msMod (Milliseconds l) (Milliseconds r) = 
+  Milliseconds (l % r) 
+
+animate :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds -> [AniChord] -> 
   Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas | eff) Unit
-animate begin beatms acs = do 
+animate canelt songduration begin beatms windowms acs = do 
   -- yeah, animate!
   -- get current time.
-  naiow <- nowEpochMilliseconds
+  con2d <- getContext2D canelt
+  globw <- innerWidth globalWindow
+  globh <- innerHeight globalWindow
+  now <- nowEpochMilliseconds
+  let modnow = msMod (now - begin) songduration 
+      acnows = (\(AniChord ac) -> Tuple (timeToChord modnow ac.time songduration) (AniChord ac)) <$> acs 
+      drawAcs = A.filter (\(Tuple ms ac) -> ms < windowms) acnows
+  -- draw the chords that remain after filtering.
+  drawAniChords con2d 25 100 500 50 modnow windowms drawAcs 
   return unit
+
+drawAniChords :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas | eff) Unit
+drawAniChords con2d x y xw yw now window acs = do
+  let xes :: [Number]
+      xes = (\(Tuple ms _) -> x + (xw * ((toNumber ms) / nwindow))) <$> acs
+      toNumber = \(Milliseconds ms) -> ms 
+      nwindow = toNumber window
+  traverse (\(Tuple x (Tuple _ (AniChord ac))) ->  
+    strokeText con2d (ac.name) x y) (zip xes acs)
+  return unit
+
+-- how long until we reach the chord?
+timeToChord :: Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds
+timeToChord modnow chordtime duration = 
+  let ct = chordtime - modnow in
+  if ct < (Milliseconds 0)
+    then duration - ct
+    else ct
 
 -- this function is called on page load.
 -- registers the onMessage callback.
@@ -237,20 +276,5 @@ foreign import documentUrl
   function documentUrl() {
     return document.URL;
   }""" :: forall eff . (Eff (dom :: DOM | eff) String)
-
-main = do
-  mbcanvas <- getCanvasElementById "canvas"
-  case mbcanvas of 
-    Just canvas -> do 
-      ctx <- getContext2D canvas
-
-      setFillStyle "#0000FF" ctx
-
-      fillPath ctx $ rect ctx 
-        { x: 250
-        , y: 150
-        , w: 100
-        , h: 100
-        }
 
 
