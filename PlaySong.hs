@@ -31,28 +31,41 @@ data TextSong = TextSong
 
 data WebSong = WebSong
   { wsName :: Text
-  , wsChords :: [Text]
+  , wsChords :: [WebChord]
+  , wsTempo :: Int
   }
   deriving (Show, Generic)
-
 instance ToJSON WebSong 
+
+data WebChord = WebChord
+  { wcName :: Text
+  , wcDuration :: Int
+  }
+  deriving (Show, Generic)
+instance ToJSON WebChord
 
 data WsIndex = WsIndex { wiIndex :: Int }
   deriving (Show, Generic)
 
 instance ToJSON WsIndex 
 
+{-
 tsToWebSong :: TextSong -> WebSong
 tsToWebSong ts = WebSong { 
     wsName = songName (song ts)
   , wsChords = (\psc -> name psc) <$> (chords ts)
   }
+-}
 
 toWebSong :: Song -> [PlaySongChord] -> WebSong
 toWebSong song chords = WebSong { 
     wsName = songName song 
-  , wsChords = (\psc -> chordRootName (chordRoot psc) <> " " <> name psc) 
-             <$> chords 
+  , wsChords = 
+      (\psc -> WebChord
+        { wcName = (chordRootName (chordRoot psc) <> " " <> name psc)
+        , wcDuration = songChordDuration (songChord psc) } )
+      <$> chords 
+  , wsTempo = songTempo song 
   }
 
 loadTextSong :: SongId -> Handler (Maybe TextSong)

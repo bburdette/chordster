@@ -22,23 +22,40 @@ import Dims
 --  data structures we're receiving from haskell ----
 -- main data structure is WebMessage, which could be a websong or a wsindex.
 
+data WebChord = WebChord
+  { wcName :: String
+  , wcDuration :: Number
+  }
+ 
 data WebSong = WebSong
   { wsName :: String
-  , wsChords :: [String] 
+  , wsChords :: [WebChord]
+  , wsTempo :: Number
   }
+
+data WsIndex = WsIndex
+  { wiIndex :: Number
+  }
+
+instance webChordIsForeign :: IsForeign WebChord where
+  read value = do 
+    wn <- readProp "wcName" value
+    dr <- readProp "wcDuration" value
+    return $ WebChord 
+      { wcName: wn 
+      , wcDuration: dr
+      }
 
 instance webSongIsForeign :: IsForeign WebSong where
   read value = do 
     wn <- readProp "wsName" value
     ch <- readProp "wsChords" value
+    tm <- readProp "wsTempo" value
     return $ WebSong  
       { wsName: wn
       , wsChords: ch 
+      , wsTempo: tm 
       }
-
-data WsIndex = WsIndex
-  { wiIndex :: Number
-  }
 
 instance wsIndexIsForeign :: IsForeign WsIndex where
   read value = do 
@@ -77,7 +94,7 @@ enmessage songref canelt msg = do
         -- trace "song"
         writeRef songref (WebSong ws)
         drawsong (WebSong ws) 0 canelt
-        trace (ws.wsName ++ show ws.wsChords) 
+        -- trace (ws.wsName ++ show ws.wsChords) 
         return unit
         {-
         clearRect con2d wholerect 
@@ -141,18 +158,18 @@ drawsong (WebSong song) index canelt = do
               y = 100
               toop = Tuple prev (Tuple cur next)
           case toop of 
-            (Tuple (Just prev) (Tuple (Just cur) (Just next))) -> do 
-              strokeText con2d prev (candims.width * 0.25) y
-              strokeText con2d cur (candims.width * 0.5) y
-              strokeText con2d next (candims.width * 0.75) y
+            (Tuple (Just prev) (Tuple (Just (WebChord cur)) (Just (WebChord next)))) -> do 
+              -- strokeText con2d prev (candims.width * 0.25) y
+              -- trace $ show $ cur.wcName
+              strokeText con2d cur.wcName (candims.width * 0.5) y
+              strokeText con2d next.wcName (candims.width * 0.75) y
               return unit 
             _ -> do 
               trace "prev/cur/next failed:"
-              trace $ "prev: " ++ show prev
-              trace $ "cur: " ++ show cur
-              trace $ "next: " ++ show next
+              -- trace $ "prev: " ++ show prev
+              -- trace $ "cur: " ++ show cur
+              -- trace $ "next: " ++ show next
               return unit 
-
 
 -- this function is called on page load.
 -- registers the onMessage callback.
@@ -165,7 +182,7 @@ enlode = do
   ws <- WS.mkWebSocket wsurl
   Just canvas <- getCanvasElementById "canvas"
   --songref <- newRef $ WebSong { wsName: "", wsChords: [] }
-  songref <- newRef $ WebSong { wsName: "", wsChords: [] }
+  songref <- newRef $ WebSong { wsName: "", wsChords: [], wsTempo: 0 }
   WS.onMessage ws (enmessage songref canvas)
   trace "enlode end"
 
@@ -191,17 +208,4 @@ main = do
         , h: 100
         }
 
-meh = do
-  mbcanvas <- getCanvasElementById "canvas"
-  case mbcanvas of 
-    Just canvas -> do 
-      ctx <- getContext2D canvas
 
-      setFillStyle "#FF00FF" ctx
-
-      fillPath ctx $ rect ctx 
-        { x: 150
-        , y: 150
-        , w: 300
-        , h: 50
-        }
