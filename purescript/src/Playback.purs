@@ -111,7 +111,7 @@ enmessage songref canelt msg = do
         -}
       WmIndex (WsIndex wi) -> do
         (WebSong song) <- readRef songref
-        drawsong (WebSong song) wi.wiIndex canelt
+        -- drawsong (WebSong song) wi.wiIndex canelt
         return unit
         {-
         -- trace "index"
@@ -140,7 +140,7 @@ drawsong (WebSong song) index canelt = do
       bodh <- getOffsetHeight bod 
       odims <- getCanvasDimensions canelt
       let canh = odims.height + globh - bodh 
-          canw = mainw 
+          canw = mainw
           -- canw = bodw - (globw - bodw) 
       setCanvasDimensions {height: canh, 
                            width: canw } canelt  
@@ -222,7 +222,7 @@ msMod (Milliseconds l) (Milliseconds r) =
   Milliseconds (l % r) 
 
 animate :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds -> [AniChord] -> 
-  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas | eff) Unit
+  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
 animate canelt songduration begin beatms windowms acs = do 
   -- yeah, animate!
   -- get current time.
@@ -234,17 +234,31 @@ animate canelt songduration begin beatms windowms acs = do
       acnows = (\(AniChord ac) -> Tuple (timeToChord modnow ac.time songduration) (AniChord ac)) <$> acs 
       drawAcs = A.filter (\(Tuple ms ac) -> ms < windowms) acnows
   -- draw the chords that remain after filtering.
-  drawAniChords con2d 25 100 500 50 modnow windowms drawAcs 
+  -- trace $ show $ (\(Tuple ttc (AniChord ac)) -> (show ttc) ++ " " ++ show ac.time) <$> acnows
+  drawAniChords con2d 25 100 500 60 modnow windowms drawAcs 
   return unit
 
-drawAniChords :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas | eff) Unit
+drawAniChords :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
 drawAniChords con2d x y xw yw now window acs = do
   let xes :: [Number]
       xes = (\(Tuple ms _) -> x + (xw * ((toNumber ms) / nwindow))) <$> acs
       toNumber = \(Milliseconds ms) -> ms 
       nwindow = toNumber window
+      wholerect = { h: yw
+                  , w: xw
+                  , x: x
+                  , y: y - yw }
+  save con2d
+  rect con2d wholerect
+  clip con2d 
+  -- trace $ "xes: " ++ (show xes)
+  setFillStyle "#0000FF" con2d
+  fillPath con2d $ rect con2d wholerect
+  -- clearRect con2d wholerect 
   traverse (\(Tuple x (Tuple _ (AniChord ac))) ->  
-    strokeText con2d (ac.name) x y) (zip xes acs)
+    strokeText con2d (ac.name) x (y - 10)) (zip xes acs)
+  -- unclip
+  restore con2d
   return unit
 
 -- how long until we reach the chord?
@@ -252,7 +266,7 @@ timeToChord :: Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds
 timeToChord modnow chordtime duration = 
   let ct = chordtime - modnow in
   if ct < (Milliseconds 0)
-    then duration - ct
+    then ct + duration
     else ct
 
 -- this function is called on page load.
