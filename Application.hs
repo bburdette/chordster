@@ -46,6 +46,7 @@ import Handler.DeleteOscDest
 import Handler.ExportSong
 import Handler.ImportSong
 import Handler.ChatTest
+import Handler.CurrentSong
 import ForkeyOpen
 
 

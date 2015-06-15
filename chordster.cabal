@@ -35,6 +35,7 @@ library
                      Handler.ExportSong
                      Handler.ImportSong
                      Handler.ChatTest
+                     Handler.CurrentSong
                      SongControl
                      PlaySong
                      ForkeyOpen

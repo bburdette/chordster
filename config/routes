@@ -20,3 +20,4 @@
 /exportsong/#SongId ExportSongR GET
 /importsong/ ImportSongR GET POST
 /chattest/ ChatTestR GET POST
+/currentsong/ CurrentSongR GET

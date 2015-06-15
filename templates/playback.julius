@@ -10,22 +10,6 @@ PS.Prelude = (function () {
     }
     ;
     
-    function showStringImpl(s) {
-      return JSON.stringify(s);
-    }
-    ;
-    
-    function showArrayImpl(f) {
-      return function(xs) {
-        var ss = [];
-        for (var i = 0, l = xs.length; i < l; i++) {
-          ss[i] = f(xs[i]);
-        }
-        return '[' + ss.join(',') + ']';
-      };
-    }
-    ;
-    
     function numAdd(n1) {
       return function(n2) {
         return n1 + n2;
@@ -43,6 +27,13 @@ PS.Prelude = (function () {
     function numMul(n1) {
       return function(n2) {
         return n1 * n2;
+      };
+    }
+    ;
+    
+    function numDiv(n1) {
+      return function(n2) {
+        return n1 / n2;
       };
     }
     ;
@@ -146,13 +137,6 @@ PS.Prelude = (function () {
       return !b;
     }
     ;
-    
-    function concatString(s1) {
-      return function(s2) {
-        return s1 + s2;
-      };
-    }
-    ;
     var Unit = function (x) {
         return x;
     };
@@ -180,9 +164,6 @@ PS.Prelude = (function () {
     var Semigroupoid = function ($less$less$less) {
         this["<<<"] = $less$less$less;
     };
-    var Show = function (show) {
-        this.show = show;
-    };
     var Functor = function ($less$dollar$greater) {
         this["<$>"] = $less$dollar$greater;
     };
@@ -207,6 +188,11 @@ PS.Prelude = (function () {
         this["+"] = $plus;
         this.one = one;
         this.zero = zero;
+    };
+    var ModuloSemiring = function ($div, __superclass_Prelude$dotSemiring_0, mod) {
+        this["/"] = $div;
+        this["__superclass_Prelude.Semiring_0"] = __superclass_Prelude$dotSemiring_0;
+        this.mod = mod;
     };
     var Ring = function ($minus, __superclass_Prelude$dotSemiring_0) {
         this["-"] = $minus;
@@ -234,9 +220,6 @@ PS.Prelude = (function () {
         this.not = not;
         this["||"] = $bar$bar;
     };
-    var Semigroup = function ($less$greater) {
-        this["<>"] = $less$greater;
-    };
     var $bar$bar = function (dict) {
         return dict["||"];
     };
@@ -262,11 +245,11 @@ PS.Prelude = (function () {
     var $div$eq = function (dict) {
         return dict["/="];
     };
+    var $div = function (dict) {
+        return dict["/"];
+    };
     var $minus = function (dict) {
         return dict["-"];
-    };
-    var $plus$plus = function (__dict_Semigroup_2) {
-        return $less$greater(__dict_Semigroup_2);
     };
     var $plus = function (dict) {
         return dict["+"];
@@ -282,13 +265,6 @@ PS.Prelude = (function () {
     };
     var unsafeCompare = unsafeCompareImpl(LT.value)(EQ.value)(GT.value);
     var unit = {};
-    var showString = new Show(showStringImpl);
-    var show = function (dict) {
-        return dict.show;
-    };
-    var showArray = function (__dict_Show_3) {
-        return new Show(showArrayImpl(show(__dict_Show_3)));
-    };
     var semiringNumber = new Semiring(numMul, numAdd, 1, 0);
     var semigroupoidArr = new Semigroupoid(function (f) {
         return function (g) {
@@ -297,7 +273,6 @@ PS.Prelude = (function () {
             };
         };
     });
-    var semigroupString = new Semigroup(concatString);
     var ringNumber = new Ring(numSub, function () {
         return semiringNumber;
     });
@@ -307,6 +282,13 @@ PS.Prelude = (function () {
     var $$return = function (__dict_Monad_5) {
         return pure(__dict_Monad_5["__superclass_Prelude.Applicative_0"]());
     };
+    var moduloSemiringNumber = new ModuloSemiring(numDiv, function () {
+        return semiringNumber;
+    }, function (_86) {
+        return function (_87) {
+            return 0;
+        };
+    });
     var liftA1 = function (__dict_Applicative_8) {
         return function (f) {
             return function (a) {
@@ -335,8 +317,8 @@ PS.Prelude = (function () {
     var $less = function (__dict_Ord_12) {
         return function (a1) {
             return function (a2) {
-                var _471 = compare(__dict_Ord_12)(a1)(a2);
-                if (_471 instanceof LT) {
+                var _669 = compare(__dict_Ord_12)(a1)(a2);
+                if (_669 instanceof LT) {
                     return true;
                 };
                 return false;
@@ -346,8 +328,8 @@ PS.Prelude = (function () {
     var $greater$eq = function (__dict_Ord_15) {
         return function (a1) {
             return function (a2) {
-                var _472 = compare(__dict_Ord_15)(a1)(a2);
-                if (_472 instanceof LT) {
+                var _670 = compare(__dict_Ord_15)(a1)(a2);
+                if (_670 instanceof LT) {
                     return false;
                 };
                 return true;
@@ -372,22 +354,20 @@ PS.Prelude = (function () {
         LT: LT, 
         GT: GT, 
         EQ: EQ, 
-        Semigroup: Semigroup, 
         BoolLike: BoolLike, 
         Bits: Bits, 
         Ord: Ord, 
         Eq: Eq, 
         Ring: Ring, 
+        ModuloSemiring: ModuloSemiring, 
         Semiring: Semiring, 
         Monad: Monad, 
         Bind: Bind, 
         Applicative: Applicative, 
         Apply: Apply, 
         Functor: Functor, 
-        Show: Show, 
         Semigroupoid: Semigroupoid, 
         unit: unit, 
-        "++": $plus$plus, 
         "<>": $less$greater, 
         "||": $bar$bar, 
         complement: complement, 
@@ -398,6 +378,7 @@ PS.Prelude = (function () {
         "==": $eq$eq, 
         "%": $percent, 
         "-": $minus, 
+        "/": $div, 
         "*": $times, 
         "+": $plus, 
         ap: ap, 
@@ -407,23 +388,20 @@ PS.Prelude = (function () {
         pure: pure, 
         "<*>": $less$times$greater, 
         "<$>": $less$dollar$greater, 
-        show: show, 
         cons: cons, 
         ":": $colon, 
         "$": $dollar, 
         "<<<": $less$less$less, 
         flip: flip, 
         semigroupoidArr: semigroupoidArr, 
-        showString: showString, 
-        showArray: showArray, 
         semiringNumber: semiringNumber, 
         ringNumber: ringNumber, 
+        moduloSemiringNumber: moduloSemiringNumber, 
         eqString: eqString, 
         eqNumber: eqNumber, 
         ordNumber: ordNumber, 
         bitsNumber: bitsNumber, 
-        boolLikeBoolean: boolLikeBoolean, 
-        semigroupString: semigroupString
+        boolLikeBoolean: boolLikeBoolean
     };
 })();
 var PS = PS || {};
@@ -439,6 +417,54 @@ PS.Prelude_Unsafe = (function () {
     ;
     return {
         unsafeIndex: unsafeIndex
+    };
+})();
+var PS = PS || {};
+PS.Data_Time = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Int = PS.Data_Int;
+    var Milliseconds = function (x) {
+        return x;
+    };
+    var semiringMilliseconds = new Prelude.Semiring(function (_195) {
+        return function (_196) {
+            return _195 * _196;
+        };
+    }, function (_193) {
+        return function (_194) {
+            return _193 + _194;
+        };
+    }, 1, 0);
+    var ringMilliseconds = new Prelude.Ring(function (_197) {
+        return function (_198) {
+            return _197 - _198;
+        };
+    }, function () {
+        return semiringMilliseconds;
+    });
+    var eqMilliseconds = new Prelude.Eq(function (_189) {
+        return function (_190) {
+            return _189 !== _190;
+        };
+    }, function (_187) {
+        return function (_188) {
+            return _187 === _188;
+        };
+    });
+    var ordMilliseconds = new Prelude.Ord(function () {
+        return eqMilliseconds;
+    }, function (_191) {
+        return function (_192) {
+            return Prelude.compare(Prelude.ordNumber)(_191)(_192);
+        };
+    });
+    return {
+        Milliseconds: Milliseconds, 
+        eqMilliseconds: eqMilliseconds, 
+        ordMilliseconds: ordMilliseconds, 
+        semiringMilliseconds: semiringMilliseconds, 
+        ringMilliseconds: ringMilliseconds
     };
 })();
 var PS = PS || {};
@@ -560,6 +586,277 @@ PS.Control_Monad_Eff_Ref = (function () {
         writeRef: writeRef, 
         readRef: readRef, 
         newRef: newRef
+    };
+})();
+var PS = PS || {};
+PS.Data_DOM_Simple_Unsafe_Document = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var DOM = PS.DOM;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var Data_DOM_Simple_Types = PS.Data_DOM_Simple_Types;
+    
+  function unsafeTitle(src) {
+    return function () {
+      return src.title;
+    };
+  };
+    
+  function unsafeSetTitle(value) {
+    return function (src) {
+      return function () {
+        src.title = value;
+      };
+    };
+  };
+    
+  function unsafeBody(src) {
+    return function () {
+      return src.body;
+    };
+  };
+    
+  function unsafeSetBody(value) {
+    return function (src) {
+      return function () {
+        src.body = value;
+      };
+    };
+  };
+    return {
+        unsafeSetBody: unsafeSetBody, 
+        unsafeBody: unsafeBody, 
+        unsafeSetTitle: unsafeSetTitle, 
+        unsafeTitle: unsafeTitle
+    };
+})();
+var PS = PS || {};
+PS.Data_DOM_Simple_Unsafe_Element = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var DOM = PS.DOM;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var Data_DOM_Simple_Types = PS.Data_DOM_Simple_Types;
+    
+  function unsafeGetElementById(targ_id) {
+    return function (src) {
+      return function () {
+        return src.getElementById(targ_id);
+      };
+    };
+  };
+    
+  function unsafeGetElementsByClassName(targ_id) {
+    return function (src) {
+      return function () {
+        return src.getElementsByClassName(targ_id);
+      };
+    };
+  };
+    
+  function unsafeGetElementsByName(targ_id) {
+    return function (src) {
+      return function () {
+        return src.getElementsByName(targ_id);
+      };
+    };
+  };
+    
+  function unsafeQuerySelector(selector) {
+    return function (src) {
+      return function () {
+        return src.querySelector(selector);
+      };
+    };
+  };
+    
+  function unsafeQuerySelectorAll(selector) {
+    return function (src) {
+      return function () {
+        return src.querySelectorAll(selector);
+      };
+    };
+  };
+    
+  function unsafeGetAttribute(name) {
+    return function (src) {
+      return function () {
+        return src.getAttribute(name);
+      };
+    };
+  };
+    
+  function unsafeSetAttribute(name) {
+    return function (value) {
+      return function (src) {
+        return function () {
+          src.setAttribute(name, value);
+          return {};
+        };
+      };
+    };
+  };
+    
+  function unsafeHasAttribute(name) {
+    return function (src) {
+      return function () {
+        return src.hasAttribute(name);
+      };
+    };
+  };
+    
+  function unsafeRemoveAttribute(name) {
+    return function (src) {
+      return function () {
+        src.removeAttribute(name);
+        return {};
+      };
+    };
+  };
+    
+  function unsafeGetStyleAttr(name) {
+    return function (src) {
+      return function () {
+        return src.style[name];
+      };
+    };
+  };
+    
+  function unsafeSetStyleAttr(name) {
+    return function (value) {
+      return function (src) {
+        return function () {
+          src.style[name] = value;
+          return {};
+        };
+      };
+    };
+  };
+    
+  function unsafeChildren(src) {
+    return function () {
+      return src.children;
+    };
+  };
+    
+  function unsafeAppendChild(src) {
+    return function (child) {
+      return function () {
+        return src.appendChild(child);
+      };
+    };
+  };
+    
+  function unsafeInnerHTML(src) {
+    return function () {
+      return src.innerHTML;
+    };
+  };
+    
+  function unsafeSetInnerHTML(value) {
+    return function (src) {
+      return function () {
+        src.innerHTML = value;
+        return {};
+      };
+    };
+  };
+    
+  function unsafeTextContent(src) {
+    return function () {
+      return src.textContent;
+    };
+  };
+    
+  function unsafeSetTextContent(value) {
+    return function (src) {
+      return function () {
+        src.textContent = value;
+        return {};
+      };
+    };
+  };
+    
+  function unsafeValue(src) {
+    return function () {
+      return src.value;
+    };
+  };
+    
+  function unsafeSetValue(value) {
+    return function (src) {
+      return function () {
+        src.value = value;
+        return {};
+      };
+    };
+  };
+    
+  function unsafeContentWindow(obj) {
+    return function () {
+      return obj.contentWindow;
+    };
+  };
+    
+  function unsafeClassAdd(value) {
+    return function (src) {
+      return function () {
+        src.classList.add(value);
+        return {};
+      };
+    };
+  };
+    
+  function unsafeClassRemove(value) {
+    return function (src) {
+      return function () {
+        src.classList.remove(value);
+        return {};
+      };
+    };
+  };
+    
+  function unsafeClassToggle(value) {
+    return function (src) {
+      return function () {
+        src.classList.toggle(value);
+        return {};
+      };
+    };
+  };
+    
+  function unsafeClassContains(value) {
+    return function (src) {
+      return function () {
+        return src.classList.contains(value);
+      };
+    };
+  };
+    return {
+        unsafeClassContains: unsafeClassContains, 
+        unsafeClassToggle: unsafeClassToggle, 
+        unsafeClassRemove: unsafeClassRemove, 
+        unsafeClassAdd: unsafeClassAdd, 
+        unsafeContentWindow: unsafeContentWindow, 
+        unsafeSetValue: unsafeSetValue, 
+        unsafeValue: unsafeValue, 
+        unsafeSetTextContent: unsafeSetTextContent, 
+        unsafeTextContent: unsafeTextContent, 
+        unsafeSetInnerHTML: unsafeSetInnerHTML, 
+        unsafeInnerHTML: unsafeInnerHTML, 
+        unsafeAppendChild: unsafeAppendChild, 
+        unsafeChildren: unsafeChildren, 
+        unsafeSetStyleAttr: unsafeSetStyleAttr, 
+        unsafeGetStyleAttr: unsafeGetStyleAttr, 
+        unsafeRemoveAttribute: unsafeRemoveAttribute, 
+        unsafeHasAttribute: unsafeHasAttribute, 
+        unsafeSetAttribute: unsafeSetAttribute, 
+        unsafeGetAttribute: unsafeGetAttribute, 
+        unsafeQuerySelectorAll: unsafeQuerySelectorAll, 
+        unsafeQuerySelector: unsafeQuerySelector, 
+        unsafeGetElementsByName: unsafeGetElementsByName, 
+        unsafeGetElementsByClassName: unsafeGetElementsByClassName, 
+        unsafeGetElementById: unsafeGetElementById
     };
 })();
 var PS = PS || {};
@@ -696,36 +993,36 @@ PS.Data_Either = (function () {
         return Right;
     })();
     var functorEither = new Prelude.Functor(function (f) {
-        return function (_110) {
-            if (_110 instanceof Left) {
-                return new Left(_110.value0);
+        return function (_249) {
+            if (_249 instanceof Left) {
+                return new Left(_249.value0);
             };
-            if (_110 instanceof Right) {
-                return new Right(f(_110.value0));
+            if (_249 instanceof Right) {
+                return new Right(f(_249.value0));
             };
             throw new Error("Failed pattern match");
         };
     });
     var either = function (f) {
         return function (g) {
-            return function (_109) {
-                if (_109 instanceof Left) {
-                    return f(_109.value0);
+            return function (_248) {
+                if (_248 instanceof Left) {
+                    return f(_248.value0);
                 };
-                if (_109 instanceof Right) {
-                    return g(_109.value0);
+                if (_248 instanceof Right) {
+                    return g(_248.value0);
                 };
                 throw new Error("Failed pattern match");
             };
         };
     };
-    var applyEither = new Prelude.Apply(function (_111) {
+    var applyEither = new Prelude.Apply(function (_250) {
         return function (r) {
-            if (_111 instanceof Left) {
-                return new Left(_111.value0);
+            if (_250 instanceof Left) {
+                return new Left(_250.value0);
             };
-            if (_111 instanceof Right) {
-                return Prelude["<$>"](functorEither)(_111.value0)(r);
+            if (_250 instanceof Right) {
+                return Prelude["<$>"](functorEither)(_250.value0)(r);
             };
             throw new Error("Failed pattern match");
         };
@@ -733,7 +1030,7 @@ PS.Data_Either = (function () {
         return functorEither;
     });
     var bindEither = new Prelude.Bind(either(function (e) {
-        return function (_108) {
+        return function (_247) {
             return new Left(e);
         };
     })(function (a) {
@@ -751,12 +1048,12 @@ PS.Data_Either = (function () {
     }, function () {
         return bindEither;
     });
-    var altEither = new Control_Alt.Alt(function (_112) {
+    var altEither = new Control_Alt.Alt(function (_251) {
         return function (r) {
-            if (_112 instanceof Left) {
+            if (_251 instanceof Left) {
                 return r;
             };
-            return _112;
+            return _251;
         };
     }, function () {
         return functorEither;
@@ -798,21 +1095,9 @@ PS.Data_Maybe = (function () {
         };
         return Just;
     })();
-    var showMaybe = function (__dict_Show_74) {
-        return new Prelude.Show(function (_129) {
-            if (_129 instanceof Just) {
-                return "Just (" + (Prelude.show(__dict_Show_74)(_129.value0) + ")");
-            };
-            if (_129 instanceof Nothing) {
-                return "Nothing";
-            };
-            throw new Error("Failed pattern match");
-        });
-    };
     return {
         Nothing: Nothing, 
-        Just: Just, 
-        showMaybe: showMaybe
+        Just: Just
     };
 })();
 var PS = PS || {};
@@ -825,8 +1110,10 @@ PS.Data_Array = (function () {
     var Control_Alternative = PS.Control_Alternative;
     var Control_MonadPlus = PS.Control_MonadPlus;
     var Prelude_Unsafe = PS.Prelude_Unsafe;
+    function snoc(l) {  return function (e) {    var l1 = l.slice();    l1.push(e);     return l1;  };};
     function length (xs) {  return xs.length;};
     function map (f) {  return function (arr) {    var l = arr.length;    var result = new Array(l);    for (var i = 0; i < l; i++) {      result[i] = f(arr[i]);    }    return result;  };};
+    function filter (f) {  return function (arr) {    var n = 0;    var result = [];    for (var i = 0, l = arr.length; i < l; i++) {      if (f(arr[i])) {        result[n++] = arr[i];      }    }    return result;  };};
     function range (start) {  return function (end) {    var i = ~~start, e = ~~end;    var step = i > e ? -1 : 1;    var result = [i], n = 1;    while (i !== e) {      i += step;      result[n++] = i;    }    return result;  };};
     function zipWith (f) {  return function (xs) {    return function (ys) {      var l = xs.length < ys.length ? xs.length : ys.length;      var result = new Array(l);      for (var i = 0; i < l; i++) {        result[i] = f(xs[i])(ys[i]);      }      return result;    };  };};
     var $bang$bang = function (xs) {
@@ -834,11 +1121,11 @@ PS.Data_Array = (function () {
             var isInt = function (n_1) {
                 return n_1 !== ~~n_1;
             };
-            var _494 = n < 0 || (n >= length(xs) || isInt(n));
-            if (_494) {
+            var _702 = n < 0 || (n >= length(xs) || isInt(n));
+            if (_702) {
                 return Data_Maybe.Nothing.value;
             };
-            if (!_494) {
+            if (!_702) {
                 return new Data_Maybe.Just(xs[n]);
             };
             throw new Error("Failed pattern match");
@@ -848,8 +1135,10 @@ PS.Data_Array = (function () {
     return {
         zipWith: zipWith, 
         range: range, 
+        filter: filter, 
         length: length, 
         map: map, 
+        snoc: snoc, 
         "!!": $bang$bang, 
         functorArray: functorArray
     };
@@ -1060,6 +1349,29 @@ PS.Data_Foreign_Index = (function () {
     };
 })();
 var PS = PS || {};
+PS.Data_DOM_Simple_Unsafe_Utils = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Maybe = PS.Data_Maybe;
+    
+  function ensure3(nothing) {
+    return function(just) {
+      return function(v) {
+        if (v === undefined || v === null) {
+          return nothing;
+        } else {
+          return just(v);
+        }
+      };
+   };
+  };
+    var ensure = ensure3(Data_Maybe.Nothing.value)(Data_Maybe.Just.create);
+    return {
+        ensure: ensure, 
+        ensure3: ensure3
+    };
+})();
+var PS = PS || {};
 PS.Data_Monoid = (function () {
     "use strict";
     var Prelude = PS.Prelude;
@@ -1093,8 +1405,14 @@ PS.Data_Tuple = (function () {
         };
         return Tuple;
     })();
+    var zip = Data_Array.zipWith(Tuple.create);
+    var snd = function (_371) {
+        return _371.value1;
+    };
     return {
-        Tuple: Tuple
+        Tuple: Tuple, 
+        zip: zip, 
+        snd: snd
     };
 })();
 var PS = PS || {};
@@ -1145,6 +1463,9 @@ PS.Data_Foldable = (function () {
     var foldr = function (dict) {
         return dict.foldr;
     };
+    var foldl = function (dict) {
+        return dict.foldl;
+    };
     var foldableArray = new Foldable(function (__dict_Monoid_292) {
         return function (f) {
             return function (xs) {
@@ -1172,8 +1493,108 @@ PS.Data_Foldable = (function () {
         Foldable: Foldable, 
         foldlArray: foldlArray, 
         foldrArray: foldrArray, 
+        foldl: foldl, 
         foldr: foldr, 
         foldableArray: foldableArray
+    };
+})();
+var PS = PS || {};
+PS.Data_DOM_Simple_Element = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_DOM_Simple_Unsafe_Element = PS.Data_DOM_Simple_Unsafe_Element;
+    var Data_DOM_Simple_Unsafe_Utils = PS.Data_DOM_Simple_Unsafe_Utils;
+    var Data_Foldable = PS.Data_Foldable;
+    var Data_Tuple = PS.Data_Tuple;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var DOM = PS.DOM;
+    var Data_DOM_Simple_Types = PS.Data_DOM_Simple_Types;
+    var Data_Maybe = PS.Data_Maybe;
+    var Data_Array = PS.Data_Array;
+    var Element = function (appendChild, children, classAdd, classContains, classRemove, classToggle, contentWindow, getAttribute, getElementById, getElementsByClassName, getElementsByName, getStyleAttr, hasAttribute, innerHTML, querySelector, querySelectorAll, removeAttribute, setAttribute, setInnerHTML, setStyleAttr, setTextContent, setValue, textContent, value) {
+        this.appendChild = appendChild;
+        this.children = children;
+        this.classAdd = classAdd;
+        this.classContains = classContains;
+        this.classRemove = classRemove;
+        this.classToggle = classToggle;
+        this.contentWindow = contentWindow;
+        this.getAttribute = getAttribute;
+        this.getElementById = getElementById;
+        this.getElementsByClassName = getElementsByClassName;
+        this.getElementsByName = getElementsByName;
+        this.getStyleAttr = getStyleAttr;
+        this.hasAttribute = hasAttribute;
+        this.innerHTML = innerHTML;
+        this.querySelector = querySelector;
+        this.querySelectorAll = querySelectorAll;
+        this.removeAttribute = removeAttribute;
+        this.setAttribute = setAttribute;
+        this.setInnerHTML = setInnerHTML;
+        this.setStyleAttr = setStyleAttr;
+        this.setTextContent = setTextContent;
+        this.setValue = setValue;
+        this.textContent = textContent;
+        this.value = value;
+    };
+    var getElementById = function (dict) {
+        return dict.getElementById;
+    };
+    return {
+        Element: Element, 
+        getElementById: getElementById
+    };
+})();
+var PS = PS || {};
+PS.Data_DOM_Simple_Document = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_DOM_Simple_Unsafe_Element = PS.Data_DOM_Simple_Unsafe_Element;
+    var Data_DOM_Simple_Unsafe_Utils = PS.Data_DOM_Simple_Unsafe_Utils;
+    var Data_DOM_Simple_Unsafe_Document = PS.Data_DOM_Simple_Unsafe_Document;
+    var DOM = PS.DOM;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var Data_DOM_Simple_Types = PS.Data_DOM_Simple_Types;
+    var Data_DOM_Simple_Element = PS.Data_DOM_Simple_Element;
+    var Document = function (body, setBody, setTitle, title) {
+        this.body = body;
+        this.setBody = setBody;
+        this.setTitle = setTitle;
+        this.title = title;
+    };
+    var htmlDocumentElement = new Data_DOM_Simple_Element.Element(Data_DOM_Simple_Unsafe_Element.unsafeAppendChild, Data_DOM_Simple_Unsafe_Element.unsafeChildren, Data_DOM_Simple_Unsafe_Element.unsafeClassAdd, Data_DOM_Simple_Unsafe_Element.unsafeClassContains, Data_DOM_Simple_Unsafe_Element.unsafeClassRemove, Data_DOM_Simple_Unsafe_Element.unsafeClassToggle, Data_DOM_Simple_Unsafe_Element.unsafeContentWindow, Data_DOM_Simple_Unsafe_Element.unsafeGetAttribute, function (id) {
+        return function (el) {
+            return Prelude[">>="](Control_Monad_Eff.bindEff)(Data_DOM_Simple_Unsafe_Element.unsafeGetElementById(id)(el))(Prelude["<<<"](Prelude.semigroupoidArr)(Prelude["return"](Control_Monad_Eff.monadEff))(Data_DOM_Simple_Unsafe_Utils.ensure));
+        };
+    }, Data_DOM_Simple_Unsafe_Element.unsafeGetElementsByClassName, Data_DOM_Simple_Unsafe_Element.unsafeGetElementsByName, Data_DOM_Simple_Unsafe_Element.unsafeGetStyleAttr, Data_DOM_Simple_Unsafe_Element.unsafeHasAttribute, Data_DOM_Simple_Unsafe_Element.unsafeInnerHTML, function (sel) {
+        return function (el) {
+            return Prelude[">>="](Control_Monad_Eff.bindEff)(Data_DOM_Simple_Unsafe_Element.unsafeQuerySelector(sel)(el))(Prelude["<<<"](Prelude.semigroupoidArr)(Prelude["return"](Control_Monad_Eff.monadEff))(Data_DOM_Simple_Unsafe_Utils.ensure));
+        };
+    }, Data_DOM_Simple_Unsafe_Element.unsafeQuerySelectorAll, Data_DOM_Simple_Unsafe_Element.unsafeRemoveAttribute, Data_DOM_Simple_Unsafe_Element.unsafeSetAttribute, Data_DOM_Simple_Unsafe_Element.unsafeSetInnerHTML, Data_DOM_Simple_Unsafe_Element.unsafeSetStyleAttr, Data_DOM_Simple_Unsafe_Element.unsafeSetTextContent, Data_DOM_Simple_Unsafe_Element.unsafeSetValue, Data_DOM_Simple_Unsafe_Element.unsafeTextContent, Data_DOM_Simple_Unsafe_Element.unsafeValue);
+    var htmlDocument = new Document(Data_DOM_Simple_Unsafe_Document.unsafeBody, Data_DOM_Simple_Unsafe_Document.unsafeSetBody, Data_DOM_Simple_Unsafe_Document.unsafeSetTitle, Data_DOM_Simple_Unsafe_Document.unsafeTitle);
+    var body = function (dict) {
+        return dict.body;
+    };
+    return {
+        Document: Document, 
+        body: body, 
+        htmlDocumentElement: htmlDocumentElement, 
+        htmlDocument: htmlDocument
+    };
+})();
+var PS = PS || {};
+PS.Dims = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var DOM = PS.DOM;
+    var Data_DOM_Simple_Types = PS.Data_DOM_Simple_Types;
+    var Data_DOM_Simple_Element = PS.Data_DOM_Simple_Element;
+    function getClientWidth(htmlelt){  return function(){    return htmlelt.clientWidth;  };};;
+    function getOffsetHeight(htmlelt){  return function(){    return htmlelt.offsetHeight;  };};;
+    return {
+        getOffsetHeight: getOffsetHeight, 
+        getClientWidth: getClientWidth
     };
 })();
 var PS = PS || {};
@@ -1219,6 +1640,15 @@ PS.Data_DOM_Simple_Window = (function () {
         this.setInterval = setInterval;
         this.setTimeout = setTimeout;
     };
+    var setInterval = function (dict) {
+        return dict.setInterval;
+    };
+    var innerWidth = function (dict) {
+        return dict.innerWidth;
+    };
+    var innerHeight = function (dict) {
+        return dict.innerHeight;
+    };
     var htmlWindow = new Window(Data_DOM_Simple_Unsafe_Window.unsafeClearTimeout, Data_DOM_Simple_Unsafe_Window.unsafeDocument, Data_DOM_Simple_Unsafe_Window.unsafeInnerHeight, Data_DOM_Simple_Unsafe_Window.unsafeInnerWidth, Data_DOM_Simple_Unsafe_Window.unsafeLocation, Data_DOM_Simple_Unsafe_Window.unsafeNavigator, Data_DOM_Simple_Unsafe_Window.unsafeSetInterval, Data_DOM_Simple_Unsafe_Window.unsafeSetTimeout);
     var document = function (dict) {
         return dict.document;
@@ -1226,6 +1656,9 @@ PS.Data_DOM_Simple_Window = (function () {
     return {
         Window: Window, 
         globalWindow: globalWindow, 
+        innerHeight: innerHeight, 
+        innerWidth: innerWidth, 
+        setInterval: setInterval, 
         document: document, 
         htmlWindow: htmlWindow
     };
@@ -1261,25 +1694,25 @@ PS.Data_Traversable = (function () {
     }, function () {
         return Data_Array.functorArray;
     }, function (__dict_Applicative_340) {
-        return function (_365) {
-            if (_365.length === 0) {
+        return function (_504) {
+            if (_504.length === 0) {
                 return Prelude.pure(__dict_Applicative_340)([  ]);
             };
-            if (_365.length >= 1) {
-                var _504 = _365.slice(1);
-                return Prelude["<*>"](__dict_Applicative_340["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_340["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(_365[0]))(sequence(traversableArray)(__dict_Applicative_340)(_504));
+            if (_504.length >= 1) {
+                var _715 = _504.slice(1);
+                return Prelude["<*>"](__dict_Applicative_340["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_340["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(_504[0]))(sequence(traversableArray)(__dict_Applicative_340)(_715));
             };
             throw new Error("Failed pattern match");
         };
     }, function (__dict_Applicative_339) {
         return function (f) {
-            return function (_364) {
-                if (_364.length === 0) {
+            return function (_503) {
+                if (_503.length === 0) {
                     return Prelude.pure(__dict_Applicative_339)([  ]);
                 };
-                if (_364.length >= 1) {
-                    var _508 = _364.slice(1);
-                    return Prelude["<*>"](__dict_Applicative_339["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_339["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(f(_364[0])))(traverse(traversableArray)(__dict_Applicative_339)(f)(_508));
+                if (_503.length >= 1) {
+                    var _719 = _503.slice(1);
+                    return Prelude["<*>"](__dict_Applicative_339["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_339["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(f(_503[0])))(traverse(traversableArray)(__dict_Applicative_339)(f)(_719));
                 };
                 throw new Error("Failed pattern match");
             };
@@ -1358,6 +1791,26 @@ PS.Data_Foreign_Class = (function () {
     };
 })();
 var PS = PS || {};
+PS.Data_Date = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Global = PS.Global;
+    var Data_Function = PS.Data_Function;
+    var Data_Enum = PS.Data_Enum;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var Data_Int = PS.Data_Int;
+    var Data_Maybe = PS.Data_Maybe;
+    var Data_Time = PS.Data_Time;
+    
+  function nowEpochMilliseconds() {
+    return Date.now();
+  }
+  ;
+    return {
+        nowEpochMilliseconds: nowEpochMilliseconds
+    };
+})();
+var PS = PS || {};
 PS.Graphics_Canvas = (function () {
     "use strict";
     var Data_Function = PS.Data_Function;
@@ -1377,22 +1830,32 @@ PS.Graphics_Canvas = (function () {
     function getContext2D(c) {  return function() {    return c.getContext('2d');  };};
     function getCanvasWidth(canvas){  return function(){    return canvas.width;  };};;
     function getCanvasHeight(canvas){  return function(){    return canvas.height;  };};;
+    function setCanvasWidth(width){   return function(canvas){      return function(){        canvas.width = width;        return canvas;      };    };};;
+    function setCanvasHeight(height){   return function(canvas){      return function(){         canvas.height = height;         return canvas;       };    };};;
     function setFillStyle(style) {  return function(ctx) {    return function() {      ctx.fillStyle = style;      return ctx;    };  };};
     function beginPath(ctx) {  return function() {    ctx.beginPath();    return ctx;  };};
     function fill(ctx) {  return function() {    ctx.fill();    return ctx;  };};
+    function clip(ctx) {  return function() {    ctx.clip();    return ctx;  };};
     function rect(ctx) {  return function(r) {    return function() {      ctx.rect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function clearRect(ctx) {  return function(r) {    return function() {      ctx.clearRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function strokeText(ctx) {  return function(text) {    return function(x) {      return function(y) {        return function() {          ctx.strokeText(text, x, y);          return ctx;        };      };    };  };};
+    function save(ctx) {  return function() {    ctx.save();    return ctx;  };};
+    function restore(ctx) {  return function() {    ctx.restore();    return ctx;  };};
+    var setCanvasDimensions = function (d) {
+        return function (ce) {
+            return Prelude[">>="](Control_Monad_Eff.bindEff)(setCanvasHeight(d.height)(ce))(setCanvasWidth(d.width));
+        };
+    };
     var getCanvasElementById = function (elId) {
         return getCanvasElementByIdImpl(elId, Data_Maybe.Just.create, Data_Maybe.Nothing.value);
     };
     var getCanvasDimensions = function (ce) {
         return function __do() {
-            var _46 = getCanvasWidth(ce)();
-            var _45 = getCanvasHeight(ce)();
+            var _49 = getCanvasWidth(ce)();
+            var _48 = getCanvasHeight(ce)();
             return {
-                width: _46, 
-                height: _45
+                width: _49, 
+                height: _48
             };
         };
     };
@@ -1400,22 +1863,28 @@ PS.Graphics_Canvas = (function () {
         return function (path) {
             return function __do() {
                 beginPath(ctx)();
-                var _48 = path();
+                var _51 = path();
                 fill(ctx)();
-                return _48;
+                return _51;
             };
         };
     };
     return {
+        restore: restore, 
+        save: save, 
         strokeText: strokeText, 
         clearRect: clearRect, 
         rect: rect, 
         fillPath: fillPath, 
+        clip: clip, 
         fill: fill, 
         beginPath: beginPath, 
         setFillStyle: setFillStyle, 
+        setCanvasDimensions: setCanvasDimensions, 
         getCanvasDimensions: getCanvasDimensions, 
+        setCanvasHeight: setCanvasHeight, 
         getCanvasHeight: getCanvasHeight, 
+        setCanvasWidth: setCanvasWidth, 
         getCanvasWidth: getCanvasWidth, 
         getContext2D: getContext2D, 
         getCanvasElementById: getCanvasElementById
@@ -1465,16 +1934,23 @@ PS.Main = (function () {
     var Graphics_Canvas = PS.Graphics_Canvas;
     var Debug_Trace = PS.Debug_Trace;
     var Control_Monad_Eff_Ref = PS.Control_Monad_Eff_Ref;
-    var Data_Array = PS.Data_Array;
     var Data_DOM_Simple_Window = PS.Data_DOM_Simple_Window;
+    var Data_DOM_Simple_Document = PS.Data_DOM_Simple_Document;
+    var Data_DOM_Simple_Element = PS.Data_DOM_Simple_Element;
+    var Dims = PS.Dims;
+    var Data_Array = PS.Data_Array;
+    var Data_Tuple = PS.Data_Tuple;
+    var Data_Foldable = PS.Data_Foldable;
+    var Data_Date = PS.Data_Date;
+    var Data_Traversable = PS.Data_Traversable;
     var Data_String = PS.Data_String;
     var WebSocket = PS.WebSocket;
     var Control_Monad_Eff = PS.Control_Monad_Eff;
     var Data_Maybe = PS.Data_Maybe;
     var Data_Foreign = PS.Data_Foreign;
     var Data_Either = PS.Data_Either;
-    var Data_Tuple = PS.Data_Tuple;
     var DOM = PS.DOM;
+    var Data_Time = PS.Data_Time;
     var Data_Foreign_Index = PS.Data_Foreign_Index;
     
   function documentUrl() {
@@ -1488,6 +1964,15 @@ PS.Main = (function () {
             return new WsIndex(value0);
         };
         return WsIndex;
+    })();
+    var WebChord = (function () {
+        function WebChord(value0) {
+            this.value0 = value0;
+        };
+        WebChord.create = function (value0) {
+            return new WebChord(value0);
+        };
+        return WebChord;
     })();
     var WebSong = (function () {
         function WebSong(value0) {
@@ -1516,119 +2001,257 @@ PS.Main = (function () {
         };
         return WmSong;
     })();
+    var AniChord = (function () {
+        function AniChord(value0) {
+            this.value0 = value0;
+        };
+        AniChord.create = function (value0) {
+            return new AniChord(value0);
+        };
+        return AniChord;
+    })();
     var wsIndexIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
-        return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.numberIsForeign)(Data_Foreign_Index.indexString)("wiIndex")(value))(function (_52) {
+        return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.numberIsForeign)(Data_Foreign_Index.indexString)("wiIndex")(value))(function (_58) {
             return Prelude["return"](Data_Either.monadEither)(new WsIndex({
-                wiIndex: _52
+                wiIndex: _58
             }));
         });
     });
-    var webSongIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
-        return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.stringIsForeign)(Data_Foreign_Index.indexString)("wsName")(value))(function (_51) {
-            return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.arrayIsForeign(Data_Foreign_Class.stringIsForeign))(Data_Foreign_Index.indexString)("wsChords")(value))(function (_50) {
-                return Prelude["return"](Data_Either.monadEither)(new WebSong({
-                    wsName: _51, 
-                    wsChords: _50
+    var webChordIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
+        return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.stringIsForeign)(Data_Foreign_Index.indexString)("wcName")(value))(function (_54) {
+            return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.numberIsForeign)(Data_Foreign_Index.indexString)("wcDuration")(value))(function (_53) {
+                return Prelude["return"](Data_Either.monadEither)(new WebChord({
+                    wcName: _54, 
+                    wcDuration: _53
                 }));
+            });
+        });
+    });
+    var webSongIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
+        return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.stringIsForeign)(Data_Foreign_Index.indexString)("wsName")(value))(function (_57) {
+            return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.arrayIsForeign(webChordIsForeign))(Data_Foreign_Index.indexString)("wsChords")(value))(function (_56) {
+                return Prelude[">>="](Data_Either.bindEither)(Data_Foreign_Class.readProp(Data_Foreign_Class.numberIsForeign)(Data_Foreign_Index.indexString)("wsTempo")(value))(function (_55) {
+                    return Prelude["return"](Data_Either.monadEither)(new WebSong({
+                        wsName: _57, 
+                        wsChords: _56, 
+                        wsTempo: _55
+                    }));
+                });
             });
         });
     });
     var webMessageIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
         return Control_Alt["<|>"](Data_Either.altEither)(Prelude["<$>"](Data_Either.functorEither)(WmSong.create)(Data_Foreign_Class.read(webSongIsForeign)(value)))(Prelude["<$>"](Data_Either.functorEither)(WmIndex.create)(Data_Foreign_Class.read(wsIndexIsForeign)(value)));
     });
-    var meh = function __do() {
-        var _66 = Graphics_Canvas.getCanvasElementById("canvas")();
-        return (function () {
-            if (_66 instanceof Data_Maybe.Just) {
-                return function __do() {
-                    var _65 = Graphics_Canvas.getContext2D(_66.value0)();
-                    Graphics_Canvas.setFillStyle("#FF00FF")(_65)();
-                    return Graphics_Canvas.fillPath(_65)(Graphics_Canvas.rect(_65)({
-                        x: 150, 
-                        y: 150, 
-                        w: 300, 
-                        h: 50
-                    }))();
+    var timeToChord = function (modnow) {
+        return function (chordtime) {
+            return function (duration) {
+                var ct = Prelude["-"](Data_Time.ringMilliseconds)(chordtime)(modnow);
+                var _729 = Prelude["<"](Data_Time.ordMilliseconds)(ct)(0);
+                if (_729) {
+                    return Prelude["+"](Data_Time.semiringMilliseconds)(ct)(duration);
                 };
-            };
-            throw new Error("Failed pattern match");
-        })()();
-    };
-    var main = function __do() {
-        var _64 = Graphics_Canvas.getCanvasElementById("canvas")();
-        return (function () {
-            if (_64 instanceof Data_Maybe.Just) {
-                return function __do() {
-                    var _63 = Graphics_Canvas.getContext2D(_64.value0)();
-                    Graphics_Canvas.setFillStyle("#0000FF")(_63)();
-                    return Graphics_Canvas.fillPath(_63)(Graphics_Canvas.rect(_63)({
-                        x: 250, 
-                        y: 150, 
-                        w: 100, 
-                        h: 100
-                    }))();
+                if (!_729) {
+                    return ct;
                 };
+                throw new Error("Failed pattern match");
             };
-            throw new Error("Failed pattern match");
-        })()();
+        };
     };
-    var drawsong = function (_470) {
+    var tempoToBeatMs = function (tempo) {
+        var _730 = tempo === 0;
+        if (_730) {
+            return 0;
+        };
+        if (!_730) {
+            var minute = 1000 * 60;
+            return minute / tempo;
+        };
+        throw new Error("Failed pattern match");
+    };
+    var msMod = function (_663) {
+        return function (_664) {
+            return _663 % _664;
+        };
+    };
+    var makeAniChords = function (_661) {
+        var beatms = tempoToBeatMs(_661.value0.wsTempo);
+        var accum = function (_665) {
+            return function (_666) {
+                return new Data_Tuple.Tuple(Prelude["+"](Data_Time.semiringMilliseconds)(_665.value0)(Prelude["*"](Data_Time.semiringMilliseconds)(_666.value0.wcDuration)(beatms)), Data_Array.snoc(_665.value1)(new AniChord({
+                    name: _666.value0.wcName, 
+                    time: _665.value0
+                })));
+            };
+        };
+        return Data_Tuple.snd(Data_Foldable.foldl(Data_Foldable.foldableArray)(accum)(new Data_Tuple.Tuple(0, [  ]))(_661.value0.wsChords));
+    };
+    var drawsong = function (_660) {
         return function (index) {
             return function (canelt) {
                 return function __do() {
-                    var _57 = Graphics_Canvas.getContext2D(canelt)();
-                    var _56 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                    var _71 = Graphics_Canvas.getContext2D(canelt)();
+                    var _70 = Data_DOM_Simple_Window.innerWidth(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+                    var _69 = Data_DOM_Simple_Window.innerHeight(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+                    var _68 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+                    var _67 = Data_DOM_Simple_Document.body(Data_DOM_Simple_Document.htmlDocument)(_68)();
+                    var _66 = Data_DOM_Simple_Element.getElementById(Data_DOM_Simple_Document.htmlDocumentElement)("main")(_68)();
                     return (function () {
-                        var wholerect = {
-                            h: _56.height, 
-                            w: _56.width, 
-                            x: 0, 
-                            y: 0
-                        };
-                        return function __do() {
-                            Graphics_Canvas.clearRect(_57)(wholerect)();
-                            Graphics_Canvas.strokeText(_57)(_470.value0.wsName)(_56.width * 0.5)(25)();
-                            var count = Data_Array.length(_470.value0.wsChords);
-                            if (count === 0) {
-                                return Prelude.unit;
-                            };
-                            return (function () {
-                                var mod = function (x) {
-                                    return function (y_1) {
-                                        var z = x % y_1;
-                                        var _529 = z < 0;
-                                        if (_529) {
-                                            return z + y_1;
-                                        };
-                                        if (!_529) {
-                                            return z;
-                                        };
-                                        throw new Error("Failed pattern match");
-                                    };
-                                };
-                                var next = Data_Array["!!"](_470.value0.wsChords)(mod(index + 1)(count));
-                                var prev = Data_Array["!!"](_470.value0.wsChords)(mod(index - 1)(count));
-                                var cur = Data_Array["!!"](_470.value0.wsChords)(mod(index)(count));
-                                var toop = new Data_Tuple.Tuple(prev, new Data_Tuple.Tuple(cur, next));
-                                if (toop.value0 instanceof Data_Maybe.Just && (toop.value1.value0 instanceof Data_Maybe.Just && toop.value1.value1 instanceof Data_Maybe.Just)) {
+                        if (_66 instanceof Data_Maybe.Just) {
+                            return function __do() {
+                                var _65 = Dims.getClientWidth(_66.value0)();
+                                var _64 = Dims.getOffsetHeight(_67)();
+                                var _63 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                                return (function () {
+                                    var canh = (_63.height + _69) - _64;
                                     return function __do() {
-                                        Graphics_Canvas.strokeText(_57)(toop.value0.value0)(_56.width * 0.25)(100)();
-                                        Graphics_Canvas.strokeText(_57)(toop.value1.value0.value0)(_56.width * 0.5)(100)();
-                                        Graphics_Canvas.strokeText(_57)(toop.value1.value1.value0)(_56.width * 0.75)(100)();
+                                        Graphics_Canvas.setCanvasDimensions({
+                                            height: canh, 
+                                            width: _65
+                                        })(canelt)();
+                                        var _62 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                                        return (function () {
+                                            var wholerect = {
+                                                h: _62.height, 
+                                                w: _62.width, 
+                                                x: 0, 
+                                                y: 0
+                                            };
+                                            return function __do() {
+                                                Graphics_Canvas.clearRect(_71)(wholerect)();
+                                                Graphics_Canvas.strokeText(_71)(_660.value0.wsName)(_62.width * 0.5)(25)();
+                                                var count = Data_Array.length(_660.value0.wsChords);
+                                                if (count === 0) {
+                                                    return Prelude.unit;
+                                                };
+                                                return (function () {
+                                                    var mod = function (x) {
+                                                        return function (y_1) {
+                                                            var z = x % y_1;
+                                                            var _755 = z < 0;
+                                                            if (_755) {
+                                                                return z + y_1;
+                                                            };
+                                                            if (!_755) {
+                                                                return z;
+                                                            };
+                                                            throw new Error("Failed pattern match");
+                                                        };
+                                                    };
+                                                    var next = Data_Array["!!"](_660.value0.wsChords)(mod(index + 1)(count));
+                                                    var prev = Data_Array["!!"](_660.value0.wsChords)(mod(index - 1)(count));
+                                                    var cur = Data_Array["!!"](_660.value0.wsChords)(mod(index)(count));
+                                                    var toop = new Data_Tuple.Tuple(prev, new Data_Tuple.Tuple(cur, next));
+                                                    if (toop.value0 instanceof Data_Maybe.Just && (toop.value1.value0 instanceof Data_Maybe.Just && toop.value1.value1 instanceof Data_Maybe.Just)) {
+                                                        return function __do() {
+                                                            Graphics_Canvas.strokeText(_71)(toop.value1.value0.value0.value0.wcName)(_62.width * 0.5)(100)();
+                                                            Graphics_Canvas.strokeText(_71)(toop.value1.value1.value0.value0.wcName)(_62.width * 0.75)(100)();
+                                                            return Prelude.unit;
+                                                        };
+                                                    };
+                                                    return function __do() {
+                                                        Debug_Trace.trace("prev/cur/next failed:")();
+                                                        return Prelude.unit;
+                                                    };
+                                                })()();
+                                            };
+                                        })()();
+                                    };
+                                })()();
+                            };
+                        };
+                        throw new Error("Failed pattern match");
+                    })()();
+                };
+            };
+        };
+    };
+    var drawAniChords = function (con2d) {
+        return function (x) {
+            return function (y) {
+                return function (xw) {
+                    return function (yw) {
+                        return function (now) {
+                            return function (window) {
+                                return function (acs) {
+                                    var wholerect = {
+                                        h: yw, 
+                                        w: xw, 
+                                        x: x, 
+                                        y: y - yw
+                                    };
+                                    var toNumber = function (_658) {
+                                        return _658;
+                                    };
+                                    var nwindow = toNumber(window);
+                                    var xes = Prelude["<$>"](Data_Array.functorArray)(function (_657) {
+                                        return x + xw * (toNumber(_657.value0) / nwindow);
+                                    })(acs);
+                                    return function __do() {
+                                        Graphics_Canvas.save(con2d)();
+                                        Graphics_Canvas.rect(con2d)(wholerect)();
+                                        Graphics_Canvas.clip(con2d)();
+                                        Graphics_Canvas.setFillStyle("#8080FF")(con2d)();
+                                        Graphics_Canvas.fillPath(con2d)(Graphics_Canvas.rect(con2d)(wholerect))();
+                                        Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_659) {
+                                            return Graphics_Canvas.strokeText(con2d)(_659.value1.value1.value0.name)(_659.value0)(y - 10);
+                                        })(Data_Tuple.zip(xes)(acs))();
+                                        Graphics_Canvas.restore(con2d)();
                                         return Prelude.unit;
                                     };
                                 };
-                                return function __do() {
-                                    Debug_Trace.trace("prev/cur/next failed:")();
-                                    Debug_Trace.trace("prev: " + Prelude.show(Data_Maybe.showMaybe(Prelude.showString))(prev_1))();
-                                    Debug_Trace.trace("cur: " + Prelude.show(Data_Maybe.showMaybe(Prelude.showString))(cur_1))();
-                                    Debug_Trace.trace("next: " + Prelude.show(Data_Maybe.showMaybe(Prelude.showString))(next_1))();
-                                    return Prelude.unit;
-                                };
-                            })()();
+                            };
                         };
-                    })()();
+                    };
                 };
+            };
+        };
+    };
+    var animate = function (canelt) {
+        return function (songduration) {
+            return function (begin) {
+                return function (beatms) {
+                    return function (windowms) {
+                        return function (acs) {
+                            return function __do() {
+                                var _76 = Graphics_Canvas.getContext2D(canelt)();
+                                var _75 = Data_DOM_Simple_Window.innerWidth(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+                                var _74 = Data_DOM_Simple_Window.innerHeight(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+                                var _73 = Data_Date.nowEpochMilliseconds();
+                                return (function () {
+                                    var modnow = msMod(Prelude["-"](Data_Time.ringMilliseconds)(_73)(begin))(songduration);
+                                    var acnows = Prelude["<$>"](Data_Array.functorArray)(function (_655) {
+                                        return new Data_Tuple.Tuple(timeToChord(modnow)(_655.value0.time)(songduration), new AniChord(_655.value0));
+                                    })(acs);
+                                    var drawAcs = Data_Array.filter(function (_656) {
+                                        return Prelude["<"](Data_Time.ordMilliseconds)(_656.value0)(windowms);
+                                    })(acnows);
+                                    return function __do() {
+                                        drawAniChords(_76)(25)(100)(500)(60)(modnow)(windowms)(drawAcs)();
+                                        return Prelude.unit;
+                                    };
+                                })()();
+                            };
+                        };
+                    };
+                };
+            };
+        };
+    };
+    var startAnimation = function (canelt) {
+        return function (_662) {
+            return function __do() {
+                var _72 = Data_Date.nowEpochMilliseconds();
+                return (function () {
+                    var beatms = tempoToBeatMs(_662.value0.wsTempo);
+                    var songduration = Data_Foldable.foldl(Data_Foldable.foldableArray)(function (sum) {
+                        return function (_654) {
+                            return Prelude["+"](Data_Time.semiringMilliseconds)(sum)(Prelude["*"](Data_Time.semiringMilliseconds)(_654.value0.wcDuration)(beatms));
+                        };
+                    })(0)(_662.value0.wsChords);
+                    var anichords = makeAniChords(new WebSong(_662.value0));
+                    return Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(40)(animate(canelt)(songduration)(_72)(beatms)(5000)(anichords));
+                })()();
             };
         };
     };
@@ -1636,12 +2259,12 @@ PS.Main = (function () {
         return function (canelt) {
             return function (msg) {
                 return function __do() {
-                    var _55 = Graphics_Canvas.getContext2D(canelt)();
-                    var _54 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                    var _61 = Graphics_Canvas.getContext2D(canelt)();
+                    var _60 = Graphics_Canvas.getCanvasDimensions(canelt)();
                     return (function () {
                         var wholerect = {
-                            h: _54.height, 
-                            w: _54.width, 
+                            h: _60.height, 
+                            w: _60.width, 
                             x: 0, 
                             y: 0
                         };
@@ -1653,12 +2276,11 @@ PS.Main = (function () {
                                 if (wm.value0 instanceof WmSong) {
                                     Control_Monad_Eff_Ref.writeRef(songref)(new WebSong(wm.value0.value0.value0))();
                                     drawsong(new WebSong(wm.value0.value0.value0))(0)(canelt)();
-                                    Debug_Trace.trace(wm.value0.value0.value0.wsName + Prelude.show(Prelude.showArray(Prelude.showString))(wm.value0.value0.value0.wsChords))();
+                                    startAnimation(canelt)(new WebSong(wm.value0.value0.value0))();
                                     return Prelude.unit;
                                 };
                                 if (wm.value0 instanceof WmIndex) {
-                                    var _53 = Control_Monad_Eff_Ref.readRef(songref)();
-                                    drawsong(new WebSong(_53.value0))(wm.value0.value0.value0.wiIndex)(canelt)();
+                                    var _59 = Control_Monad_Eff_Ref.readRef(songref)();
                                     return Prelude.unit;
                                 };
                                 return Debug_Trace.trace("message pattern match failed")();
@@ -1675,19 +2297,20 @@ PS.Main = (function () {
     };
     var enlode = function __do() {
         Debug_Trace.trace("enlode")();
-        var _62 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
-        var _61 = documentUrl();
+        var _81 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+        var _80 = documentUrl();
         return (function () {
-            var wsurl = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_61));
+            var wsurl = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_80));
             return function __do() {
-                var _60 = WebSocket.mkWebSocket(wsurl)();
-                var _59 = Graphics_Canvas.getCanvasElementById("canvas")();
-                if (_59 instanceof Data_Maybe.Just) {
-                    var _58 = Control_Monad_Eff_Ref.newRef(new WebSong({
+                var _79 = WebSocket.mkWebSocket(wsurl)();
+                var _78 = Graphics_Canvas.getCanvasElementById("canvas")();
+                if (_78 instanceof Data_Maybe.Just) {
+                    var _77 = Control_Monad_Eff_Ref.newRef(new WebSong({
                         wsName: "", 
-                        wsChords: [  ]
+                        wsChords: [  ], 
+                        wsTempo: 0
                     }))();
-                    WebSocket.onMessage(_60)(enmessage(_58)(_59.value0))();
+                    WebSocket.onMessage(_79)(enmessage(_77)(_78.value0))();
                     return Debug_Trace.trace("enlode end")();
                 };
                 throw new Error("Failed pattern match");
@@ -1695,16 +2318,24 @@ PS.Main = (function () {
         })()();
     };
     return {
+        AniChord: AniChord, 
         WmIndex: WmIndex, 
         WmSong: WmSong, 
         WsIndex: WsIndex, 
         WebSong: WebSong, 
-        meh: meh, 
-        main: main, 
+        WebChord: WebChord, 
         documentUrl: documentUrl, 
         enlode: enlode, 
+        timeToChord: timeToChord, 
+        drawAniChords: drawAniChords, 
+        animate: animate, 
+        msMod: msMod, 
+        startAnimation: startAnimation, 
+        makeAniChords: makeAniChords, 
+        tempoToBeatMs: tempoToBeatMs, 
         drawsong: drawsong, 
         enmessage: enmessage, 
+        webChordIsForeign: webChordIsForeign, 
         webSongIsForeign: webSongIsForeign, 
         wsIndexIsForeign: wsIndexIsForeign, 
         webMessageIsForeign: webMessageIsForeign

@@ -5,10 +5,12 @@ import Control.Concurrent.MVar
 import SongControl
 import qualified Data.Text as T
 import Control.Monad (forever)
+import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
 import Data.Maybe
+import Data.Traversable as TR
 import PlaySong
 import Yesod.WebSockets
 import Text.Julius
@@ -54,18 +56,18 @@ startSongThread sid = do
                             (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
                           lightdests
       pscs <- makePscs (map entityVal chords)
-      threadid <- liftIO $ forkIO $ 
-        playSong (songLine app) song (catMaybes pscs) chordips lightips
-      oldid <- liftIO $ tryTakeMVar $ playThread $ songControl app
-      case oldid of 
-         Nothing -> return ()
-         Just id -> lift $ killThread id 
-      -- blam, start a thread for song playing.
-      -- report back that there is a song playing, or something.
-      -- track whatever it is so that it can be stopped later.  
-      res <- liftIO $ tryPutMVar (playThread $ songControl app) threadid
-      return ()
-
+      -- kill the old song, if any.
+      oldinfo <- liftIO $ tryTakeMVar $ playThread $ songControl app
+      case oldinfo of 
+        Just (tid, id) | id == sid -> return () 
+        _ -> do 
+          lift $ TR.mapM (\(tid,_) -> killThread tid) oldinfo
+          -- start a new song thread
+          threadid <- liftIO $ forkIO $ 
+            playSong (songLine app) song (catMaybes pscs) chordips lightips
+          -- save the new thread id and song id in the MVar.
+          res <- liftIO $ tryPutMVar (playThread $ songControl app) (threadid, sid)
+          return ()
 
 postPlaySongR :: SongId -> Handler Html
 postPlaySongR sid = do 
@@ -75,10 +77,10 @@ postPlaySongR sid = do
       redirect SongsR
     Just _ -> do 
       app <- getYesod 
-      oldid <- liftIO $ tryTakeMVar $ playThread $ songControl app
-      case oldid of 
+      oldinfo <- liftIO $ tryTakeMVar $ playThread $ songControl app
+      case oldinfo of 
          Nothing -> return ()
-         Just tid -> lift $ killThread tid 
+         Just (tid,_) -> lift $ killThread tid 
       redirect SongsR
 
 
