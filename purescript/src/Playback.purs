@@ -252,7 +252,7 @@ drawAniChords con2d x y xw yw now window acs = do
   rect con2d wholerect
   clip con2d 
   -- trace $ "xes: " ++ (show xes)
-  setFillStyle "#0000FF" con2d
+  setFillStyle "#00001F" con2d
   fillPath con2d $ rect con2d wholerect
   -- clearRect con2d wholerect 
   traverse (\(Tuple x (Tuple _ (AniChord ac))) ->  
