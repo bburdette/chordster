@@ -2,6 +2,8 @@
 
 <ol>
   <li> 
+    <a href=@{CurrentSongR}> Current Song 
+  <li> 
     <a href=@{SongsR}> Songs
   <li> 
     <a href=@{NoteSetsR}> Chord Types
