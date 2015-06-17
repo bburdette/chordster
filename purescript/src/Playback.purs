@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad.Eff
+import Control.Monad.Eff.Ref
 import Graphics.Canvas hiding (translate)
 import Data.Maybe
 import Data.Foreign
@@ -17,6 +18,7 @@ import Control.Monad.Eff.Ref
 import Data.DOM.Simple.Window
 import Data.DOM.Simple.Document
 import Data.DOM.Simple.Element
+import Data.DOM.Simple.Types
 import Dims
 import Data.Date 
 import Data.Foldable
@@ -76,13 +78,13 @@ instance webMessageIsForeign :: IsForeign WebMessage where
     <|> (WmIndex <$> (read value :: F WsIndex))
 
 -- in this callback function we process a message from the websocket.
-enmessage :: forall e. RefVal WebSong -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
+enmessage :: forall e. RefVal WebSong -> RefVal (Maybe Timeout) -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
       canvas :: Canvas, 
       ws :: WS.WebSocket,
       now :: Data.Date.Now,
       dom :: DOM,
       trace :: Trace | e) Unit
-enmessage songref canelt msg = do 
+enmessage songref timeoutref canelt msg = do 
   -- trace msg
   con2d <- getContext2D canelt
   candims <- getCanvasDimensions canelt
@@ -96,11 +98,13 @@ enmessage songref canelt msg = do
   case wm of 
     Right wm -> case wm of 
       WmSong (WebSong ws) -> do
-        -- trace "song"
+        trace "song"
+        trace ws.wsName 
         writeRef songref (WebSong ws)
         drawsong (WebSong ws) 0 canelt
         -- trace (ws.wsName ++ show ws.wsChords) 
-        startAnimation canelt (WebSong ws)
+        timeout <- startAnimation canelt (WebSong ws) 0
+        writeRef timeoutref $ Just timeout 
         return unit
         {-
         clearRect con2d wholerect 
@@ -110,9 +114,20 @@ enmessage songref canelt msg = do
         return unit
         -}
       WmIndex (WsIndex wi) -> do
-        (WebSong song) <- readRef songref
+        trace "index"
+        trace (show wi.wiIndex)
+        (WebSong ws) <- readRef songref
+        mbt <- readRef timeoutref
+        case (Tuple mbt wi)  of 
+          (Tuple (Just tm) wi) -> do 
+            clearTimeout globalWindow tm
+            timeout <- startAnimation canelt (WebSong ws) wi.wiIndex 
+            writeRef timeoutref $ Just timeout 
+            return unit
+          _ ->
+            return unit
         -- drawsong (WebSong song) wi.wiIndex canelt
-        return unit
+        -- return unit
         {-
         -- trace "index"
         let tc = { x: 50, y: 200 }
@@ -204,7 +219,7 @@ makeAniChords (WebSong ws) =
             (A.snoc acs 
                     (AniChord { name: wc.wcName, time: time })))
 
-startAnimation canelt (WebSong ws) = do 
+startAnimation canelt (WebSong ws) chordindex = do 
   begin <- nowEpochMilliseconds
   let anichords = makeAniChords (WebSong ws)
       beatms = tempoToBeatMs ws.wsTempo
@@ -213,9 +228,10 @@ startAnimation canelt (WebSong ws) = do
           (\sum (WebChord wc) -> 
             sum + (Milliseconds wc.wcDuration) * beatms) 
           (Milliseconds 0) 
-          ws.wsChords 
+          ws.wsChords
+      curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (anichords A.!! chordindex) 
   setInterval globalWindow 40 
-    (animate canelt songduration begin beatms (Milliseconds 5000) anichords)
+    (animate canelt songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
 
 msMod :: Milliseconds -> Milliseconds -> Milliseconds 
 msMod (Milliseconds l) (Milliseconds r) = 
@@ -281,7 +297,8 @@ enlode = do
   Just canvas <- getCanvasElementById "canvas"
   --songref <- newRef $ WebSong { wsName: "", wsChords: [] }
   songref <- newRef $ WebSong { wsName: "", wsChords: [], wsTempo: 0 }
-  WS.onMessage ws (enmessage songref canvas)
+  ref <- newRef $ Nothing
+  WS.onMessage ws (enmessage songref ref canvas)
   trace "enlode end"
 
 -- boilerplate to get url for websockets.
