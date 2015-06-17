@@ -8,7 +8,7 @@ import SongControl
 getCurrentSongR :: Handler Html
 getCurrentSongR = do 
   app <- getYesod 
-  wat <- liftIO $ tryTakeMVar $ playThread $ songControl app
+  wat <- liftIO $ tryReadMVar $ playThread $ songControl app
   case wat of 
     Just (_,songid) -> redirect $ PlaySongR songid
     Nothing -> error "no song is playing right now."

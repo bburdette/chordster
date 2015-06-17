@@ -21,7 +21,10 @@ playSongWs sid = do
   let writeChan = songLine app
   readChan <- (liftIO . atomically) $ dupTChan writeChan
   lift $ startSongThread sid
+  liftIO $ print "pre readTChan, etc"
   (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
+  liftIO $ print "post readTChan, etc"
+  return ()
 
 getPlaySongR :: SongId -> Handler Html
 getPlaySongR sid = do
@@ -57,18 +60,34 @@ startSongThread sid = do
                           lightdests
       pscs <- makePscs (map entityVal chords)
       -- kill the old song, if any.
-      oldinfo <- liftIO $ tryTakeMVar $ playThread $ songControl app
+      oldinfo <- liftIO $ tryReadMVar $ playThread $ songControl app
+      liftIO $ print $ "oldinfo: " ++ show oldinfo
       case oldinfo of 
-        Just (tid, id) | id == sid -> return () 
-        _ -> do 
+        Just (tid, id) | id == sid -> do  
+          liftIO $ print $ "song thread exists; doing nothing. " ++ show (tid, id)
+          return () 
+        Just (tid, _) -> do
+          -- kill the old song thread. 
+          liftIO $ print $ "killing old thread: " ++ show tid
           lift $ TR.mapM (\(tid,_) -> killThread tid) oldinfo
           -- start a new song thread
           threadid <- liftIO $ forkIO $ 
             playSong (songLine app) song (catMaybes pscs) chordips lightips
           -- save the new thread id and song id in the MVar.
-          res <- liftIO $ tryPutMVar (playThread $ songControl app) (threadid, sid)
+          _ <- liftIO $ tryTakeMVar $ playThread $ songControl app
+          res <- liftIO $ putMVar (playThread $ songControl app) (threadid, sid)
+          liftIO $ print $ "res= " ++ show res
           return ()
-
+        Nothing -> do
+          liftIO $ print $ "starting new song thread"  
+          -- start a new song thread
+          threadid <- liftIO $ forkIO $ 
+            playSong (songLine app) song (catMaybes pscs) chordips lightips
+          -- store in the mvar.
+          res <- liftIO $ putMVar (playThread $ songControl app) (threadid, sid)
+          liftIO $ print $ "nothing res= " ++ show res
+          return ()
+ 
 postPlaySongR :: SongId -> Handler Html
 postPlaySongR sid = do 
   meh <- lookupPostParam "stop"
