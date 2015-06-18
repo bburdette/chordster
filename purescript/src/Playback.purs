@@ -92,8 +92,8 @@ enmessage songref timeoutref canelt msg = do
                   , w: candims.width
                   , x: 0
                   , y: 0 }
-  trace "received msg: "
-  trace msg
+  -- trace "received msg: "
+  -- trace msg
   let wm = readJSON msg :: F WebMessage
   case wm of 
     Right wm -> case wm of 
@@ -103,8 +103,19 @@ enmessage songref timeoutref canelt msg = do
         writeRef songref (WebSong ws)
         drawsong (WebSong ws) 0 canelt
         -- trace (ws.wsName ++ show ws.wsChords) 
-        timeout <- startAnimation canelt (WebSong ws) 0
-        writeRef timeoutref $ Just timeout 
+        mbt <- readRef timeoutref
+        case mbt of 
+          Just tm -> do 
+            trace "start with clear"
+            clearTimeout globalWindow tm
+            timeout <- startAnimation canelt (WebSong ws) 0
+            writeRef timeoutref $ Just timeout 
+            return unit
+          _ -> do
+            trace "start without clear"
+            timeout <- startAnimation canelt (WebSong ws) 0
+            writeRef timeoutref $ Just timeout 
+            return unit
         return unit
         {-
         clearRect con2d wholerect 
@@ -114,8 +125,8 @@ enmessage songref timeoutref canelt msg = do
         return unit
         -}
       WmIndex (WsIndex wi) -> do
-        trace "index"
-        trace (show wi.wiIndex)
+        -- trace "index"
+        -- trace (show wi.wiIndex)
         (WebSong ws) <- readRef songref
         mbt <- readRef timeoutref
         case (Tuple mbt wi)  of 
