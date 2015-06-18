@@ -102,51 +102,23 @@ enmessage songref timeoutref canelt msg = do
         trace "song"
         trace ws.wsName 
         writeRef songref (WebSong ws)
-        drawsong (WebSong ws) 0 canelt
-        -- trace (ws.wsName ++ show ws.wsChords) 
+        doc <- document globalWindow
+        wat <- getElementById "songname" doc
+        traverse (setTextContent ws.wsName) wat 
         mbt <- readRef timeoutref
-        case mbt of 
-          Just tm -> do 
-            trace "start with clear"
-            clearTimeout globalWindow tm
-            timeout <- startAnimation canelt (WebSong ws) 0
-            writeRef timeoutref $ Just timeout 
-            return unit
-          _ -> do
-            trace "start without clear"
-            timeout <- startAnimation canelt (WebSong ws) 0
-            writeRef timeoutref $ Just timeout 
-            return unit
+        traverse (clearTimeout globalWindow) mbt
+        timeout <- startAnimation canelt (WebSong ws) 0
+        writeRef timeoutref $ Just timeout 
         return unit
-        {-
-        clearRect con2d wholerect 
-        strokeText con2d msg 50 100
-        -- save con2d   -- doesn't work across multiple calls to enmessage?
-        trace (ws.wsName ++ show ws.wsChords) 
-        return unit
-        -}
       WmIndex (WsIndex wi) -> do
         -- trace "index"
         -- trace (show wi.wiIndex)
         (WebSong ws) <- readRef songref
         mbt <- readRef timeoutref
-        case (Tuple mbt wi)  of 
-          (Tuple (Just tm) wi) -> do 
-            clearTimeout globalWindow tm
-            timeout <- startAnimation canelt (WebSong ws) wi.wiIndex 
-            writeRef timeoutref $ Just timeout 
-            return unit
-          _ ->
-            return unit
-        -- drawsong (WebSong song) wi.wiIndex canelt
-        -- return unit
-        {-
-        -- trace "index"
-        let tc = { x: 50, y: 200 }
-        clearRect con2d { x: tc.x - 20 , y: tc.y - 20, w: 200, h: 50 } 
-        strokeText con2d (show wi.wiIndex) tc.x tc.y
-        trace (show wi.wiIndex)
-        -}
+        traverse (clearTimeout globalWindow) mbt
+        timeout <- startAnimation canelt (WebSong ws) wi.wiIndex 
+        writeRef timeoutref $ Just timeout 
+        return unit
       default -> do 
         trace "message pattern match failed"
     Left _ -> do 
