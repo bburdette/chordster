@@ -18,6 +18,7 @@ import Control.Monad.Eff.Ref
 import Data.DOM.Simple.Window
 import Data.DOM.Simple.Document
 import Data.DOM.Simple.Element
+import qualified Data.DOM.Simple.Events as E
 import Data.DOM.Simple.Types
 import Dims
 import Data.Date 
@@ -150,6 +151,32 @@ enmessage songref timeoutref canelt msg = do
         trace "message pattern match failed"
     Left _ -> do 
         trace "message read failed"
+
+sizeCanvasEvt :: forall e. CanvasElement -> DOMEvent ->
+  Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
+sizeCanvasEvt canelt _ = sizeCanvas canelt 
+
+sizeCanvas :: forall e. CanvasElement -> 
+  Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
+sizeCanvas canelt = do 
+  -- con2d <- getContext2D canelt
+  globw <- innerWidth globalWindow
+  globh <- innerHeight globalWindow
+  doc <- document globalWindow
+  bod <- body doc
+  mbmain <- getElementById "main" doc 
+  case mbmain of 
+    Just main -> do 
+      mainw <- getClientWidth main 
+      bodh <- getOffsetHeight bod 
+      odims <- getCanvasDimensions canelt
+      let canh = odims.height + globh - bodh 
+          canw = mainw
+          -- canw = bodw - (globw - bodw) 
+      setCanvasDimensions {height: canh, 
+                           width: canw } canelt  
+      return unit
+    _ -> return unit
 
 drawsong :: forall e. WebSong -> Number -> CanvasElement
   -> Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
@@ -298,7 +325,9 @@ timeToChord modnow chordtime duration =
 
 -- this function is called on page load.
 -- registers the onMessage callback.
--- enlode :: forall e. Eff (ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
+enlode :: forall e. Eff (now :: Data.Date.Now, dom :: DOM, ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
+--  -> Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
+   
 enlode = do
   trace "enlode"
   doc <- document globalWindow
@@ -310,7 +339,10 @@ enlode = do
   songref <- newRef $ WebSong { wsName: "", wsChords: [], wsTempo: 0 }
   ref <- newRef $ Nothing
   WS.onMessage ws (enmessage songref ref canvas)
+  sizeCanvas canvas
+  E.addUIEventListener E.ResizeEvent (sizeCanvasEvt canvas) globalWindow
   trace "enlode end"
+  return unit
 
 -- boilerplate to get url for websockets.
 foreign import documentUrl
