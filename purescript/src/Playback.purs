@@ -271,15 +271,23 @@ animate canelt songduration begin beatms windowms acs = do
   -- yeah, animate!
   -- get current time.
   con2d <- getContext2D canelt
-  globw <- innerWidth globalWindow
-  globh <- innerHeight globalWindow
   now <- nowEpochMilliseconds
   let modnow = msMod (now - begin) songduration 
       acnows = (\(AniChord ac) -> Tuple (timeToChord modnow ac.time songduration) (AniChord ac)) <$> acs 
       drawAcs = A.filter (\(Tuple ms ac) -> ms < windowms) acnows
+      mbcurchord = (\x -> foldr tupcomp x acnows) <$> A.head acnows
+      tupcomp (Tuple msl acl) (Tuple msr acr) = 
+        if (msl > msr) then (Tuple msl acl) else (Tuple msr acr)
   -- draw the chords that remain after filtering.
   -- trace $ show $ (\(Tuple ttc (AniChord ac)) -> (show ttc) ++ " " ++ show ac.time) <$> acnows
-  drawAniChords con2d 25 100 500 60 modnow windowms drawAcs 
+  -- zefont <- font con2d
+  -- trace $ "font: " ++ show zefont
+  setFont "20px sans-serif" con2d 
+  cdims <- getCanvasDimensions canelt
+  clearRect con2d { x: 0, y: 0, w: cdims.width, h: cdims.height }
+  traverse (\(Tuple ms (AniChord ac)) -> do 
+    fillText con2d (ac.name) 25 25) mbcurchord 
+  drawAniChords con2d 0 100 cdims.width 60 modnow windowms drawAcs 
   return unit
 
 drawAniChords :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
@@ -299,8 +307,9 @@ drawAniChords con2d x y xw yw now window acs = do
   setFillStyle "#8080FF" con2d
   fillPath con2d $ rect con2d wholerect
   -- clearRect con2d wholerect 
+  setFillStyle "#000000" con2d
   traverse (\(Tuple x (Tuple _ (AniChord ac))) ->  
-    strokeText con2d (ac.name) x (y - 10)) (zip xes acs)
+    fillText con2d (ac.name) x (y - 10)) (zip xes acs)
   -- unclip
   restore con2d
   return unit
