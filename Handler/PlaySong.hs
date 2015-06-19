@@ -10,10 +10,12 @@ import Control.Concurrent
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
 import Data.Maybe
+import Database.Persist.Sql
 import Data.Traversable as TR
 import PlaySong
 import Yesod.WebSockets
 import Text.Julius
+import Database.Persist.Sql 
 
 playSongWs :: SongId -> WebSocketsT Handler ()
 playSongWs sid = do 
@@ -32,7 +34,7 @@ playSongWs sid = do
     (Just (song, chords), Just (tid, id)) | id == sid -> do  
       liftIO $ print $ "song thread exists; doing nothing. " ++ show (tid, id)
       -- actually, send song info if here.
-      let websong = toWebSong song chords
+      let websong = toWebSong 0 song chords
           wsjs = toJSON websong
       sendTextData (toJsonText wsjs)
       return () 
@@ -106,6 +108,10 @@ postPlaySongR sid = do
       app <- getYesod 
       oldinfo <- liftIO $ tryTakeMVar $ playThread $ songControl app
       case oldinfo of 
-         Nothing -> return ()
-         Just (tid,_) -> lift $ killThread tid 
+        Nothing -> return ()
+        Just (tid,_) -> do
+          lift $ print $ show $ fromSqlKey sid 
+          (liftIO . atomically) $ 
+            writeTChan (songLine app) (toJsonText $ toJSON (WsStop (fromSqlKey sid)))
+          lift $ killThread tid 
       redirect SongsR

@@ -35,7 +35,8 @@ data WebChord = WebChord
   }
  
 data WebSong = WebSong
-  { wsName :: String
+  { wsId :: Number
+  , wsName :: String
   , wsChords :: [WebChord]
   , wsTempo :: Number
   }
@@ -43,6 +44,9 @@ data WebSong = WebSong
 data WsIndex = WsIndex
   { wiIndex :: Number
   }
+
+data WsStop = WsStop
+  { wssId :: Number } 
 
 instance webChordIsForeign :: IsForeign WebChord where
   read value = do 
@@ -55,11 +59,13 @@ instance webChordIsForeign :: IsForeign WebChord where
 
 instance webSongIsForeign :: IsForeign WebSong where
   read value = do 
+    wi <- readProp "wsId" value
     wn <- readProp "wsName" value
     ch <- readProp "wsChords" value
     tm <- readProp "wsTempo" value
     return $ WebSong  
-      { wsName: wn
+      { wsId: wi
+      , wsName: wn
       , wsChords: ch 
       , wsTempo: tm 
       }
@@ -69,14 +75,21 @@ instance wsIndexIsForeign :: IsForeign WsIndex where
     wi <- readProp "wiIndex" value :: F Number
     return $ WsIndex { wiIndex: wi }
 
-data WebMessage = WmIndex WsIndex
-                | WmSong WebSong
+instance wsStopIsForeign :: IsForeign WsStop where
+  read value = do 
+    wsid <- readProp "wssId" value :: F Number
+    return $ WsStop { wssId: wsid }
+
+data WebMessage = WmSong WebSong
+                | WmIndex WsIndex
+                | WmStop WsStop
 
 -- just returns the first 'read' that succeeds.  
 instance webMessageIsForeign :: IsForeign WebMessage where
   read value = 
     (WmSong <$> (read value :: F WebSong))
     <|> (WmIndex <$> (read value :: F WsIndex))
+    <|> (WmStop <$> (read value :: F WsStop))
 
 -- in this callback function we process a message from the websocket.
 enmessage :: forall e. RefVal WebSong -> RefVal (Maybe Timeout) -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
@@ -93,8 +106,8 @@ enmessage songref timeoutref canelt msg = do
                   , w: candims.width
                   , x: 0
                   , y: 0 }
-  -- trace "received msg: "
-  -- trace msg
+  trace "received msg: "
+  trace msg
   let wm = readJSON msg :: F WebMessage
   case wm of 
     Right wm -> case wm of 
@@ -118,6 +131,11 @@ enmessage songref timeoutref canelt msg = do
         traverse (clearTimeout globalWindow) mbt
         timeout <- startAnimation canelt (WebSong ws) wi.wiIndex 
         writeRef timeoutref $ Just timeout 
+        return unit
+      WmStop (WsStop ws) -> do 
+        -- if there's an animation running, stop it.
+        mbt <- readRef timeoutref
+        traverse (clearTimeout globalWindow) mbt
         return unit
       default -> do 
         trace "message pattern match failed"
@@ -308,7 +326,7 @@ enlode = do
   ws <- WS.mkWebSocket wsurl
   Just canvas <- getCanvasElementById "canvas"
   --songref <- newRef $ WebSong { wsName: "", wsChords: [] }
-  songref <- newRef $ WebSong { wsName: "", wsChords: [], wsTempo: 0 }
+  songref <- newRef $ WebSong { wsId: 0, wsName: "", wsChords: [], wsTempo: 0 }
   ref <- newRef $ Nothing
   WS.onMessage ws (enmessage songref ref canvas)
   sizeCanvas canvas

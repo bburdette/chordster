@@ -10,6 +10,7 @@ import Control.Monad.Loops
 import SongControl
 import Data.Ratio
 import Data.List
+import Data.Int
 import Data.Maybe
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
@@ -30,7 +31,8 @@ data TextSong = TextSong
   deriving Show
 
 data WebSong = WebSong
-  { wsName :: Text
+  { wsId :: Int64
+  , wsName :: Text
   , wsChords :: [WebChord]
   , wsTempo :: Int
   }
@@ -49,6 +51,13 @@ data WsIndex = WsIndex { wiIndex :: Int }
 
 instance ToJSON WsIndex 
 
+data WsStop = WsStop
+  { wssId :: Int64
+  }
+  deriving Generic
+
+instance ToJSON WsStop 
+
 {-
 tsToWebSong :: TextSong -> WebSong
 tsToWebSong ts = WebSong { 
@@ -57,9 +66,10 @@ tsToWebSong ts = WebSong {
   }
 -}
 
-toWebSong :: Song -> [PlaySongChord] -> WebSong
-toWebSong song chords = WebSong { 
-    wsName = songName song 
+toWebSong :: Int64 -> Song -> [PlaySongChord] -> WebSong
+toWebSong sid song chords = WebSong { 
+    wsId = sid 
+  , wsName = songName song 
   , wsChords = 
       (\psc -> WebChord
         { wcName = (chordRootName (chordRoot psc) <> " " <> name psc)
@@ -127,7 +137,7 @@ playSong textchan song chords chorddests lightdests = do
   chordcons <- mapM (\(ip,port) -> openUDP ip port) chorddests
   lightcons <- mapM (\(ip,port) -> openUDP ip port) lightdests
   setupLights lightcons
-  let websong = toWebSong song chords
+  let websong = toWebSong 0 song chords
       wsjs = toJSON websong
   (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
   iterateWhile (\_ -> True) 
