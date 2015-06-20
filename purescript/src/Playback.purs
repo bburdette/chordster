@@ -21,6 +21,7 @@ import Data.DOM.Simple.Element
 import qualified Data.DOM.Simple.Events as E
 import Data.DOM.Simple.Types
 import Dims
+import Math
 import Data.Date 
 import Data.Foldable
 import Data.Time
@@ -99,6 +100,7 @@ enmessage :: forall e. RefVal WebSong -> RefVal (Maybe Timeout) -> CanvasElement
       dom :: DOM,
       trace :: Trace | e) Unit
 enmessage songref timeoutref canelt msg = do 
+  -- trace "received msg: "
   -- trace msg
   con2d <- getContext2D canelt
   candims <- getCanvasDimensions canelt
@@ -106,8 +108,6 @@ enmessage songref timeoutref canelt msg = do
                   , w: candims.width
                   , x: 0
                   , y: 0 }
-  trace "received msg: "
-  trace msg
   let wm = readJSON msg :: F WebMessage
   case wm of 
     Right wm -> case wm of 
@@ -167,58 +167,6 @@ sizeCanvas canelt = do
                            width: canw } canelt  
       return unit
     _ -> return unit
-
-drawsong :: forall e. WebSong -> Number -> CanvasElement
-  -> Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
-drawsong (WebSong song) index canelt = do 
-  con2d <- getContext2D canelt
-  globw <- innerWidth globalWindow
-  globh <- innerHeight globalWindow
-  doc <- document globalWindow
-  bod <- body doc
-  mbmain <- getElementById "main" doc 
-  case mbmain of 
-    Just main -> do 
-      mainw <- getClientWidth main 
-      bodh <- getOffsetHeight bod 
-      odims <- getCanvasDimensions canelt
-      let canh = odims.height + globh - bodh 
-          canw = mainw
-          -- canw = bodw - (globw - bodw) 
-      setCanvasDimensions {height: canh, 
-                           width: canw } canelt  
-      -- get the dims again, just in case they didn't take.
-      candims <- getCanvasDimensions canelt
-      let wholerect = { h: candims.height
-                      , w: candims.width
-                      , x: 0
-                      , y: 0 }
-      clearRect con2d wholerect 
-      strokeText con2d (song.wsName) (candims.width * 0.5) 25
-      let count = A.length song.wsChords
-      case count of 
-        0 -> return unit
-        _ -> do
-          let prev = song.wsChords A.!! (mod (index - 1) count)
-              cur = song.wsChords A.!! (mod index count)
-              next = song.wsChords A.!! (mod (index + 1) count)
-              mod x y = let z = x % y in
-                if z < 0 then z + y else z
-              y = 100
-              toop = Tuple prev (Tuple cur next)
-          case toop of 
-            (Tuple (Just prev) (Tuple (Just (WebChord cur)) (Just (WebChord next)))) -> do 
-              -- strokeText con2d prev (candims.width * 0.25) y
-              -- trace $ show $ cur.wcName
-              strokeText con2d cur.wcName (candims.width * 0.5) y
-              strokeText con2d next.wcName (candims.width * 0.75) y
-              return unit 
-            _ -> do 
-              trace "prev/cur/next failed:"
-              -- trace $ "prev: " ++ show prev
-              -- trace $ "cur: " ++ show cur
-              -- trace $ "next: " ++ show next
-              return unit 
 
 -- compute milliseconds per beat
 tempoToBeatMs :: Number -> Milliseconds
@@ -288,7 +236,20 @@ animate canelt songduration begin beatms windowms acs = do
   traverse (\(Tuple ms (AniChord ac)) -> do 
     fillText con2d (ac.name) 25 25) mbcurchord 
   drawAniChords con2d 0 100 cdims.width 60 modnow windowms drawAcs 
+  drawChordGrid con2d 0 (cdims.height * 0.5) cdims.width (cdims.height * 0.5) (drawAcs A.!! 0) drawAcs 
   return unit
+
+{-
+onChordDraw :: forall eff. CanvasElement -> Number -> [AniChord] -> 
+  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+onChordDraw canelt curchordidx acs = do 
+  con2d <- getContext2D canelt
+  cdims <- getCanvasDimensions canelt
+  let mbcurchord = acs A.!! curchordidx
+  traverse (\(Tuple ms (AniChord ac)) -> do 
+    fillText con2d (ac.name) 25 25) mbcurchord 
+  drawChordGrid con2d 0 (cdims.height * 0.5) cdims.width (cdims.height * 0.5) mbcurchord acs
+-}
 
 drawAniChords :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
 drawAniChords con2d x y xw yw now window acs = do
@@ -313,6 +274,41 @@ drawAniChords con2d x y xw yw now window acs = do
   -- unclip
   restore con2d
   return unit
+
+drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Maybe (Tuple Milliseconds AniChord) -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawChordGrid con2d x y xw yw (Just (Tuple ms (AniChord curchord))) acs = do
+  -- how many chords are we talking?
+  let count = A.length acs
+  -- what's the size of t 
+  tm <- measureText con2d curchord.name
+  --  
+  let numperrow = floor (xw / tm.width)
+      rows = ceil (count / numperrow)
+      rowheight = yw / rows
+      hspace = xw / numperrow
+      drawloc hspace rowheight index = 
+        let inum = index / numperrow
+            row = floor inum
+            col = (inum - row) * numperrow
+         in 
+          Tuple (x + col * hspace) (y + row * rowheight)
+      dexes = A.range 0 (A.length acs - 1)
+      dexedacs = zip dexes acs
+  -- trace $ "numperrow: " ++ show numperrow
+  -- trace $ "rows: " ++ show rows
+  -- trace $ "rowheight: " ++ show rowheight
+  -- trace $ "hspace: " ++ show hspace
+  -- setFont (show rowheight ++ "px sans-serif") con2d 
+  setFillStyle "#000000" con2d
+  traverse (\(Tuple xidx (Tuple _ (AniChord ac))) -> do
+    let toop = drawloc hspace rowheight xidx
+    fillText con2d (ac.name) (fst toop) (snd toop)
+    -- trace $ "blah x " ++ (show (fst toop)) ++ 
+    --   " y " ++ (show (snd toop)))
+    )
+    dexedacs
+  return unit 
+drawChordGrid con2d x y xw yw Nothing acs = return unit
 
 -- how long until we reach the chord?
 timeToChord :: Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds
