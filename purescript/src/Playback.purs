@@ -265,22 +265,28 @@ onChordDraw canelt curchordidx acs = do
   cdims <- getCanvasDimensions canelt
   setFont "20px sans-serif" con2d 
   let mbcurchord = acs A.!! curchordidx
+  mcw <- maxChordWidth con2d acs
   -- draw current chord.
   traverse (\(AniChord ac) -> do 
     tm <- measureText con2d ac.name
-    clearRect con2d { x: 25, y: 5, w: tm.width, h: 20 }
+    clearRect con2d { x: 25, y: 5, w: mcw, h: 25 }
     fillText con2d (ac.name) 25 25) mbcurchord 
   let cdh = (cdims.height * 0.5)
-  drawChordGrid con2d 0 cdh cdims.width cdh mbcurchord acs
+  drawChordGrid con2d 0 cdh cdims.width cdh mcw acs
 
-drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Maybe AniChord -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-drawChordGrid con2d x y xw yw (Just (AniChord curchord)) acs = do
+maxChordWidth :: forall eff. Context2D -> [AniChord] -> Eff (canvas :: Canvas, trace :: Trace | eff) Number
+maxChordWidth con2d chords = do 
+  widths <- traverse (\(AniChord ac) -> do
+    tm <- measureText con2d ac.name
+    return tm.width) 
+    chords
+  return $ foldr (\a b -> if a > b then a else b) 0 widths 
+
+drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawChordGrid con2d x y xw yw maxchordwidth acs = do
   -- how many chords are we talking?
   let count = A.length acs
-  -- what's the size of t 
-  tm <- measureText con2d curchord.name
-  --  
-  let numperrow = floor (xw / tm.width)
+      numperrow = floor (xw / maxchordwidth)
       rows = ceil (count / numperrow)
       rowheight = yw / rows
       hspace = xw / numperrow
@@ -307,7 +313,7 @@ drawChordGrid con2d x y xw yw (Just (AniChord curchord)) acs = do
     )
     dexedacs
   return unit 
-drawChordGrid con2d x y xw yw Nothing acs = return unit
+-- drawChordGrid con2d x y xw yw Nothing acs = return unit
 
 -- how long until we reach the chord?
 timeToChord :: Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds
