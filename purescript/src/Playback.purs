@@ -272,7 +272,7 @@ onChordDraw canelt curchordidx acs = do
     clearRect con2d { x: 25, y: 5, w: mcw, h: 25 }
     fillText con2d (ac.name) 25 25) mbcurchord 
   let cdh = (cdims.height * 0.5)
-  drawChordGrid con2d 0 cdh cdims.width cdh mcw acs
+  drawChordGrid con2d 0 cdh cdims.width cdh mcw curchordidx acs
 
 maxChordWidth :: forall eff. Context2D -> [AniChord] -> Eff (canvas :: Canvas, trace :: Trace | eff) Number
 maxChordWidth con2d chords = do 
@@ -282,8 +282,8 @@ maxChordWidth con2d chords = do
     chords
   return $ foldr (\a b -> if a > b then a else b) 0 widths 
 
-drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-drawChordGrid con2d x y xw yw maxchordwidth acs = do
+drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawChordGrid con2d x y xw yw maxchordwidth curchordidx acs = do
   -- how many chords are we talking?
   let count = A.length acs
       numperrow = floor (xw / maxchordwidth)
@@ -307,9 +307,13 @@ drawChordGrid con2d x y xw yw maxchordwidth acs = do
   setFillStyle "#000000" con2d
   traverse (\(Tuple xidx (AniChord ac)) -> do
     let toop = drawloc hspace rowheight xidx
-    fillText con2d (ac.name) (fst toop) (snd toop)
-    -- trace $ "blah x " ++ (show (fst toop)) ++ 
-    --   " y " ++ (show (snd toop)))
+    if xidx == curchordidx
+      then do 
+        setFillStyle "#FF0000" con2d
+        fillText con2d (ac.name) (fst toop) (snd toop)
+        setFillStyle "#000000" con2d
+      else do 
+        fillText con2d (ac.name) (fst toop) (snd toop)
     )
     dexedacs
   return unit 
