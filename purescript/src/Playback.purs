@@ -131,6 +131,8 @@ enmessage songref timeoutref canelt msg = do
         traverse (clearTimeout globalWindow) mbt
         timeout <- startAnimation canelt (WebSong ws) wi.wiIndex 
         writeRef timeoutref $ Just timeout 
+        let anichords = makeAniChords (WebSong ws)
+        onChordDraw canelt wi.wiIndex anichords
         return unit
       WmStop (WsStop ws) -> do 
         -- if there's an animation running, stop it.
@@ -223,33 +225,14 @@ animate canelt songduration begin beatms windowms acs = do
   let modnow = msMod (now - begin) songduration 
       acnows = (\(AniChord ac) -> Tuple (timeToChord modnow ac.time songduration) (AniChord ac)) <$> acs 
       drawAcs = A.filter (\(Tuple ms ac) -> ms < windowms) acnows
-      mbcurchord = (\x -> foldr tupcomp x acnows) <$> A.head acnows
-      tupcomp (Tuple msl acl) (Tuple msr acr) = 
-        if (msl > msr) then (Tuple msl acl) else (Tuple msr acr)
   -- draw the chords that remain after filtering.
   -- trace $ show $ (\(Tuple ttc (AniChord ac)) -> (show ttc) ++ " " ++ show ac.time) <$> acnows
   -- zefont <- font con2d
   -- trace $ "font: " ++ show zefont
   setFont "20px sans-serif" con2d 
   cdims <- getCanvasDimensions canelt
-  clearRect con2d { x: 0, y: 0, w: cdims.width, h: cdims.height }
-  traverse (\(Tuple ms (AniChord ac)) -> do 
-    fillText con2d (ac.name) 25 25) mbcurchord 
   drawAniChords con2d 0 100 cdims.width 60 modnow windowms drawAcs 
-  drawChordGrid con2d 0 (cdims.height * 0.5) cdims.width (cdims.height * 0.5) (drawAcs A.!! 0) drawAcs 
   return unit
-
-{-
-onChordDraw :: forall eff. CanvasElement -> Number -> [AniChord] -> 
-  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-onChordDraw canelt curchordidx acs = do 
-  con2d <- getContext2D canelt
-  cdims <- getCanvasDimensions canelt
-  let mbcurchord = acs A.!! curchordidx
-  traverse (\(Tuple ms (AniChord ac)) -> do 
-    fillText con2d (ac.name) 25 25) mbcurchord 
-  drawChordGrid con2d 0 (cdims.height * 0.5) cdims.width (cdims.height * 0.5) mbcurchord acs
--}
 
 drawAniChords :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
 drawAniChords con2d x y xw yw now window acs = do
@@ -275,8 +258,23 @@ drawAniChords con2d x y xw yw now window acs = do
   restore con2d
   return unit
 
-drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Maybe (Tuple Milliseconds AniChord) -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-drawChordGrid con2d x y xw yw (Just (Tuple ms (AniChord curchord))) acs = do
+onChordDraw :: forall eff. CanvasElement -> Number -> [AniChord] -> 
+  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+onChordDraw canelt curchordidx acs = do 
+  con2d <- getContext2D canelt
+  cdims <- getCanvasDimensions canelt
+  setFont "20px sans-serif" con2d 
+  let mbcurchord = acs A.!! curchordidx
+  -- draw current chord.
+  traverse (\(AniChord ac) -> do 
+    tm <- measureText con2d ac.name
+    clearRect con2d { x: 25, y: 5, w: tm.width, h: 20 }
+    fillText con2d (ac.name) 25 25) mbcurchord 
+  let cdh = (cdims.height * 0.5)
+  drawChordGrid con2d 0 cdh cdims.width cdh mbcurchord acs
+
+drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Maybe AniChord -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawChordGrid con2d x y xw yw (Just (AniChord curchord)) acs = do
   -- how many chords are we talking?
   let count = A.length acs
   -- what's the size of t 
@@ -291,7 +289,7 @@ drawChordGrid con2d x y xw yw (Just (Tuple ms (AniChord curchord))) acs = do
             row = floor inum
             col = (inum - row) * numperrow
          in 
-          Tuple (x + col * hspace) (y + row * rowheight)
+          Tuple (x + col * hspace) (y + 20 + row * rowheight)
       dexes = A.range 0 (A.length acs - 1)
       dexedacs = zip dexes acs
   -- trace $ "numperrow: " ++ show numperrow
@@ -299,8 +297,9 @@ drawChordGrid con2d x y xw yw (Just (Tuple ms (AniChord curchord))) acs = do
   -- trace $ "rowheight: " ++ show rowheight
   -- trace $ "hspace: " ++ show hspace
   -- setFont (show rowheight ++ "px sans-serif") con2d 
+  clearRect con2d { x: x, y: y, w: xw, h: yw }
   setFillStyle "#000000" con2d
-  traverse (\(Tuple xidx (Tuple _ (AniChord ac))) -> do
+  traverse (\(Tuple xidx (AniChord ac)) -> do
     let toop = drawloc hspace rowheight xidx
     fillText con2d (ac.name) (fst toop) (snd toop)
     -- trace $ "blah x " ++ (show (fst toop)) ++ 
