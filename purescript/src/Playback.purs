@@ -255,8 +255,15 @@ drawAniChords con2d { x: x, y: y, w: xw, h: yw } now window acs = do
   fillPath con2d $ rect con2d wholerect
   -- clearRect con2d wholerect 
   setFillStyle "#000000" con2d
-  traverse (\(Tuple x (Tuple _ (AniChord ac))) ->  
-    fillText con2d (ac.name) x (y - 10)) (zip xes acs)
+  let twoPi = pi * 2
+  traverse (\(Tuple x (Tuple _ (AniChord ac))) -> do
+    fillText con2d (ac.name) x (y - 10)
+    let a = { x: x, y: y - 35, r: 10, start: 0, end: twoPi }
+    beginPath con2d
+    arc con2d a
+    fill con2d
+    )
+    (zip xes acs)
   -- unclip
   restore con2d
   return unit
@@ -266,11 +273,11 @@ drawAniDots :: forall eff. Context2D -> Rectangle
 -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
 drawAniDots con2d { x: x, y: y, w: xw, h: yw } (Milliseconds begin) (Milliseconds beatms) (Milliseconds windowms) (Milliseconds now) = do
   let beatsofar = (now - begin) / beatms
-      firstbeat = (beatsofar - floor beatsofar) * beatms
+      firstbeat = (ceil beatsofar - beatsofar) * beatms
       numbeats = floor ((windowms - firstbeat) / beatms)
       b2x = xw / windowms
       dots = A.range 0 numbeats
-      dotsms = (\i -> xw - ((i * beatms + firstbeat) * b2x) + x) <$> dots
+      dotsms = (\i -> (i * beatms + firstbeat) * b2x) <$> dots
       twoPi = 2 * pi
   setFillStyle "#000000" con2d
   traverse (\dtx -> do 
