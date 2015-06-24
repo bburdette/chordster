@@ -92,6 +92,27 @@ instance webMessageIsForeign :: IsForeign WebMessage where
     <|> (WmIndex <$> (read value :: F WsIndex))
     <|> (WmStop <$> (read value :: F WsStop))
 
+data AniChord = AniChord
+  { name :: String
+  , time :: Milliseconds 
+  , beats :: Number       -- duration of the chord in beats. 
+  , onbeat :: Number      -- how many beats until now in the song.
+  }
+
+makeAniChords :: WebSong -> [AniChord]
+makeAniChords (WebSong ws) = 
+  snd $ foldl accum (Tuple 0 []) ws.wsChords
+  where
+    beatms = tempoToBeatMs ws.wsTempo 
+    accum :: (Tuple Number [AniChord]) -> WebChord -> (Tuple Number [AniChord])
+    accum (Tuple totebeats acs) (WebChord wc) = 
+      (Tuple (totebeats + wc.wcDuration)
+            (A.snoc acs 
+                    (AniChord { name: wc.wcName, 
+                        time: Milliseconds totebeats * beatms, 
+                        beats: wc.wcDuration,
+                        onbeat: totebeats })))
+
 -- in this callback function we process a message from the websocket.
 enmessage :: forall e. RefVal WebSong -> RefVal (Maybe Timeout) -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
       canvas :: Canvas, 
@@ -180,22 +201,6 @@ tempoToBeatMs tempo =
       -- one minute in milliseconds is...
       let minute = 1000 * 60 in 
         Milliseconds (minute / tempo)
-
-data AniChord = AniChord
-  { name :: String
-  , time :: Milliseconds 
-  }
-
-makeAniChords :: WebSong -> [AniChord]
-makeAniChords (WebSong ws) = 
-  snd $ foldl accum (Tuple (Milliseconds 0) []) ws.wsChords
-  where
-    beatms = tempoToBeatMs ws.wsTempo 
-    accum :: (Tuple Milliseconds [AniChord]) -> WebChord -> (Tuple Milliseconds [AniChord])
-    accum (Tuple time acs) (WebChord wc) = 
-      (Tuple (time + (Milliseconds wc.wcDuration) * beatms) 
-            (A.snoc acs 
-                    (AniChord { name: wc.wcName, time: time })))
 
 startAnimation canelt (WebSong ws) chordindex = do 
   begin <- nowEpochMilliseconds
@@ -304,7 +309,8 @@ onChordDraw canelt curchordidx acs = do
     clearRect con2d { x: 25, y: 5, w: mcw, h: 25 }
     fillText con2d (ac.name) 25 25) mbcurchord 
   let cdh = (cdims.height * 0.5)
-  drawChordGrid con2d 0 cdh cdims.width cdh mcw curchordidx acs
+      chrect = { x: 0, y: cdh, w: cdims.width, h: cdh }
+  drawMsChordGrid con2d chrect 30 mcw curchordidx acs
 
 maxChordWidth :: forall eff. Context2D -> [AniChord] -> Eff (canvas :: Canvas, trace :: Trace | eff) Number
 maxChordWidth con2d chords = do 
@@ -314,8 +320,8 @@ maxChordWidth con2d chords = do
     chords
   return $ foldr (\a b -> if a > b then a else b) 0 widths 
 
-drawChordGrid :: forall eff. Context2D -> Number -> Number -> Number -> Number -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-drawChordGrid con2d x y xw yw maxchordwidth curchordidx acs = do
+drawChordGrid :: forall eff. Context2D -> Rectangle -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawChordGrid con2d { x: x, y: y, w: xw, h: yw } maxchordwidth curchordidx acs = do
   -- how many chords are we talking?
   let count = A.length acs
       numperrow = floor (xw / maxchordwidth)
@@ -349,9 +355,54 @@ drawChordGrid con2d x y xw yw maxchordwidth curchordidx acs = do
     )
     dexedacs
   return unit 
--- drawChordGrid con2d x y xw yw Nothing acs = return unit
 
--- how long until we reach the chord?
+drawMsChordGrid :: forall eff. Context2D -> Rectangle -> Number -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawMsChordGrid con2d { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth curchordidx acs = do
+  -- how many beats are we talking?
+  let beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
+      minbeats = foldr (\(AniChord ac) minimum -> min minimum ac.beats) beattot acs
+      beatwidth = maxchordwidth / minbeats
+      beatrowwidth = xw - maxchordwidth
+      numperrow = floor (beatrowwidth / beatwidth)
+      rows = ceil (beattot / numperrow)
+      -- rowheight = yw / rows
+      -- hspace = xw / numperrow
+      drawloc numperrow rowheight hspace index = 
+        let inum = index / numperrow
+            row = floor inum
+            col = (inum - row) * numperrow
+         in 
+          Tuple (x + col * hspace) (y + 20 + row * rowheight)
+      beatloc = drawloc numperrow rowheight beatwidth
+      twoPi = 2 * pi
+      dexes = A.range 0 (A.length acs - 1)
+      dexedacs = zip dexes acs
+  clearRect con2d { x: x, y: y, w: xw, h: yw }
+  setFillStyle "#000000" con2d
+  -- draw the chords.
+  traverse (\(Tuple idx (AniChord ac)) -> do
+    let toop = beatloc ac.onbeat
+    if idx == curchordidx
+      then do 
+        setFillStyle "#FF0000" con2d
+        fillText con2d (ac.name) (fst toop) (snd toop)
+        setFillStyle "#000000" con2d
+      else do 
+        fillText con2d (ac.name) (fst toop) (snd toop)
+    )
+    dexedacs
+  -- draw the beats
+  traverse (\xidx -> do 
+    let toop = beatloc xidx
+    let a = { x: (fst toop), y: (snd toop), r: 5, start: 0, end: twoPi }
+    beginPath con2d
+    arc con2d a
+    fill con2d)
+    (A.range 0 (beattot - 1))
+    
+  return unit 
+
+--- how long until we reach the chord?
 timeToChord :: Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds
 timeToChord modnow chordtime duration = 
   let ct = chordtime - modnow in
