@@ -30,6 +30,8 @@ import Data.Traversable
 --  data structures we're receiving from haskell ----
 -- main data structure is WebMessage, which could be a websong or a wsindex.
 
+twoPi = 2 * pi
+
 data WebChord = WebChord
   { wcName :: String
   , wcDuration :: Number
@@ -114,7 +116,7 @@ makeAniChords (WebSong ws) =
                         onbeat: totebeats })))
 
 -- in this callback function we process a message from the websocket.
-enmessage :: forall e. RefVal WebSong -> RefVal (Maybe Timeout) -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
+enmessage :: forall e. RefVal WebSong -> RefVal (Maybe (Tuple Timeout Timeout)) -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
       canvas :: Canvas, 
       ws :: WS.WebSocket,
       now :: Data.Date.Now,
@@ -140,25 +142,34 @@ enmessage songref timeoutref canelt msg = do
         wat <- getElementById "songname" doc
         traverse (setTextContent ws.wsName) wat 
         mbt <- readRef timeoutref
-        traverse (clearTimeout globalWindow) mbt
-        timeout <- startAnimation canelt (WebSong ws) 0
-        writeRef timeoutref $ Just timeout 
+        traverse (\(Tuple tmo1 tmo2) -> do 
+          clearTimeout globalWindow tmo1 
+          clearTimeout globalWindow tmo2)
+          mbt
+        timeouts <- startAnimation canelt (WebSong ws) 0
+        writeRef timeoutref $ Just timeouts 
         return unit
       WmIndex (WsIndex wi) -> do
         -- trace "index"
         -- trace (show wi.wiIndex)
         (WebSong ws) <- readRef songref
         mbt <- readRef timeoutref
-        traverse (clearTimeout globalWindow) mbt
-        timeout <- startAnimation canelt (WebSong ws) wi.wiIndex 
-        writeRef timeoutref $ Just timeout 
+        traverse (\(Tuple tmo1 tmo2) -> do 
+          clearTimeout globalWindow tmo1 
+          clearTimeout globalWindow tmo2)
+          mbt
+        timeouts <- startAnimation canelt (WebSong ws) wi.wiIndex 
+        writeRef timeoutref $ Just timeouts
         let anichords = makeAniChords (WebSong ws)
         onChordDraw canelt wi.wiIndex anichords
         return unit
       WmStop (WsStop ws) -> do 
         -- if there's an animation running, stop it.
         mbt <- readRef timeoutref
-        traverse (clearTimeout globalWindow) mbt
+        traverse (\(Tuple tmo1 tmo2) -> do 
+          clearTimeout globalWindow tmo1 
+          clearTimeout globalWindow tmo2)
+          mbt
         return unit
       default -> do 
         trace "message pattern match failed"
@@ -221,10 +232,11 @@ startAnimation canelt (WebSong ws) chordindex = do
   mcw <- maxChordWidth con2d anichords
   let beatloc = gridBeatLoc chrect rowheight mcw anichords 
       bms = (\(Milliseconds ms) -> ms) beatms
-  setInterval globalWindow 40 
+  meh1 <- setInterval globalWindow 40 
     (animate canelt songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
-  setInterval globalWindow bms
+  meh2 <- setInterval globalWindow bms
     (anibeat canelt songduration (begin - curchordtime) beatms beatloc)
+  return $ Tuple meh1 meh2
 
 anibeat :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> (Number -> (Tuple Number Number)) -> 
   Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
@@ -239,25 +251,22 @@ anibeat canelt songduration begin beatms beatloc = do
             floor $ 0.5 + ((\(Milliseconds nowms) (Milliseconds bms) -> nowms / bms) modnow beatms) 
       nowbeat = tobeat now
       prevbeat = tobeat (now - beatms)
-      twoPi = 2 * pi
-      drawbeat :: forall eff. Number -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-      drawbeat beat = do 
-        let toop = beatloc beat
-            a = { x: (fst toop), y: (snd toop) - 35, r: 5, start: 0, end: twoPi }
-        -- let toop = beatloc beat
-        --    a = { x: 100, y: 100 - 35, r: 5, start: 0, end: twoPi }
-        beginPath con2d
-        arc con2d a
-        fill con2d
-        return unit
   -- black dot on prev beat, red dot on nowbeat.
-  setFillStyle "#000000" con2d
-  drawbeat prevbeat
+  setFillStyle "#00FF00" con2d
+  drawbeat beatloc con2d prevbeat
   setFillStyle "#FF0000" con2d
-  drawbeat nowbeat
+  drawbeat beatloc con2d nowbeat
   return unit
-   
 
+drawbeat :: forall eff. (Number -> (Tuple Number Number)) -> Context2D -> Number -> Eff (canvas :: Canvas | eff) Unit   
+drawbeat beatloc con2d beat = do 
+  let toop = beatloc beat
+      a = { x: (fst toop), y: (snd toop) - 35, r: 5, start: 0, end: twoPi }
+  beginPath con2d
+  arc con2d a
+  fill con2d
+  return unit
+ 
 msMod :: Milliseconds -> Milliseconds -> Milliseconds 
 msMod (Milliseconds l) (Milliseconds r) = 
   Milliseconds (l % r) 
@@ -301,7 +310,6 @@ drawAniChords con2d { x: x, y: y, w: xw, h: yw } now window acs = do
   fillPath con2d $ rect con2d wholerect
   -- clearRect con2d wholerect 
   setFillStyle "#000000" con2d
-  let twoPi = pi * 2
   traverse (\(Tuple x (Tuple _ (AniChord ac))) -> do
     fillText con2d (ac.name) x (y - 10)
     let a = { x: x, y: y - 35, r: 10, start: 0, end: twoPi }
@@ -324,7 +332,6 @@ drawAniDots con2d { x: x, y: y, w: xw, h: yw } (Milliseconds begin) (Millisecond
       b2x = xw / windowms
       dots = A.range 0 numbeats
       dotsms = (\i -> (i * beatms + firstbeat) * b2x) <$> dots
-      twoPi = 2 * pi
   setFillStyle "#000000" con2d
   traverse (\dtx -> do 
       let a = { x: dtx, y: y - 10, r: 5, start: 0, end: twoPi }
@@ -354,7 +361,11 @@ onChordDraw canelt curchordidx acs = do
       rowheight = 30
       beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
       beatloc = gridBeatLoc chrect rowheight mcw acs 
-  drawMsChordGrid con2d chrect beatloc beattot curchordidx acs
+  clearRect con2d chrect
+  drawMsChordGrid con2d beatloc beattot curchordidx acs
+  traverse (\(AniChord ac) -> drawbeat beatloc con2d ac.onbeat) mbcurchord
+  return unit
+  
 
 maxChordWidth :: forall eff. Context2D -> [AniChord] -> Eff (canvas :: Canvas, trace :: Trace | eff) Number
 maxChordWidth con2d chords = do 
@@ -363,42 +374,6 @@ maxChordWidth con2d chords = do
     return tm.width) 
     chords
   return $ foldr (\a b -> if a > b then a else b) 0 widths 
-
-drawChordGrid :: forall eff. Context2D -> Rectangle -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-drawChordGrid con2d { x: x, y: y, w: xw, h: yw } maxchordwidth curchordidx acs = do
-  -- how many chords are we talking?
-  let count = A.length acs
-      numperrow = floor (xw / maxchordwidth)
-      rows = ceil (count / numperrow)
-      rowheight = yw / rows
-      hspace = xw / numperrow
-      drawloc hspace rowheight index = 
-        let inum = index / numperrow
-            row = floor inum
-            col = (inum - row) * numperrow
-         in 
-          Tuple (x + col * hspace) (y + 20 + row * rowheight)
-      dexes = A.range 0 (A.length acs - 1)
-      dexedacs = zip dexes acs
-  -- trace $ "numperrow: " ++ show numperrow
-  -- trace $ "rows: " ++ show rows
-  -- trace $ "rowheight: " ++ show rowheight
-  -- trace $ "hspace: " ++ show hspace
-  -- setFont (show rowheight ++ "px sans-serif") con2d 
-  clearRect con2d { x: x, y: y, w: xw, h: yw }
-  setFillStyle "#000000" con2d
-  traverse (\(Tuple xidx (AniChord ac)) -> do
-    let toop = drawloc hspace rowheight xidx
-    if xidx == curchordidx
-      then do 
-        setFillStyle "#FF0000" con2d
-        fillText con2d (ac.name) (fst toop) (snd toop)
-        setFillStyle "#000000" con2d
-      else do 
-        fillText con2d (ac.name) (fst toop) (snd toop)
-    )
-    dexedacs
-  return unit 
 
 gridBeatLoc :: Rectangle -> Number -> Number -> [AniChord] -> (Number -> (Tuple Number Number))
 gridBeatLoc { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth acs = 
@@ -419,13 +394,11 @@ gridBeatLoc { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth acs =
           Tuple (x + col * hspace) (y + 20 + row * rowheight) in 
   drawloc numperrow rowheight beatwidth
 
-drawMsChordGrid :: forall eff. Context2D -> Rectangle -> (Number -> (Tuple Number Number)) -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-drawMsChordGrid con2d { x: x, y: y, w: xw, h: yw } beatloc beattot curchordidx acs = do
+drawMsChordGrid :: forall eff. Context2D -> (Number -> (Tuple Number Number)) -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawMsChordGrid con2d beatloc beattot curchordidx acs = do
   -- how many beats are we talking?
-  let twoPi = 2 * pi
-      dexes = A.range 0 (A.length acs - 1)
+  let dexes = A.range 0 (A.length acs - 1)
       dexedacs = zip dexes acs
-  clearRect con2d { x: x, y: y, w: xw, h: yw }
   setFillStyle "#000000" con2d
   -- draw the chords.
   traverse (\(Tuple idx (AniChord ac)) -> do
