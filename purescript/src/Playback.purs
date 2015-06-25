@@ -204,6 +204,8 @@ tempoToBeatMs tempo =
 
 startAnimation canelt (WebSong ws) chordindex = do 
   begin <- nowEpochMilliseconds
+  cdims <- getCanvasDimensions canelt
+  con2d <- getContext2D canelt
   let anichords = makeAniChords (WebSong ws)
       beatms = tempoToBeatMs ws.wsTempo
       songduration :: Milliseconds
@@ -213,13 +215,52 @@ startAnimation canelt (WebSong ws) chordindex = do
           (Milliseconds 0) 
           ws.wsChords
       curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (anichords A.!! chordindex) 
+      cdh = (cdims.height * 0.5)
+      chrect = { x: 0, y: cdh, w: cdims.width, h: cdh }
+      rowheight = 30
+  mcw <- maxChordWidth con2d anichords
+  let beatloc = gridBeatLoc chrect rowheight mcw anichords 
+      bms = (\(Milliseconds ms) -> ms) beatms
   setInterval globalWindow 40 
     (animate canelt songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
+  setInterval globalWindow bms
+    (anibeat canelt songduration (begin - curchordtime) beatms beatloc)
+
+anibeat :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> (Number -> (Tuple Number Number)) -> 
+  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+anibeat canelt songduration begin beatms beatloc = do 
+  con2d <- getContext2D canelt
+  now <- nowEpochMilliseconds
+  -- compute current and previous beat number.
+  let tobeat :: Milliseconds -> Number
+      tobeat nowms = 
+        let modnow = msMod (now - begin) songduration 
+          in
+            floor $ 0.5 + ((\(Milliseconds nowms) (Milliseconds bms) -> nowms / bms) modnow beatms) 
+      nowbeat = tobeat now
+      prevbeat = tobeat (now - beatms)
+      twoPi = 2 * pi
+      drawbeat :: forall eff. Number -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+      drawbeat beat = do 
+        let toop = beatloc beat
+            a = { x: (fst toop), y: (snd toop) - 35, r: 5, start: 0, end: twoPi }
+        -- let toop = beatloc beat
+        --    a = { x: 100, y: 100 - 35, r: 5, start: 0, end: twoPi }
+        beginPath con2d
+        arc con2d a
+        fill con2d
+        return unit
+  -- black dot on prev beat, red dot on nowbeat.
+  setFillStyle "#000000" con2d
+  drawbeat prevbeat
+  setFillStyle "#FF0000" con2d
+  drawbeat nowbeat
+  return unit
+   
 
 msMod :: Milliseconds -> Milliseconds -> Milliseconds 
 msMod (Milliseconds l) (Milliseconds r) = 
   Milliseconds (l % r) 
-
 
 animate :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds -> [AniChord] -> 
   Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
@@ -310,7 +351,10 @@ onChordDraw canelt curchordidx acs = do
     fillText con2d (ac.name) 25 25) mbcurchord 
   let cdh = (cdims.height * 0.5)
       chrect = { x: 0, y: cdh, w: cdims.width, h: cdh }
-  drawMsChordGrid con2d chrect 30 mcw curchordidx acs
+      rowheight = 30
+      beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
+      beatloc = gridBeatLoc chrect rowheight mcw acs 
+  drawMsChordGrid con2d chrect beatloc beattot curchordidx acs
 
 maxChordWidth :: forall eff. Context2D -> [AniChord] -> Eff (canvas :: Canvas, trace :: Trace | eff) Number
 maxChordWidth con2d chords = do 
@@ -356,8 +400,8 @@ drawChordGrid con2d { x: x, y: y, w: xw, h: yw } maxchordwidth curchordidx acs =
     dexedacs
   return unit 
 
-drawMsChordGrid :: forall eff. Context2D -> Rectangle -> Number -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-drawMsChordGrid con2d { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth curchordidx acs = do
+gridBeatLoc :: Rectangle -> Number -> Number -> [AniChord] -> (Number -> (Tuple Number Number))
+gridBeatLoc { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth acs = 
   -- how many beats are we talking?
   let beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
       minbeats = foldr (\(AniChord ac) minimum -> min minimum ac.beats) beattot acs
@@ -372,9 +416,13 @@ drawMsChordGrid con2d { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth curch
             row = floor inum
             col = (inum - row) * numperrow
          in 
-          Tuple (x + col * hspace) (y + 20 + row * rowheight)
-      beatloc = drawloc numperrow rowheight beatwidth
-      twoPi = 2 * pi
+          Tuple (x + col * hspace) (y + 20 + row * rowheight) in 
+  drawloc numperrow rowheight beatwidth
+
+drawMsChordGrid :: forall eff. Context2D -> Rectangle -> (Number -> (Tuple Number Number)) -> Number -> Number -> [AniChord] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
+drawMsChordGrid con2d { x: x, y: y, w: xw, h: yw } beatloc beattot curchordidx acs = do
+  -- how many beats are we talking?
+  let twoPi = 2 * pi
       dexes = A.range 0 (A.length acs - 1)
       dexedacs = zip dexes acs
   clearRect con2d { x: x, y: y, w: xw, h: yw }
