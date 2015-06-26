@@ -1,0 +1,40 @@
+install ghc, cabal.  probly like this:
+
+> pacman -S ghc cabal 
+
+update cabal database, install newest cabal-install.
+
+> cabal update
+> cabal install cabal-install NOPE DON'T DO THIS DOESN'T WORK
+
+update locale to en_US.UTF-8 as documented here:
+
+https://wiki.archlinux.org/index.php/Locale
+
+basically edit /etc/locale.gen, then do 
+> sudo locale-gen
+> sudo localectl set-locale LANG=en_US.UTF-8
+
+vector 0.10.12.2 had a problem in Size.hs.  
+got master from github, it built ok. vector-0.11.0.0.
+
+ok installed vector-0.11.0.0 that compiles ok.  
+compiled persistent-sqlite3 with that.  
+
+compiling chordster fails though - it tries to use the old version of vector, 0.10.12.2, and that doesn't work.  I tried putting a depencence into chordster of 0.11.0.0 but that generates one million conflicts with yesod. 
+
+from here:  download yesod, change vector lib dependence?
+
+no, cabal test fails for persistent-sqlite with same error.  
+
+ok, for persistent-sqlite, change the systemlib flag to true.  
+
+flag systemlib
+  description: Use the system-wide sqlite library
+  default: True
+
+If using a sandbox to build chordster, then do this:
+
+chordster dir> cabal sandbox add-source ~/code/persistent/persistent-sqlte
+ 
+I did a 'cabal install persistent-sqlite' (in chordster dir), but it might work to just do cabal install again. 
