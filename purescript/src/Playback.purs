@@ -250,10 +250,9 @@ anibeat canelt songduration begin beatms beatloc = do
           in
             floor $ 0.5 + ((\(Milliseconds nowms) (Milliseconds bms) -> nowms / bms) modnow beatms) 
       nowbeat = tobeat now
-      prevbeat = tobeat (now - beatms)
   -- black dot on prev beat, red dot on nowbeat.
-  setFillStyle "#00FF00" con2d
-  drawbeat beatloc con2d prevbeat
+  setFillStyle "#000000" con2d
+  drawbeat beatloc con2d (nowbeat - 1)
   setFillStyle "#FF0000" con2d
   drawbeat beatloc con2d nowbeat
   return unit
@@ -261,7 +260,7 @@ anibeat canelt songduration begin beatms beatloc = do
 drawbeat :: forall eff. (Number -> (Tuple Number Number)) -> Context2D -> Number -> Eff (canvas :: Canvas | eff) Unit   
 drawbeat beatloc con2d beat = do 
   let toop = beatloc beat
-      a = { x: (fst toop), y: (snd toop) - 35, r: 5, start: 0, end: twoPi }
+      a = { x: (fst toop), y: (snd toop), r: 5, start: 0, end: twoPi }
   beginPath con2d
   arc con2d a
   fill con2d
@@ -342,7 +341,6 @@ drawAniDots con2d { x: x, y: y, w: xw, h: yw } (Milliseconds begin) (Millisecond
     dotsms
   return unit
   
-
 onChordDraw :: forall eff. CanvasElement -> Number -> [AniChord] -> 
   Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
 onChordDraw canelt curchordidx acs = do 
@@ -363,10 +361,10 @@ onChordDraw canelt curchordidx acs = do
       beatloc = gridBeatLoc chrect rowheight mcw acs 
   clearRect con2d chrect
   drawMsChordGrid con2d beatloc beattot curchordidx acs
+  setFillStyle "#FF0000" con2d
   traverse (\(AniChord ac) -> drawbeat beatloc con2d ac.onbeat) mbcurchord
   return unit
   
-
 maxChordWidth :: forall eff. Context2D -> [AniChord] -> Eff (canvas :: Canvas, trace :: Trace | eff) Number
 maxChordWidth con2d chords = do 
   widths <- traverse (\(AniChord ac) -> do
@@ -406,10 +404,10 @@ drawMsChordGrid con2d beatloc beattot curchordidx acs = do
     if idx == curchordidx
       then do 
         setFillStyle "#FF0000" con2d
-        fillText con2d (ac.name) (fst toop) (snd toop)
+        fillText con2d (ac.name) (fst toop) ((snd toop) - 10)
         setFillStyle "#000000" con2d
       else do 
-        fillText con2d (ac.name) (fst toop) (snd toop)
+        fillText con2d (ac.name) (fst toop) ((snd toop) - 10)
     )
     dexedacs
   -- draw the beats
@@ -420,7 +418,6 @@ drawMsChordGrid con2d beatloc beattot curchordidx acs = do
     arc con2d a
     fill con2d)
     (A.range 0 (beattot - 1))
-    
   return unit 
 
 --- how long until we reach the chord?
