@@ -297,8 +297,8 @@ PS.Prelude = (function () {
     };
     var moduloSemiringNumber = new ModuloSemiring(numDiv, function () {
         return semiringNumber;
-    }, function (_104) {
-        return function (_105) {
+    }, function (_106) {
+        return function (_107) {
             return 0;
         };
     });
@@ -330,8 +330,8 @@ PS.Prelude = (function () {
     var $less = function (__dict_Ord_12) {
         return function (a1) {
             return function (a2) {
-                var _707 = compare(__dict_Ord_12)(a1)(a2);
-                if (_707 instanceof LT) {
+                var _710 = compare(__dict_Ord_12)(a1)(a2);
+                if (_710 instanceof LT) {
                     return true;
                 };
                 return false;
@@ -341,8 +341,8 @@ PS.Prelude = (function () {
     var $greater = function (__dict_Ord_14) {
         return function (a1) {
             return function (a2) {
-                var _708 = compare(__dict_Ord_14)(a1)(a2);
-                if (_708 instanceof GT) {
+                var _711 = compare(__dict_Ord_14)(a1)(a2);
+                if (_711 instanceof GT) {
                     return true;
                 };
                 return false;
@@ -352,8 +352,8 @@ PS.Prelude = (function () {
     var $greater$eq = function (__dict_Ord_15) {
         return function (a1) {
             return function (a2) {
-                var _709 = compare(__dict_Ord_15)(a1)(a2);
-                if (_709 instanceof LT) {
+                var _712 = compare(__dict_Ord_15)(a1)(a2);
+                if (_712 instanceof LT) {
                     return false;
                 };
                 return true;
@@ -470,36 +470,36 @@ PS.Data_Time = (function () {
     var Milliseconds = function (x) {
         return x;
     };
-    var semiringMilliseconds = new Prelude.Semiring(function (_213) {
-        return function (_214) {
-            return _213 * _214;
+    var semiringMilliseconds = new Prelude.Semiring(function (_215) {
+        return function (_216) {
+            return _215 * _216;
         };
-    }, function (_211) {
-        return function (_212) {
-            return _211 + _212;
+    }, function (_213) {
+        return function (_214) {
+            return _213 + _214;
         };
     }, 1, 0);
-    var ringMilliseconds = new Prelude.Ring(function (_215) {
-        return function (_216) {
-            return _215 - _216;
+    var ringMilliseconds = new Prelude.Ring(function (_217) {
+        return function (_218) {
+            return _217 - _218;
         };
     }, function () {
         return semiringMilliseconds;
     });
-    var eqMilliseconds = new Prelude.Eq(function (_207) {
-        return function (_208) {
-            return _207 !== _208;
+    var eqMilliseconds = new Prelude.Eq(function (_209) {
+        return function (_210) {
+            return _209 !== _210;
         };
-    }, function (_205) {
-        return function (_206) {
-            return _205 === _206;
+    }, function (_207) {
+        return function (_208) {
+            return _207 === _208;
         };
     });
     var ordMilliseconds = new Prelude.Ord(function () {
         return eqMilliseconds;
-    }, function (_209) {
-        return function (_210) {
-            return Prelude.compare(Prelude.ordNumber)(_209)(_210);
+    }, function (_211) {
+        return function (_212) {
+            return Prelude.compare(Prelude.ordNumber)(_211)(_212);
         };
     });
     return {
@@ -1109,36 +1109,36 @@ PS.Data_Either = (function () {
         return Right;
     })();
     var functorEither = new Prelude.Functor(function (f) {
-        return function (_267) {
-            if (_267 instanceof Left) {
-                return new Left(_267.value0);
+        return function (_269) {
+            if (_269 instanceof Left) {
+                return new Left(_269.value0);
             };
-            if (_267 instanceof Right) {
-                return new Right(f(_267.value0));
+            if (_269 instanceof Right) {
+                return new Right(f(_269.value0));
             };
             throw new Error("Failed pattern match");
         };
     });
     var either = function (f) {
         return function (g) {
-            return function (_266) {
-                if (_266 instanceof Left) {
-                    return f(_266.value0);
+            return function (_268) {
+                if (_268 instanceof Left) {
+                    return f(_268.value0);
                 };
-                if (_266 instanceof Right) {
-                    return g(_266.value0);
+                if (_268 instanceof Right) {
+                    return g(_268.value0);
                 };
                 throw new Error("Failed pattern match");
             };
         };
     };
-    var applyEither = new Prelude.Apply(function (_268) {
+    var applyEither = new Prelude.Apply(function (_270) {
         return function (r) {
-            if (_268 instanceof Left) {
-                return new Left(_268.value0);
+            if (_270 instanceof Left) {
+                return new Left(_270.value0);
             };
-            if (_268 instanceof Right) {
-                return Prelude["<$>"](functorEither)(_268.value0)(r);
+            if (_270 instanceof Right) {
+                return Prelude["<$>"](functorEither)(_270.value0)(r);
             };
             throw new Error("Failed pattern match");
         };
@@ -1146,7 +1146,7 @@ PS.Data_Either = (function () {
         return functorEither;
     });
     var bindEither = new Prelude.Bind(either(function (e) {
-        return function (_265) {
+        return function (_267) {
             return new Left(e);
         };
     })(function (a) {
@@ -1164,12 +1164,12 @@ PS.Data_Either = (function () {
     }, function () {
         return bindEither;
     });
-    var altEither = new Control_Alt.Alt(function (_269) {
+    var altEither = new Control_Alt.Alt(function (_271) {
         return function (r) {
-            if (_269 instanceof Left) {
+            if (_271 instanceof Left) {
                 return r;
             };
-            return _269;
+            return _271;
         };
     }, function () {
         return functorEither;
@@ -1213,21 +1213,21 @@ PS.Data_Maybe = (function () {
     })();
     var maybe = function (b) {
         return function (f) {
-            return function (_278) {
-                if (_278 instanceof Nothing) {
+            return function (_280) {
+                if (_280 instanceof Nothing) {
                     return b;
                 };
-                if (_278 instanceof Just) {
-                    return f(_278.value0);
+                if (_280 instanceof Just) {
+                    return f(_280.value0);
                 };
                 throw new Error("Failed pattern match");
             };
         };
     };
     var functorMaybe = new Prelude.Functor(function (fn) {
-        return function (_279) {
-            if (_279 instanceof Just) {
-                return new Just(fn(_279.value0));
+        return function (_281) {
+            if (_281 instanceof Just) {
+                return new Just(fn(_281.value0));
             };
             return Nothing.value;
         };
@@ -1260,11 +1260,11 @@ PS.Data_Array = (function () {
             var isInt = function (n_1) {
                 return n_1 !== ~~n_1;
             };
-            var _748 = n < 0 || (n >= length(xs) || isInt(n));
-            if (_748) {
+            var _751 = n < 0 || (n >= length(xs) || isInt(n));
+            if (_751) {
                 return Data_Maybe.Nothing.value;
             };
-            if (!_748) {
+            if (!_751) {
                 return new Data_Maybe.Just(xs[n]);
             };
             throw new Error("Failed pattern match");
@@ -1545,11 +1545,11 @@ PS.Data_Tuple = (function () {
         return Tuple;
     })();
     var zip = Data_Array.zipWith(Tuple.create);
-    var snd = function (_389) {
-        return _389.value1;
+    var snd = function (_391) {
+        return _391.value1;
     };
-    var fst = function (_388) {
-        return _388.value0;
+    var fst = function (_390) {
+        return _390.value0;
     };
     return {
         Tuple: Tuple, 
@@ -1611,36 +1611,36 @@ PS.Data_Foldable = (function () {
     };
     var foldableMaybe = new Foldable(function (__dict_Monoid_289) {
         return function (f) {
-            return function (_487) {
-                if (_487 instanceof Data_Maybe.Nothing) {
+            return function (_489) {
+                if (_489 instanceof Data_Maybe.Nothing) {
                     return Data_Monoid.mempty(__dict_Monoid_289);
                 };
+                if (_489 instanceof Data_Maybe.Just) {
+                    return f(_489.value0);
+                };
+                throw new Error("Failed pattern match");
+            };
+        };
+    }, function (f) {
+        return function (z) {
+            return function (_488) {
+                if (_488 instanceof Data_Maybe.Nothing) {
+                    return z;
+                };
+                if (_488 instanceof Data_Maybe.Just) {
+                    return f(z)(_488.value0);
+                };
+                throw new Error("Failed pattern match");
+            };
+        };
+    }, function (f) {
+        return function (z) {
+            return function (_487) {
+                if (_487 instanceof Data_Maybe.Nothing) {
+                    return z;
+                };
                 if (_487 instanceof Data_Maybe.Just) {
-                    return f(_487.value0);
-                };
-                throw new Error("Failed pattern match");
-            };
-        };
-    }, function (f) {
-        return function (z) {
-            return function (_486) {
-                if (_486 instanceof Data_Maybe.Nothing) {
-                    return z;
-                };
-                if (_486 instanceof Data_Maybe.Just) {
-                    return f(z)(_486.value0);
-                };
-                throw new Error("Failed pattern match");
-            };
-        };
-    }, function (f) {
-        return function (z) {
-            return function (_485) {
-                if (_485 instanceof Data_Maybe.Nothing) {
-                    return z;
-                };
-                if (_485 instanceof Data_Maybe.Just) {
-                    return f(_485.value0)(z);
+                    return f(_487.value0)(z);
                 };
                 throw new Error("Failed pattern match");
             };
@@ -1936,26 +1936,26 @@ PS.Data_DOM_Simple_Events = (function () {
         this.addUIEventListener = addUIEventListener;
         this.removeUIEventListener = removeUIEventListener;
     };
-    var uiEventTypeShow = new Prelude.Show(function (_517) {
-        if (_517 instanceof LoadEvent) {
+    var uiEventTypeShow = new Prelude.Show(function (_519) {
+        if (_519 instanceof LoadEvent) {
             return "load";
         };
-        if (_517 instanceof UnloadEvent) {
+        if (_519 instanceof UnloadEvent) {
             return "unload";
         };
-        if (_517 instanceof AbortEvent) {
+        if (_519 instanceof AbortEvent) {
             return "abort";
         };
-        if (_517 instanceof ErrorEvent) {
+        if (_519 instanceof ErrorEvent) {
             return "error";
         };
-        if (_517 instanceof SelectEvent) {
+        if (_519 instanceof SelectEvent) {
             return "select";
         };
-        if (_517 instanceof ResizeEvent) {
+        if (_519 instanceof ResizeEvent) {
             return "resize";
         };
-        if (_517 instanceof ScrollEvent) {
+        if (_519 instanceof ScrollEvent) {
             return "scroll";
         };
         throw new Error("Failed pattern match");
@@ -2022,23 +2022,23 @@ PS.Data_Traversable = (function () {
     }, function () {
         return Data_Maybe.functorMaybe;
     }, function (__dict_Applicative_332) {
-        return function (_526) {
-            if (_526 instanceof Data_Maybe.Nothing) {
+        return function (_528) {
+            if (_528 instanceof Data_Maybe.Nothing) {
                 return Prelude.pure(__dict_Applicative_332)(Data_Maybe.Nothing.value);
             };
-            if (_526 instanceof Data_Maybe.Just) {
-                return Prelude["<$>"]((__dict_Applicative_332["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Data_Maybe.Just.create)(_526.value0);
+            if (_528 instanceof Data_Maybe.Just) {
+                return Prelude["<$>"]((__dict_Applicative_332["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Data_Maybe.Just.create)(_528.value0);
             };
             throw new Error("Failed pattern match");
         };
     }, function (__dict_Applicative_331) {
         return function (f) {
-            return function (_525) {
-                if (_525 instanceof Data_Maybe.Nothing) {
+            return function (_527) {
+                if (_527 instanceof Data_Maybe.Nothing) {
                     return Prelude.pure(__dict_Applicative_331)(Data_Maybe.Nothing.value);
                 };
-                if (_525 instanceof Data_Maybe.Just) {
-                    return Prelude["<$>"]((__dict_Applicative_331["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Data_Maybe.Just.create)(f(_525.value0));
+                if (_527 instanceof Data_Maybe.Just) {
+                    return Prelude["<$>"]((__dict_Applicative_331["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Data_Maybe.Just.create)(f(_527.value0));
                 };
                 throw new Error("Failed pattern match");
             };
@@ -2052,25 +2052,25 @@ PS.Data_Traversable = (function () {
     }, function () {
         return Data_Array.functorArray;
     }, function (__dict_Applicative_340) {
-        return function (_522) {
-            if (_522.length === 0) {
+        return function (_524) {
+            if (_524.length === 0) {
                 return Prelude.pure(__dict_Applicative_340)([  ]);
             };
-            if (_522.length >= 1) {
-                var _781 = _522.slice(1);
-                return Prelude["<*>"](__dict_Applicative_340["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_340["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(_522[0]))(sequence(traversableArray)(__dict_Applicative_340)(_781));
+            if (_524.length >= 1) {
+                var _784 = _524.slice(1);
+                return Prelude["<*>"](__dict_Applicative_340["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_340["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(_524[0]))(sequence(traversableArray)(__dict_Applicative_340)(_784));
             };
             throw new Error("Failed pattern match");
         };
     }, function (__dict_Applicative_339) {
         return function (f) {
-            return function (_521) {
-                if (_521.length === 0) {
+            return function (_523) {
+                if (_523.length === 0) {
                     return Prelude.pure(__dict_Applicative_339)([  ]);
                 };
-                if (_521.length >= 1) {
-                    var _785 = _521.slice(1);
-                    return Prelude["<*>"](__dict_Applicative_339["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_339["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(f(_521[0])))(traverse(traversableArray)(__dict_Applicative_339)(f)(_785));
+                if (_523.length >= 1) {
+                    var _788 = _523.slice(1);
+                    return Prelude["<*>"](__dict_Applicative_339["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_339["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(f(_523[0])))(traverse(traversableArray)(__dict_Applicative_339)(f)(_788));
                 };
                 throw new Error("Failed pattern match");
             };
@@ -2294,6 +2294,7 @@ var PS = PS || {};
 PS.Main = (function () {
     "use strict";
     var Prelude = PS.Prelude;
+    var $$Math = PS.$$Math;
     var Data_Foreign_Class = PS.Data_Foreign_Class;
     var Control_Alt = PS.Control_Alt;
     var Data_Array = PS.Data_Array;
@@ -2309,7 +2310,6 @@ PS.Main = (function () {
     var Dims = PS.Dims;
     var Data_Date = PS.Data_Date;
     var Data_Maybe = PS.Data_Maybe;
-    var $$Math = PS.$$Math;
     var Data_String = PS.Data_String;
     var WebSocket = PS.WebSocket;
     var Data_DOM_Simple_Events = PS.Data_DOM_Simple_Events;
@@ -2439,15 +2439,16 @@ PS.Main = (function () {
     var webMessageIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
         return Control_Alt["<|>"](Data_Either.altEither)(Control_Alt["<|>"](Data_Either.altEither)(Prelude["<$>"](Data_Either.functorEither)(WmSong.create)(Data_Foreign_Class.read(webSongIsForeign)(value)))(Prelude["<$>"](Data_Either.functorEither)(WmIndex.create)(Data_Foreign_Class.read(wsIndexIsForeign)(value))))(Prelude["<$>"](Data_Either.functorEither)(WmStop.create)(Data_Foreign_Class.read(wsStopIsForeign)(value)));
     });
+    var twoPi = 2 * $$Math.pi;
     var timeToChord = function (modnow) {
         return function (chordtime) {
             return function (duration) {
                 var ct = Prelude["-"](Data_Time.ringMilliseconds)(chordtime)(modnow);
-                var _797 = Prelude["<"](Data_Time.ordMilliseconds)(ct)(0);
-                if (_797) {
+                var _800 = Prelude["<"](Data_Time.ordMilliseconds)(ct)(0);
+                if (_800) {
                     return Prelude["+"](Data_Time.semiringMilliseconds)(ct)(duration);
                 };
-                if (!_797) {
+                if (!_800) {
                     return ct;
                 };
                 throw new Error("Failed pattern match");
@@ -2455,11 +2456,11 @@ PS.Main = (function () {
         };
     };
     var tempoToBeatMs = function (tempo) {
-        var _798 = tempo === 0;
-        if (_798) {
+        var _801 = tempo === 0;
+        if (_801) {
             return 0;
         };
-        if (!_798) {
+        if (!_801) {
             var minute = 1000 * 60;
             return minute / tempo;
         };
@@ -2495,54 +2496,54 @@ PS.Main = (function () {
         };
     };
     var sizeCanvasEvt = function (canelt) {
-        return function (_690) {
+        return function (_695) {
             return sizeCanvas(canelt);
         };
     };
-    var msMod = function (_692) {
-        return function (_693) {
-            return _692 % _693;
+    var msMod = function (_697) {
+        return function (_698) {
+            return _697 % _698;
         };
     };
     var maxChordWidth = function (con2d) {
         return function (chords) {
             return function __do() {
-                var _93 = Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_684) {
+                var _95 = Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_690) {
                     return function __do() {
-                        var _92 = Graphics_Canvas.measureText(con2d)(_684.value0.name)();
-                        return _92.width;
+                        var _94 = Graphics_Canvas.measureText(con2d)(_690.value0.name)();
+                        return _94.width;
                     };
                 })(chords)();
                 return Data_Foldable.foldr(Data_Foldable.foldableArray)(function (a) {
                     return function (b) {
-                        var _817 = a > b;
-                        if (_817) {
+                        var _820 = a > b;
+                        if (_820) {
                             return a;
                         };
-                        if (!_817) {
+                        if (!_820) {
                             return b;
                         };
                         throw new Error("Failed pattern match");
                     };
-                })(0)(_93);
+                })(0)(_95);
             };
         };
     };
-    var makeAniChords = function (_689) {
-        var beatms = tempoToBeatMs(_689.value0.wsTempo);
-        var accum = function (_703) {
-            return function (_704) {
-                return new Data_Tuple.Tuple(_703.value0 + _704.value0.wcDuration, Data_Array.snoc(_703.value1)(new AniChord({
-                    name: _704.value0.wcName, 
-                    time: Prelude["*"](Data_Time.semiringMilliseconds)(_703.value0)(beatms), 
-                    beats: _704.value0.wcDuration, 
-                    onbeat: _703.value0
+    var makeAniChords = function (_694) {
+        var beatms = tempoToBeatMs(_694.value0.wsTempo);
+        var accum = function (_706) {
+            return function (_707) {
+                return new Data_Tuple.Tuple(_706.value0 + _707.value0.wcDuration, Data_Array.snoc(_706.value1)(new AniChord({
+                    name: _707.value0.wcName, 
+                    time: Prelude["*"](Data_Time.semiringMilliseconds)(_706.value0)(beatms), 
+                    beats: _707.value0.wcDuration, 
+                    onbeat: _706.value0
                 })));
             };
         };
-        return Data_Tuple.snd(Data_Foldable.foldl(Data_Foldable.foldableArray)(accum)(new Data_Tuple.Tuple(0, [  ]))(_689.value0.wsChords));
+        return Data_Tuple.snd(Data_Foldable.foldl(Data_Foldable.foldableArray)(accum)(new Data_Tuple.Tuple(0, [  ]))(_694.value0.wsChords));
     };
-    var gridBeatLoc = function (_701) {
+    var gridBeatLoc = function (_705) {
         return function (rowheight) {
             return function (maxchordwidth) {
                 return function (acs) {
@@ -2553,23 +2554,23 @@ PS.Main = (function () {
                                     var inum = index / numperrow;
                                     var row = $$Math.floor(inum);
                                     var col = (inum - row) * numperrow;
-                                    return new Data_Tuple.Tuple(_701.x + col * hspace, _701.y + 20 + row * rowheight_2);
+                                    return new Data_Tuple.Tuple(_705.x + col * hspace, _705.y + 20 + row * rowheight_2);
                                 };
                             };
                         };
                     };
-                    var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_686) {
+                    var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_691) {
                         return function (sum) {
-                            return sum + _686.value0.beats;
+                            return sum + _691.value0.beats;
                         };
                     })(0)(acs);
-                    var minbeats = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_687) {
+                    var minbeats = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_692) {
                         return function (minimum) {
-                            return $$Math.min(minimum)(_687.value0.beats);
+                            return $$Math.min(minimum)(_692.value0.beats);
                         };
                     })(beattot)(acs);
                     var beatwidth = maxchordwidth / minbeats;
-                    var beatrowwidth = _701.w - maxchordwidth;
+                    var beatrowwidth = _705.w - maxchordwidth;
                     var numperrow = $$Math.floor(beatrowwidth / beatwidth);
                     var rows = $$Math.ceil(beattot / numperrow);
                     return drawloc(numperrow)(rowheight)(beatwidth);
@@ -2577,55 +2578,66 @@ PS.Main = (function () {
             };
         };
     };
+    var drawbeat = function (beatloc) {
+        return function (con2d) {
+            return function (beat) {
+                var toop = beatloc(beat);
+                var a = {
+                    x: Data_Tuple.fst(toop), 
+                    y: Data_Tuple.snd(toop), 
+                    r: 5, 
+                    start: 0, 
+                    end: twoPi
+                };
+                return function __do() {
+                    Graphics_Canvas.beginPath(con2d)();
+                    Graphics_Canvas.arc(con2d)(a)();
+                    Graphics_Canvas.fill(con2d)();
+                    return Prelude.unit;
+                };
+            };
+        };
+    };
     var drawMsChordGrid = function (con2d) {
-        return function (_702) {
-            return function (beatloc) {
-                return function (beattot) {
-                    return function (curchordidx) {
-                        return function (acs) {
-                            var twoPi = 2 * $$Math.pi;
-                            var dexes = Data_Array.range(0)(Data_Array.length(acs) - 1);
-                            var dexedacs = Data_Tuple.zip(dexes)(acs);
-                            return function __do() {
-                                Graphics_Canvas.clearRect(con2d)({
-                                    x: _702.x, 
-                                    y: _702.y, 
-                                    w: _702.w, 
-                                    h: _702.h
-                                })();
-                                Graphics_Canvas.setFillStyle("#000000")(con2d)();
-                                Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_688) {
-                                    var toop = beatloc(_688.value1.value0.onbeat);
-                                    var _844 = _688.value0 === curchordidx;
-                                    if (_844) {
-                                        return function __do() {
-                                            Graphics_Canvas.setFillStyle("#FF0000")(con2d)();
-                                            Graphics_Canvas.fillText(con2d)(_688.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop))();
-                                            return Graphics_Canvas.setFillStyle("#000000")(con2d)();
-                                        };
-                                    };
-                                    if (!_844) {
-                                        return Graphics_Canvas.fillText(con2d)(_688.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop));
-                                    };
-                                    throw new Error("Failed pattern match");
-                                })(dexedacs)();
-                                Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (xidx) {
-                                    var toop = beatloc(xidx);
-                                    var a = {
-                                        x: Data_Tuple.fst(toop), 
-                                        y: Data_Tuple.snd(toop), 
-                                        r: 5, 
-                                        start: 0, 
-                                        end: twoPi
-                                    };
+        return function (beatloc) {
+            return function (beattot) {
+                return function (curchordidx) {
+                    return function (acs) {
+                        var dexes = Data_Array.range(0)(Data_Array.length(acs) - 1);
+                        var dexedacs = Data_Tuple.zip(dexes)(acs);
+                        return function __do() {
+                            Graphics_Canvas.setFillStyle("#000000")(con2d)();
+                            Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_693) {
+                                var toop = beatloc(_693.value1.value0.onbeat);
+                                var _841 = _693.value0 === curchordidx;
+                                if (_841) {
                                     return function __do() {
-                                        Graphics_Canvas.beginPath(con2d)();
-                                        Graphics_Canvas.arc(con2d)(a)();
-                                        return Graphics_Canvas.fill(con2d)();
+                                        Graphics_Canvas.setFillStyle("#FF0000")(con2d)();
+                                        Graphics_Canvas.fillText(con2d)(_693.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10)();
+                                        return Graphics_Canvas.setFillStyle("#000000")(con2d)();
                                     };
-                                })(Data_Array.range(0)(beattot - 1))();
-                                return Prelude.unit;
-                            };
+                                };
+                                if (!_841) {
+                                    return Graphics_Canvas.fillText(con2d)(_693.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10);
+                                };
+                                throw new Error("Failed pattern match");
+                            })(dexedacs)();
+                            Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (xidx) {
+                                var toop = beatloc(xidx);
+                                var a = {
+                                    x: Data_Tuple.fst(toop), 
+                                    y: Data_Tuple.snd(toop), 
+                                    r: 5, 
+                                    start: 0, 
+                                    end: twoPi
+                                };
+                                return function __do() {
+                                    Graphics_Canvas.beginPath(con2d)();
+                                    Graphics_Canvas.arc(con2d)(a)();
+                                    return Graphics_Canvas.fill(con2d)();
+                                };
+                            })(Data_Array.range(0)(beattot - 1))();
+                            return Prelude.unit;
                         };
                     };
                 };
@@ -2636,114 +2648,67 @@ PS.Main = (function () {
         return function (curchordidx) {
             return function (acs) {
                 return function __do() {
-                    var _91 = Graphics_Canvas.getContext2D(canelt)();
-                    var _90 = Graphics_Canvas.getCanvasDimensions(canelt)();
-                    Graphics_Canvas.setFont("20px sans-serif")(_91)();
+                    var _93 = Graphics_Canvas.getContext2D(canelt)();
+                    var _92 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                    Graphics_Canvas.setFont("20px sans-serif")(_93)();
                     var mbcurchord = Data_Array["!!"](acs)(curchordidx);
-                    var _89 = maxChordWidth(_91)(acs)();
-                    Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_682) {
+                    var _91 = maxChordWidth(_93)(acs)();
+                    Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_687) {
                         return function __do() {
-                            var _88 = Graphics_Canvas.measureText(_91)(_682.value0.name)();
-                            Graphics_Canvas.clearRect(_91)({
+                            var _90 = Graphics_Canvas.measureText(_93)(_687.value0.name)();
+                            Graphics_Canvas.clearRect(_93)({
                                 x: 25, 
                                 y: 5, 
-                                w: _89, 
+                                w: _91, 
                                 h: 25
                             })();
-                            return Graphics_Canvas.fillText(_91)(_682.value0.name)(25)(25)();
+                            return Graphics_Canvas.fillText(_93)(_687.value0.name)(25)(25)();
                         };
                     })(mbcurchord)();
-                    var cdh = _90.height * 0.5;
+                    var cdh = _92.height * 0.5;
                     var chrect = {
                         x: 0, 
                         y: cdh, 
-                        w: _90.width, 
+                        w: _92.width, 
                         h: cdh
                     };
-                    var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_683) {
+                    var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_688) {
                         return function (sum) {
-                            return sum + _683.value0.beats;
+                            return sum + _688.value0.beats;
                         };
                     })(0)(acs);
-                    var beatloc = gridBeatLoc(chrect)(30)(_89)(acs);
-                    return drawMsChordGrid(_91)(chrect)(beatloc)(beattot)(curchordidx)(acs)();
-                };
-            };
-        };
-    };
-    var drawChordGrid = function (con2d) {
-        return function (_700) {
-            return function (maxchordwidth) {
-                return function (curchordidx) {
-                    return function (acs) {
-                        var numperrow = $$Math.floor(_700.w / maxchordwidth);
-                        var hspace = _700.w / numperrow;
-                        var drawloc = function (hspace_1) {
-                            return function (rowheight) {
-                                return function (index) {
-                                    var inum = index / numperrow;
-                                    var row = $$Math.floor(inum);
-                                    var col = (inum - row) * numperrow;
-                                    return new Data_Tuple.Tuple(_700.x + col * hspace_1, _700.y + 20 + row * rowheight);
-                                };
-                            };
-                        };
-                        var dexes = Data_Array.range(0)(Data_Array.length(acs) - 1);
-                        var dexedacs = Data_Tuple.zip(dexes)(acs);
-                        var count = Data_Array.length(acs);
-                        var rows = $$Math.ceil(count / numperrow);
-                        var rowheight = _700.h / rows;
-                        return function __do() {
-                            Graphics_Canvas.clearRect(con2d)({
-                                x: _700.x, 
-                                y: _700.y, 
-                                w: _700.w, 
-                                h: _700.h
-                            })();
-                            Graphics_Canvas.setFillStyle("#000000")(con2d)();
-                            Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_685) {
-                                var toop = drawloc(hspace)(rowheight)(_685.value0);
-                                var _866 = _685.value0 === curchordidx;
-                                if (_866) {
-                                    return function __do() {
-                                        Graphics_Canvas.setFillStyle("#FF0000")(con2d)();
-                                        Graphics_Canvas.fillText(con2d)(_685.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop))();
-                                        return Graphics_Canvas.setFillStyle("#000000")(con2d)();
-                                    };
-                                };
-                                if (!_866) {
-                                    return Graphics_Canvas.fillText(con2d)(_685.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop));
-                                };
-                                throw new Error("Failed pattern match");
-                            })(dexedacs)();
-                            return Prelude.unit;
-                        };
-                    };
+                    var beatloc = gridBeatLoc(chrect)(30)(_91)(acs);
+                    Graphics_Canvas.clearRect(_93)(chrect)();
+                    drawMsChordGrid(_93)(beatloc)(beattot)(curchordidx)(acs)();
+                    Graphics_Canvas.setFillStyle("#FF0000")(_93)();
+                    Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_689) {
+                        return drawbeat(beatloc)(_93)(_689.value0.onbeat);
+                    })(mbcurchord)();
+                    return Prelude.unit;
                 };
             };
         };
     };
     var drawAniDots = function (con2d) {
-        return function (_695) {
-            return function (_696) {
-                return function (_697) {
-                    return function (_698) {
-                        return function (_699) {
-                            var twoPi = 2 * $$Math.pi;
-                            var beatsofar = (_699 - _696) / _697;
-                            var firstbeat = ($$Math.ceil(beatsofar) - beatsofar) * _697;
-                            var numbeats = $$Math.floor((_698 - firstbeat) / _697);
+        return function (_700) {
+            return function (_701) {
+                return function (_702) {
+                    return function (_703) {
+                        return function (_704) {
+                            var beatsofar = (_704 - _701) / _702;
+                            var firstbeat = ($$Math.ceil(beatsofar) - beatsofar) * _702;
+                            var numbeats = $$Math.floor((_703 - firstbeat) / _702);
                             var dots = Data_Array.range(0)(numbeats);
-                            var b2x = _695.w / _698;
+                            var b2x = _700.w / _703;
                             var dotsms = Prelude["<$>"](Data_Array.functorArray)(function (i) {
-                                return (i * _697 + firstbeat) * b2x;
+                                return (i * _702 + firstbeat) * b2x;
                             })(dots);
                             return function __do() {
                                 Graphics_Canvas.setFillStyle("#000000")(con2d)();
                                 Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (dtx) {
                                     var a = {
                                         x: dtx, 
-                                        y: _695.y - 10, 
+                                        y: _700.y - 10, 
                                         r: 5, 
                                         start: 0, 
                                         end: twoPi
@@ -2763,22 +2728,22 @@ PS.Main = (function () {
         };
     };
     var drawAniChords = function (con2d) {
-        return function (_694) {
+        return function (_699) {
             return function (now) {
                 return function (window) {
                     return function (acs) {
                         var wholerect = {
-                            h: _694.h, 
-                            w: _694.w, 
-                            x: _694.x, 
-                            y: _694.y - _694.h
+                            h: _699.h, 
+                            w: _699.w, 
+                            x: _699.x, 
+                            y: _699.y - _699.h
                         };
-                        var toNumber = function (_680) {
-                            return _680;
+                        var toNumber = function (_685) {
+                            return _685;
                         };
                         var nwindow = toNumber(window);
-                        var xes = Prelude["<$>"](Data_Array.functorArray)(function (_679) {
-                            return _694.x + _694.w * (toNumber(_679.value0) / nwindow);
+                        var xes = Prelude["<$>"](Data_Array.functorArray)(function (_684) {
+                            return _699.x + _699.w * (toNumber(_684.value0) / nwindow);
                         })(acs);
                         return function __do() {
                             Graphics_Canvas.save(con2d)();
@@ -2787,13 +2752,12 @@ PS.Main = (function () {
                             Graphics_Canvas.setFillStyle("#8080FF")(con2d)();
                             Graphics_Canvas.fillPath(con2d)(Graphics_Canvas.rect(con2d)(wholerect))();
                             Graphics_Canvas.setFillStyle("#000000")(con2d)();
-                            var twoPi = $$Math.pi * 2;
-                            Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_681) {
+                            Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_686) {
                                 return function __do() {
-                                    Graphics_Canvas.fillText(con2d)(_681.value1.value1.value0.name)(_681.value0)(_694.y - 10)();
+                                    Graphics_Canvas.fillText(con2d)(_686.value1.value1.value0.name)(_686.value0)(_699.y - 10)();
                                     var a = {
-                                        x: _681.value0, 
-                                        y: _694.y - 35, 
+                                        x: _686.value0, 
+                                        y: _699.y - 35, 
                                         r: 10, 
                                         start: 0, 
                                         end: twoPi
@@ -2818,29 +2782,29 @@ PS.Main = (function () {
                     return function (windowms) {
                         return function (acs) {
                             return function __do() {
-                                var _87 = Graphics_Canvas.getContext2D(canelt)();
-                                var _86 = Data_Date.nowEpochMilliseconds();
+                                var _89 = Graphics_Canvas.getContext2D(canelt)();
+                                var _88 = Data_Date.nowEpochMilliseconds();
                                 return (function () {
-                                    var modnow = msMod(Prelude["-"](Data_Time.ringMilliseconds)(_86)(begin))(songduration);
-                                    var acnows = Prelude["<$>"](Data_Array.functorArray)(function (_677) {
-                                        return new Data_Tuple.Tuple(timeToChord(modnow)(_677.value0.time)(songduration), new AniChord(_677.value0));
+                                    var modnow = msMod(Prelude["-"](Data_Time.ringMilliseconds)(_88)(begin))(songduration);
+                                    var acnows = Prelude["<$>"](Data_Array.functorArray)(function (_682) {
+                                        return new Data_Tuple.Tuple(timeToChord(modnow)(_682.value0.time)(songduration), new AniChord(_682.value0));
                                     })(acs);
-                                    var drawAcs = Data_Array.filter(function (_678) {
-                                        return Prelude["<"](Data_Time.ordMilliseconds)(_678.value0)(windowms);
+                                    var drawAcs = Data_Array.filter(function (_683) {
+                                        return Prelude["<"](Data_Time.ordMilliseconds)(_683.value0)(windowms);
                                     })(acnows);
                                     return function __do() {
-                                        Graphics_Canvas.setFont("20px sans-serif")(_87)();
-                                        var _85 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                                        Graphics_Canvas.setFont("20px sans-serif")(_89)();
+                                        var _87 = Graphics_Canvas.getCanvasDimensions(canelt)();
                                         return (function () {
                                             var dr = {
                                                 x: 0, 
                                                 y: 100, 
-                                                w: _85.width, 
+                                                w: _87.width, 
                                                 h: 60
                                             };
                                             return function __do() {
-                                                drawAniChords(_87)(dr)(modnow)(windowms)(drawAcs)();
-                                                drawAniDots(_87)(dr)(begin)(beatms)(windowms)(_86)();
+                                                drawAniChords(_89)(dr)(modnow)(windowms)(drawAcs)();
+                                                drawAniDots(_89)(dr)(begin)(beatms)(windowms)(_88)();
                                                 return Prelude.unit;
                                             };
                                         })()();
@@ -2859,42 +2823,23 @@ PS.Main = (function () {
                 return function (beatms) {
                     return function (beatloc) {
                         return function __do() {
-                            var _84 = Graphics_Canvas.getContext2D(canelt)();
-                            var _83 = Data_Date.nowEpochMilliseconds();
+                            var _86 = Graphics_Canvas.getContext2D(canelt)();
+                            var _85 = Data_Date.nowEpochMilliseconds();
                             return (function () {
-                                var twoPi = 2 * $$Math.pi;
                                 var tobeat = function (nowms) {
-                                    var modnow = msMod(Prelude["-"](Data_Time.ringMilliseconds)(_83)(begin))(songduration);
-                                    return $$Math.floor(0.5 + (function (_676) {
-                                        return function (_675) {
-                                            return _676 / _675;
+                                    var modnow = msMod(Prelude["-"](Data_Time.ringMilliseconds)(_85)(begin))(songduration);
+                                    return $$Math.floor(0.5 + (function (_681) {
+                                        return function (_680) {
+                                            return _681 / _680;
                                         };
                                     })(modnow)(beatms));
                                 };
-                                var prevbeat = tobeat(Prelude["-"](Data_Time.ringMilliseconds)(_83)(beatms));
-                                var nowbeat = tobeat(_83);
-                                var drawbeat = function (beat) {
-                                    var toop = beatloc(beat);
-                                    var a = {
-                                        x: Data_Tuple.fst(toop), 
-                                        y: Data_Tuple.snd(toop) - 35, 
-                                        r: 5, 
-                                        start: 0, 
-                                        end: twoPi
-                                    };
-                                    return function __do() {
-                                        Graphics_Canvas.beginPath(_84)();
-                                        Graphics_Canvas.arc(_84)(a)();
-                                        Graphics_Canvas.fill(_84)();
-                                        return Prelude.unit;
-                                    };
-                                };
+                                var nowbeat = tobeat(_85);
                                 return function __do() {
-                                    Debug_Trace.trace("drawing ze dots")();
-                                    Graphics_Canvas.setFillStyle("#000000")(_84)();
-                                    drawbeat(prevbeat)();
-                                    Graphics_Canvas.setFillStyle("#FF0000")(_84)();
-                                    drawbeat(nowbeat)();
+                                    Graphics_Canvas.setFillStyle("#000000")(_86)();
+                                    drawbeat(beatloc)(_86)(nowbeat - 1)();
+                                    Graphics_Canvas.setFillStyle("#FF0000")(_86)();
+                                    drawbeat(beatloc)(_86)(nowbeat)();
                                     return Prelude.unit;
                                 };
                             })()();
@@ -2905,40 +2850,41 @@ PS.Main = (function () {
         };
     };
     var startAnimation = function (canelt) {
-        return function (_691) {
+        return function (_696) {
             return function (chordindex) {
                 return function __do() {
-                    var _82 = Data_Date.nowEpochMilliseconds();
-                    var _81 = Graphics_Canvas.getCanvasDimensions(canelt)();
-                    var _80 = Graphics_Canvas.getContext2D(canelt)();
+                    var _84 = Data_Date.nowEpochMilliseconds();
+                    var _83 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                    var _82 = Graphics_Canvas.getContext2D(canelt)();
                     return (function () {
-                        var cdh = _81.height * 0.5;
+                        var cdh = _83.height * 0.5;
                         var chrect = {
                             x: 0, 
                             y: cdh, 
-                            w: _81.width, 
+                            w: _83.width, 
                             h: cdh
                         };
-                        var beatms = tempoToBeatMs(_691.value0.wsTempo);
+                        var beatms = tempoToBeatMs(_696.value0.wsTempo);
                         var songduration = Data_Foldable.foldl(Data_Foldable.foldableArray)(function (sum) {
-                            return function (_672) {
-                                return Prelude["+"](Data_Time.semiringMilliseconds)(sum)(Prelude["*"](Data_Time.semiringMilliseconds)(_672.value0.wcDuration)(beatms));
+                            return function (_677) {
+                                return Prelude["+"](Data_Time.semiringMilliseconds)(sum)(Prelude["*"](Data_Time.semiringMilliseconds)(_677.value0.wcDuration)(beatms));
                             };
-                        })(0)(_691.value0.wsChords);
-                        var anichords = makeAniChords(new WebSong(_691.value0));
-                        var curchordtime = Data_Maybe.maybe(0)(function (_673) {
-                            return _673.value0.time;
+                        })(0)(_696.value0.wsChords);
+                        var anichords = makeAniChords(new WebSong(_696.value0));
+                        var curchordtime = Data_Maybe.maybe(0)(function (_678) {
+                            return _678.value0.time;
                         })(Data_Array["!!"](anichords)(chordindex));
                         return function __do() {
-                            var _79 = maxChordWidth(_80)(anichords)();
+                            var _81 = maxChordWidth(_82)(anichords)();
                             return (function () {
-                                var bms = (function (_674) {
-                                    return _674;
+                                var bms = (function (_679) {
+                                    return _679;
                                 })(beatms);
-                                var beatloc = gridBeatLoc(chrect)(30)(_79)(anichords);
+                                var beatloc = gridBeatLoc(chrect)(30)(_81)(anichords);
                                 return function __do() {
-                                    Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(40)(animate(canelt)(songduration)(Prelude["-"](Data_Time.ringMilliseconds)(_82)(curchordtime))(beatms)(5000)(anichords))();
-                                    return Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(bms)(anibeat(canelt)(songduration)(Prelude["-"](Data_Time.ringMilliseconds)(_82)(curchordtime))(beatms)(beatloc))();
+                                    var _80 = Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(40)(animate(canelt)(songduration)(Prelude["-"](Data_Time.ringMilliseconds)(_84)(curchordtime))(beatms)(5000)(anichords))();
+                                    var _79 = Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(bms)(anibeat(canelt)(songduration)(Prelude["-"](Data_Time.ringMilliseconds)(_84)(curchordtime))(beatms)(beatloc))();
+                                    return new Data_Tuple.Tuple(_80, _79);
                                 };
                             })()();
                         };
@@ -2972,7 +2918,12 @@ PS.Main = (function () {
                                         var _63 = Data_DOM_Simple_Element.getElementById(Data_DOM_Simple_Document.htmlDocumentElement)("songname")(_64)();
                                         Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(Data_DOM_Simple_Element.setTextContent(Data_DOM_Simple_Element.htmlElement)(wm.value0.value0.value0.wsName))(_63)();
                                         var _62 = Control_Monad_Eff_Ref.readRef(timeoutref)();
-                                        Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow))(_62)();
+                                        Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_674) {
+                                            return function __do() {
+                                                Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(_674.value0)();
+                                                return Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(_674.value1)();
+                                            };
+                                        })(_62)();
                                         var _61 = startAnimation(canelt)(new WebSong(wm.value0.value0.value0))(0)();
                                         Control_Monad_Eff_Ref.writeRef(timeoutref)(new Data_Maybe.Just(_61))();
                                         return Prelude.unit;
@@ -2982,7 +2933,12 @@ PS.Main = (function () {
                                     return function __do() {
                                         var _67 = Control_Monad_Eff_Ref.readRef(songref)();
                                         var _66 = Control_Monad_Eff_Ref.readRef(timeoutref)();
-                                        Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow))(_66)();
+                                        Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_675) {
+                                            return function __do() {
+                                                Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(_675.value0)();
+                                                return Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(_675.value1)();
+                                            };
+                                        })(_66)();
                                         var _65 = startAnimation(canelt)(new WebSong(_67.value0))(wm.value0.value0.value0.wiIndex)();
                                         Control_Monad_Eff_Ref.writeRef(timeoutref)(new Data_Maybe.Just(_65))();
                                         var anichords = makeAniChords(new WebSong(_67.value0));
@@ -2993,7 +2949,12 @@ PS.Main = (function () {
                                 if (wm.value0 instanceof WmStop) {
                                     return function __do() {
                                         var _68 = Control_Monad_Eff_Ref.readRef(timeoutref)();
-                                        Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow))(_68)();
+                                        Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_676) {
+                                            return function __do() {
+                                                Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(_676.value0)();
+                                                return Data_DOM_Simple_Window.clearTimeout(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(_676.value1)();
+                                            };
+                                        })(_68)();
                                         return Prelude.unit;
                                     };
                                 };
@@ -3011,24 +2972,24 @@ PS.Main = (function () {
     };
     var enlode = function __do() {
         Debug_Trace.trace("enlode")();
-        var _99 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
-        var _98 = documentUrl();
+        var _101 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
+        var _100 = documentUrl();
         return (function () {
-            var wsurl = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_98));
+            var wsurl = Data_String.replace("https:")("wss:")(Data_String.replace("http:")("ws:")(_100));
             return function __do() {
-                var _97 = WebSocket.mkWebSocket(wsurl)();
-                var _96 = Graphics_Canvas.getCanvasElementById("canvas")();
-                if (_96 instanceof Data_Maybe.Just) {
-                    var _95 = Control_Monad_Eff_Ref.newRef(new WebSong({
+                var _99 = WebSocket.mkWebSocket(wsurl)();
+                var _98 = Graphics_Canvas.getCanvasElementById("canvas")();
+                if (_98 instanceof Data_Maybe.Just) {
+                    var _97 = Control_Monad_Eff_Ref.newRef(new WebSong({
                         wsId: 0, 
                         wsName: "", 
                         wsChords: [  ], 
                         wsTempo: 0
                     }))();
-                    var _94 = Control_Monad_Eff_Ref.newRef(Data_Maybe.Nothing.value)();
-                    WebSocket.onMessage(_97)(enmessage(_95)(_94)(_96.value0))();
-                    sizeCanvas(_96.value0)();
-                    Data_DOM_Simple_Events.addUIEventListener(Data_DOM_Simple_Events.uiEventTargetHTMLWindow)(Data_DOM_Simple_Events.uiEventDOMEvent)(Data_DOM_Simple_Events.ResizeEvent.value)(sizeCanvasEvt(_96.value0))(Data_DOM_Simple_Window.globalWindow)();
+                    var _96 = Control_Monad_Eff_Ref.newRef(Data_Maybe.Nothing.value)();
+                    WebSocket.onMessage(_99)(enmessage(_97)(_96)(_98.value0))();
+                    sizeCanvas(_98.value0)();
+                    Data_DOM_Simple_Events.addUIEventListener(Data_DOM_Simple_Events.uiEventTargetHTMLWindow)(Data_DOM_Simple_Events.uiEventDOMEvent)(Data_DOM_Simple_Events.ResizeEvent.value)(sizeCanvasEvt(_98.value0))(Data_DOM_Simple_Window.globalWindow)();
                     Debug_Trace.trace("enlode end")();
                     return Prelude.unit;
                 };
@@ -3050,13 +3011,13 @@ PS.Main = (function () {
         timeToChord: timeToChord, 
         drawMsChordGrid: drawMsChordGrid, 
         gridBeatLoc: gridBeatLoc, 
-        drawChordGrid: drawChordGrid, 
         maxChordWidth: maxChordWidth, 
         onChordDraw: onChordDraw, 
         drawAniDots: drawAniDots, 
         drawAniChords: drawAniChords, 
         animate: animate, 
         msMod: msMod, 
+        drawbeat: drawbeat, 
         anibeat: anibeat, 
         startAnimation: startAnimation, 
         tempoToBeatMs: tempoToBeatMs, 
@@ -3064,6 +3025,7 @@ PS.Main = (function () {
         sizeCanvasEvt: sizeCanvasEvt, 
         enmessage: enmessage, 
         makeAniChords: makeAniChords, 
+        twoPi: twoPi, 
         webChordIsForeign: webChordIsForeign, 
         webSongIsForeign: webSongIsForeign, 
         wsIndexIsForeign: wsIndexIsForeign, 
