@@ -9,6 +9,7 @@ import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
+import Data.IORef
 import Data.Maybe
 import Database.Persist.Sql
 import Data.Traversable as TR
@@ -25,7 +26,7 @@ playSongWs sid = do
   -- info for new song to play.
   mbsonginfo <- lift $ getSongInfo sid 
   -- info for old song currenty playing.
-  oldinfo <- liftIO $ tryReadMVar $ playThread $ songControl app
+  oldinfo <- liftIO $ readIORef $ playThread $ songControl app
   liftIO $ print $ "oldinfo: " ++ show oldinfo
   case (mbsonginfo, oldinfo) of 
     (Nothing, _) -> do
@@ -45,8 +46,8 @@ playSongWs sid = do
       -- start a new song thread
       threadid <- lift $ startSongThread writeChan song chords 
       -- save the new thread id and song id in the MVar.
-      _ <- liftIO $ tryTakeMVar $ playThread $ songControl app
-      res <- liftIO $ putMVar (playThread $ songControl app) (threadid, sid)
+      -- _ <- liftIO $ tryTakeMVar $ playThread $ songControl app
+      res <- liftIO $ writeIORef (playThread $ songControl app) $ Just (threadid, sid)
       liftIO $ print $ "res= " ++ show res
       return ()
     (Just (song, chords), Nothing) -> do 
@@ -54,7 +55,7 @@ playSongWs sid = do
       -- start a new song thread
       threadid <- lift $ startSongThread writeChan song chords 
       -- save the new thread id and song id in the MVar.
-      res <- liftIO $ putMVar (playThread $ songControl app) (threadid, sid)
+      res <- liftIO $ writeIORef (playThread $ songControl app) $ Just (threadid, sid)
       liftIO $ print $ "nothing res= " ++ show res
       return ()
   liftIO $ print "pre readTChan, etc"
@@ -106,7 +107,7 @@ postPlaySongR sid = do
       redirect SongsR
     Just _ -> do 
       app <- getYesod 
-      oldinfo <- liftIO $ tryTakeMVar $ playThread $ songControl app
+      oldinfo <- liftIO $ readIORef $ playThread $ songControl app
       case oldinfo of 
         Nothing -> return ()
         Just (tid,_) -> do

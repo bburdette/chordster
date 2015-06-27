@@ -27,6 +27,7 @@ import SongControl
 import Control.Concurrent.MVar
 import Control.Concurrent.STM.TChan
 import Control.Monad.STM
+import Data.IORef
 
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
@@ -90,8 +91,8 @@ makeFoundation conf = do
     loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, _) <- clockDateCacher
 
-    mv <- newEmptyMVar
-    let sctrl = SongControl { playThread = mv }
+    ir <- newIORef Nothing
+    let sctrl = SongControl { playThread = ir }
     tc <- liftIO $ atomically newTChan
     sl <- liftIO $ atomically newTChan
 
