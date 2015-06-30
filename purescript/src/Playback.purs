@@ -227,13 +227,14 @@ startAnimation canelt (WebSong ws) chordindex = do
           ws.wsChords
       curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (anichords A.!! chordindex) 
       cdh = (cdims.height * 0.5)
-      chrect = { x: 0, y: cdh, w: cdims.width, h: cdh }
-      rowheight = 30
+      dr = { x: 0, y: 100, w: cdims.width, h: 60 }
+      chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+      rowheight = 40
   mcw <- maxChordWidth con2d anichords
-  let beatloc = gridBeatLoc chrect rowheight mcw anichords 
+  let beatloc = gridBeatLoc chrect rowheight (mcw + 15) anichords 
       bms = (\(Milliseconds ms) -> ms) beatms
   meh1 <- setInterval globalWindow 40 
-    (animate canelt songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
+    (animate canelt dr songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
   meh2 <- setInterval globalWindow bms
     (anibeat canelt songduration (begin - curchordtime) beatms beatloc)
   return $ Tuple meh1 meh2
@@ -270,9 +271,9 @@ msMod :: Milliseconds -> Milliseconds -> Milliseconds
 msMod (Milliseconds l) (Milliseconds r) = 
   Milliseconds (l % r) 
 
-animate :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds -> [AniChord] -> 
+animate :: forall eff. CanvasElement -> Rectangle -> Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds -> [AniChord] -> 
   Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-animate canelt songduration begin beatms windowms acs = do 
+animate canelt drawrect songduration begin beatms windowms acs = do 
   -- get current time.
   con2d <- getContext2D canelt
   now <- nowEpochMilliseconds
@@ -285,10 +286,9 @@ animate canelt songduration begin beatms windowms acs = do
   -- trace $ "font: " ++ show zefont
   setFont "20px sans-serif" con2d 
   cdims <- getCanvasDimensions canelt
-  let dr = { x: 0, y: 100, w: cdims.width, h: 60 }
-  drawAniChords con2d dr modnow windowms drawAcs 
+  drawAniChords con2d drawrect modnow windowms drawAcs 
   -- drawAniChords con2d 0 100 cdims.width 60 modnow windowms drawAcs 
-  drawAniDots con2d dr begin beatms windowms now
+  drawAniDots con2d drawrect begin beatms windowms now
   return unit
 
 drawAniChords :: forall eff. Context2D -> Rectangle -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
@@ -354,11 +354,10 @@ onChordDraw canelt curchordidx acs = do
     tm <- measureText con2d ac.name
     clearRect con2d { x: 25, y: 5, w: mcw, h: 25 }
     fillText con2d (ac.name) 25 25) mbcurchord 
-  let cdh = (cdims.height * 0.5)
-      chrect = { x: 0, y: cdh, w: cdims.width, h: cdh }
-      rowheight = 30
+  let chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+      rowheight = 40
       beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
-      beatloc = gridBeatLoc chrect rowheight mcw acs 
+      beatloc = gridBeatLoc chrect rowheight (mcw + 15) acs 
   clearRect con2d chrect
   drawMsChordGrid con2d beatloc beattot curchordidx acs
   setFillStyle "#FF0000" con2d
@@ -385,7 +384,7 @@ gridBeatLoc { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth acs =
       -- rowheight = yw / rows
       -- hspace = xw / numperrow
       drawloc numperrow rowheight hspace index = 
-        let inum = index / numperrow
+        let inum = (index % beattot) / numperrow
             row = floor inum
             col = (inum - row) * numperrow
          in 
