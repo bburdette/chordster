@@ -260,7 +260,7 @@ anibeat canelt songduration begin beatms beatloc = do
 drawbeat :: forall eff. (Number -> (Tuple Number Number)) -> Context2D -> Number -> Eff (canvas :: Canvas | eff) Unit   
 drawbeat beatloc con2d beat = do 
   let toop = beatloc beat
-      a = { x: (fst toop), y: (snd toop), r: 5, start: 0, end: twoPi }
+      a = { x: (fst toop) + 5, y: (snd toop), r: 5, start: 0, end: twoPi }
   beginPath con2d
   arc con2d a
   fill con2d
@@ -401,6 +401,11 @@ drawMsChordGrid con2d beatloc beattot curchordidx acs = do
   -- draw the chords.
   traverse (\(Tuple idx (AniChord ac)) -> do
     let toop = beatloc ac.onbeat
+    setLineWidth 2 con2d
+    beginPath con2d 
+    moveTo con2d (fst toop) (snd toop)
+    lineTo con2d (fst toop) ((snd toop) - 25)
+    stroke con2d
     if idx == curchordidx
       then do 
         setFillStyle "#FF0000" con2d
@@ -413,7 +418,7 @@ drawMsChordGrid con2d beatloc beattot curchordidx acs = do
   -- draw the beats
   traverse (\xidx -> do 
     let toop = beatloc xidx
-    let a = { x: (fst toop), y: (snd toop), r: 5, start: 0, end: twoPi }
+    let a = { x: (fst toop) + 5, y: (snd toop), r: 5, start: 0, end: twoPi }
     beginPath con2d
     arc con2d a
     fill con2d)
