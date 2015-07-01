@@ -72,7 +72,7 @@ toWebSong sid song chords = WebSong {
   , wsName = songName song 
   , wsChords = 
       (\psc -> WebChord
-        { wcName = (chordRootName (chordRoot psc) <> " " <> name psc)
+        { wcName = (chordRootName (chordRoot psc) <> name psc)
         , wcDuration = songChordDuration (songChord psc) } )
       <$> chords 
   , wsTempo = songTempo song 

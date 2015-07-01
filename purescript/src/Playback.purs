@@ -135,8 +135,7 @@ enmessage songref timeoutref canelt msg = do
   case wm of 
     Right wm -> case wm of 
       WmSong (WebSong ws) -> do
-        trace "song"
-        trace ws.wsName 
+        trace $ "song loaded: " ++ ws.wsName 
         writeRef songref (WebSong ws)
         doc <- document globalWindow
         wat <- getElementById "songname" doc
@@ -227,13 +226,14 @@ startAnimation canelt (WebSong ws) chordindex = do
           ws.wsChords
       curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (anichords A.!! chordindex) 
       cdh = (cdims.height * 0.5)
-      chrect = { x: 0, y: cdh, w: cdims.width, h: cdh }
-      rowheight = 30
+      dr = { x: 0, y: 100, w: cdims.width, h: 60 }
+      chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+      rowheight = 40
   mcw <- maxChordWidth con2d anichords
-  let beatloc = gridBeatLoc chrect rowheight mcw anichords 
+  let beatloc = gridBeatLoc chrect rowheight (mcw + 15) anichords 
       bms = (\(Milliseconds ms) -> ms) beatms
   meh1 <- setInterval globalWindow 40 
-    (animate canelt songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
+    (animate canelt dr songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
   meh2 <- setInterval globalWindow bms
     (anibeat canelt songduration (begin - curchordtime) beatms beatloc)
   return $ Tuple meh1 meh2
@@ -260,7 +260,7 @@ anibeat canelt songduration begin beatms beatloc = do
 drawbeat :: forall eff. (Number -> (Tuple Number Number)) -> Context2D -> Number -> Eff (canvas :: Canvas | eff) Unit   
 drawbeat beatloc con2d beat = do 
   let toop = beatloc beat
-      a = { x: (fst toop), y: (snd toop), r: 5, start: 0, end: twoPi }
+      a = { x: (fst toop) + 5, y: (snd toop), r: 5, start: 0, end: twoPi }
   beginPath con2d
   arc con2d a
   fill con2d
@@ -270,9 +270,9 @@ msMod :: Milliseconds -> Milliseconds -> Milliseconds
 msMod (Milliseconds l) (Milliseconds r) = 
   Milliseconds (l % r) 
 
-animate :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds -> [AniChord] -> 
+animate :: forall eff. CanvasElement -> Rectangle -> Milliseconds -> Milliseconds -> Milliseconds -> Milliseconds -> [AniChord] -> 
   Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-animate canelt songduration begin beatms windowms acs = do 
+animate canelt drawrect songduration begin beatms windowms acs = do 
   -- get current time.
   con2d <- getContext2D canelt
   now <- nowEpochMilliseconds
@@ -285,10 +285,9 @@ animate canelt songduration begin beatms windowms acs = do
   -- trace $ "font: " ++ show zefont
   setFont "20px sans-serif" con2d 
   cdims <- getCanvasDimensions canelt
-  let dr = { x: 0, y: 100, w: cdims.width, h: 60 }
-  drawAniChords con2d dr modnow windowms drawAcs 
+  drawAniChords con2d drawrect modnow windowms drawAcs 
   -- drawAniChords con2d 0 100 cdims.width 60 modnow windowms drawAcs 
-  drawAniDots con2d dr begin beatms windowms now
+  drawAniDots con2d drawrect begin beatms windowms now
   return unit
 
 drawAniChords :: forall eff. Context2D -> Rectangle -> Milliseconds -> Milliseconds -> [(Tuple Milliseconds AniChord)] -> Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
@@ -354,11 +353,10 @@ onChordDraw canelt curchordidx acs = do
     tm <- measureText con2d ac.name
     clearRect con2d { x: 25, y: 5, w: mcw, h: 25 }
     fillText con2d (ac.name) 25 25) mbcurchord 
-  let cdh = (cdims.height * 0.5)
-      chrect = { x: 0, y: cdh, w: cdims.width, h: cdh }
-      rowheight = 30
+  let chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+      rowheight = 40
       beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
-      beatloc = gridBeatLoc chrect rowheight mcw acs 
+      beatloc = gridBeatLoc chrect rowheight (mcw + 15) acs 
   clearRect con2d chrect
   drawMsChordGrid con2d beatloc beattot curchordidx acs
   setFillStyle "#FF0000" con2d
@@ -373,19 +371,25 @@ maxChordWidth con2d chords = do
     chords
   return $ foldr (\a b -> if a > b then a else b) 0 widths 
 
+posmod x a =  
+  let b = x % a in 
+  if (b < 0)
+   then
+     b + a
+   else
+     b
+
 gridBeatLoc :: Rectangle -> Number -> Number -> [AniChord] -> (Number -> (Tuple Number Number))
 gridBeatLoc { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth acs = 
   -- how many beats are we talking?
   let beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
       minbeats = foldr (\(AniChord ac) minimum -> min minimum ac.beats) beattot acs
       beatwidth = maxchordwidth / minbeats
-      beatrowwidth = xw - maxchordwidth
+      beatrowwidth = xw
       numperrow = floor (beatrowwidth / beatwidth)
       rows = ceil (beattot / numperrow)
-      -- rowheight = yw / rows
-      -- hspace = xw / numperrow
       drawloc numperrow rowheight hspace index = 
-        let inum = index / numperrow
+        let inum = (posmod index beattot) / numperrow
             row = floor inum
             col = (inum - row) * numperrow
          in 
@@ -401,6 +405,11 @@ drawMsChordGrid con2d beatloc beattot curchordidx acs = do
   -- draw the chords.
   traverse (\(Tuple idx (AniChord ac)) -> do
     let toop = beatloc ac.onbeat
+    setLineWidth 2 con2d
+    beginPath con2d 
+    moveTo con2d (fst toop) (snd toop)
+    lineTo con2d (fst toop) ((snd toop) - 25)
+    stroke con2d
     if idx == curchordidx
       then do 
         setFillStyle "#FF0000" con2d
@@ -413,7 +422,7 @@ drawMsChordGrid con2d beatloc beattot curchordidx acs = do
   -- draw the beats
   traverse (\xidx -> do 
     let toop = beatloc xidx
-    let a = { x: (fst toop), y: (snd toop), r: 5, start: 0, end: twoPi }
+    let a = { x: (fst toop) + 5, y: (snd toop), r: 5, start: 0, end: twoPi }
     beginPath con2d
     arc con2d a
     fill con2d)
@@ -434,7 +443,6 @@ enlode :: forall e. Eff (now :: Data.Date.Now, dom :: DOM, ref :: Ref, canvas ::
 --  -> Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
    
 enlode = do
-  trace "enlode"
   doc <- document globalWindow
   myurl <- documentUrl
   let wsurl = replace "https:" "wss:" (replace "http:" "ws:" myurl)
@@ -446,7 +454,6 @@ enlode = do
   WS.onMessage ws (enmessage songref ref canvas)
   sizeCanvas canvas
   E.addUIEventListener E.ResizeEvent (sizeCanvasEvt canvas) globalWindow
-  trace "enlode end"
   return unit
 
 -- boilerplate to get url for websockets.
