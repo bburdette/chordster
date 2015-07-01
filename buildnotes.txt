@@ -7,14 +7,69 @@ update cabal database, install newest cabal-install.
 > cabal update
 > cabal install cabal-install NOPE DON'T DO THIS DOESN'T WORK
 
+--------------------------------------------------------------------------------------------------
+
 update locale to en_US.UTF-8 as documented here:
 
 https://wiki.archlinux.org/index.php/Locale
 
-basically edit /etc/locale.gen, then do 
+1) basically edit file /etc/locale.gen, uncommenting the locale you want (en_US...)
+then:  
 > sudo locale-gen
 > sudo localectl set-locale LANG=en_US.UTF-8
 
+
+[1]+  Stopped                 vim /etc/locale.gen
+[bananapi@lemaker serial]$ vim ~/code/chordster/buildnotes.txt 
+
+[2]+  Stopped                 vim ~/code/chordster/buildnotes.txt
+[bananapi@lemaker serial]$ fg 
+vim ~/code/chordster/buildnotes.txt
+
+[2]+  Stopped                 vim ~/code/chordster/buildnotes.txt
+[bananapi@lemaker serial]$ fg 1
+vim /etc/locale.gen
+[bananapi@lemaker serial]$ sudo vim /etc/locale.gen 
+[bananapi@lemaker serial]$ sudo locale-gen
+Generating locales...
+  en_US.UTF-8... done
+Generation complete.
+[bananapi@lemaker serial]$ fg 
+vim ~/code/chordster/buildnotes.txt
+
+[2]+  Stopped                 vim ~/code/chordster/buildnotes.txt
+[bananapi@lemaker serial]$ 
+[bananapi@lemaker serial]$ 
+[bananapi@lemaker serial]$ sudo localectl set-locale LANG=en_US.UTF-8
+[bananapi@lemaker serial]$ locale -a
+locale: Cannot set LC_CTYPE to default locale: No such file or directory
+locale: Cannot set LC_MESSAGES to default locale: No such file or directory
+locale: Cannot set LC_COLLATE to default locale: No such file or directory
+C
+POSIX
+en_US.utf8
+[bananapi@lemaker serial]$ locale
+locale: Cannot set LC_CTYPE to default locale: No such file or directory
+locale: Cannot set LC_MESSAGES to default locale: No such file or directory
+locale: Cannot set LC_ALL to default locale: No such file or directory
+LANG=C.UTF-8
+LC_CTYPE="C.UTF-8"
+LC_NUMERIC="C.UTF-8"
+LC_TIME="C.UTF-8"
+LC_COLLATE="C.UTF-8"
+LC_MONETARY="C.UTF-8"
+LC_MESSAGES="C.UTF-8"
+LC_PAPER="C.UTF-8"
+LC_NAME="C.UTF-8"
+LC_ADDRESS="C.UTF-8"
+LC_TELEPHONE="C.UTF-8"
+LC_MEASUREMENT="C.UTF-8"
+LC_IDENTIFICATION="C.UTF-8"
+LC_ALL=
+[bananapi@lemaker serial]$ exit
+--------LOGOUT AND BACK IN FOR CORRECT LOCALE-------
+
+--------------------------------------------------------------------------------------------------
 vector 0.10.12.2 had a problem in Size.hs.  
 got master from github, it built ok. vector-0.11.0.0.
 
