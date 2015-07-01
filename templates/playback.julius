@@ -137,6 +137,13 @@ PS.Prelude = (function () {
       return !b;
     }
     ;
+    
+    function concatString(s1) {
+      return function(s2) {
+        return s1 + s2;
+      };
+    }
+    ;
     var Unit = function (x) {
         return x;
     };
@@ -223,6 +230,9 @@ PS.Prelude = (function () {
         this.not = not;
         this["||"] = $bar$bar;
     };
+    var Semigroup = function ($less$greater) {
+        this["<>"] = $less$greater;
+    };
     var $bar$bar = function (dict) {
         return dict["||"];
     };
@@ -261,6 +271,9 @@ PS.Prelude = (function () {
     var $minus = function (dict) {
         return dict["-"];
     };
+    var $plus$plus = function (__dict_Semigroup_2) {
+        return $less$greater(__dict_Semigroup_2);
+    };
     var $plus = function (dict) {
         return dict["+"];
     };
@@ -286,6 +299,7 @@ PS.Prelude = (function () {
             };
         };
     });
+    var semigroupString = new Semigroup(concatString);
     var ringNumber = new Ring(numSub, function () {
         return semiringNumber;
     });
@@ -378,6 +392,7 @@ PS.Prelude = (function () {
         LT: LT, 
         GT: GT, 
         EQ: EQ, 
+        Semigroup: Semigroup, 
         BoolLike: BoolLike, 
         Bits: Bits, 
         Ord: Ord, 
@@ -393,6 +408,7 @@ PS.Prelude = (function () {
         Show: Show, 
         Semigroupoid: Semigroupoid, 
         unit: unit, 
+        "++": $plus$plus, 
         "<>": $less$greater, 
         "||": $bar$bar, 
         complement: complement, 
@@ -429,7 +445,8 @@ PS.Prelude = (function () {
         eqNumber: eqNumber, 
         ordNumber: ordNumber, 
         bitsNumber: bitsNumber, 
-        boolLikeBoolean: boolLikeBoolean
+        boolLikeBoolean: boolLikeBoolean, 
+        semigroupString: semigroupString
     };
 })();
 var PS = PS || {};
@@ -2191,10 +2208,14 @@ PS.Graphics_Canvas = (function () {
     function getCanvasHeight(canvas){  return function(){    return canvas.height;  };};;
     function setCanvasWidth(width){   return function(canvas){      return function(){        canvas.width = width;        return canvas;      };    };};;
     function setCanvasHeight(height){   return function(canvas){      return function(){         canvas.height = height;         return canvas;       };    };};;
+    function setLineWidth(width) {  return function(ctx) {    return function() {      ctx.lineWidth = width;      return ctx;    };  };};
     function setFillStyle(style) {  return function(ctx) {    return function() {      ctx.fillStyle = style;      return ctx;    };  };};
     function beginPath(ctx) {  return function() {    ctx.beginPath();    return ctx;  };};
+    function stroke(ctx) {  return function() {    ctx.stroke();    return ctx;  };};
     function fill(ctx) {  return function() {    ctx.fill();    return ctx;  };};
     function clip(ctx) {  return function() {    ctx.clip();    return ctx;  };};
+    function lineTo(ctx) {  return function(x) {    return function(y) {      return function() {        ctx.lineTo(x, y);        return ctx;      };    };  };};
+    function moveTo(ctx) {  return function(x) {    return function(y) {      return function() {        ctx.moveTo(x, y);        return ctx;      };    };  };};
     function arc(ctx) {  return function(a) {    return function() {      ctx.arc(a.x, a.y, a.r, a.start, a.end);      return ctx;    };  };};
     function rect(ctx) {  return function(r) {    return function() {      ctx.rect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function clearRect(ctx) {  return function(r) {    return function() {      ctx.clearRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
@@ -2241,10 +2262,14 @@ PS.Graphics_Canvas = (function () {
         rect: rect, 
         arc: arc, 
         fillPath: fillPath, 
+        moveTo: moveTo, 
+        lineTo: lineTo, 
         clip: clip, 
         fill: fill, 
+        stroke: stroke, 
         beginPath: beginPath, 
         setFillStyle: setFillStyle, 
+        setLineWidth: setLineWidth, 
         setCanvasDimensions: setCanvasDimensions, 
         getCanvasDimensions: getCanvasDimensions, 
         setCanvasHeight: setCanvasHeight, 
@@ -2500,6 +2525,19 @@ PS.Main = (function () {
             return sizeCanvas(canelt);
         };
     };
+    var posmod = function (x) {
+        return function (a) {
+            var b = x % a;
+            var _814 = b < 0;
+            if (_814) {
+                return b + a;
+            };
+            if (!_814) {
+                return b;
+            };
+            throw new Error("Failed pattern match");
+        };
+    };
     var msMod = function (_697) {
         return function (_698) {
             return _697 % _698;
@@ -2516,11 +2554,11 @@ PS.Main = (function () {
                 })(chords)();
                 return Data_Foldable.foldr(Data_Foldable.foldableArray)(function (a) {
                     return function (b) {
-                        var _820 = a > b;
-                        if (_820) {
+                        var _821 = a > b;
+                        if (_821) {
                             return a;
                         };
-                        if (!_820) {
+                        if (!_821) {
                             return b;
                         };
                         throw new Error("Failed pattern match");
@@ -2547,11 +2585,16 @@ PS.Main = (function () {
         return function (rowheight) {
             return function (maxchordwidth) {
                 return function (acs) {
+                    var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_691) {
+                        return function (sum) {
+                            return sum + _691.value0.beats;
+                        };
+                    })(0)(acs);
                     var drawloc = function (numperrow) {
                         return function (rowheight_2) {
                             return function (hspace) {
                                 return function (index) {
-                                    var inum = index / numperrow;
+                                    var inum = posmod(index)(beattot) / numperrow;
                                     var row = $$Math.floor(inum);
                                     var col = (inum - row) * numperrow;
                                     return new Data_Tuple.Tuple(_705.x + col * hspace, _705.y + 20 + row * rowheight_2);
@@ -2559,19 +2602,13 @@ PS.Main = (function () {
                             };
                         };
                     };
-                    var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_691) {
-                        return function (sum) {
-                            return sum + _691.value0.beats;
-                        };
-                    })(0)(acs);
                     var minbeats = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_692) {
                         return function (minimum) {
                             return $$Math.min(minimum)(_692.value0.beats);
                         };
                     })(beattot)(acs);
                     var beatwidth = maxchordwidth / minbeats;
-                    var beatrowwidth = _705.w - maxchordwidth;
-                    var numperrow = $$Math.floor(beatrowwidth / beatwidth);
+                    var numperrow = $$Math.floor(_705.w / beatwidth);
                     var rows = $$Math.ceil(beattot / numperrow);
                     return drawloc(numperrow)(rowheight)(beatwidth);
                 };
@@ -2583,7 +2620,7 @@ PS.Main = (function () {
             return function (beat) {
                 var toop = beatloc(beat);
                 var a = {
-                    x: Data_Tuple.fst(toop), 
+                    x: Data_Tuple.fst(toop) + 5, 
                     y: Data_Tuple.snd(toop), 
                     r: 5, 
                     start: 0, 
@@ -2609,23 +2646,28 @@ PS.Main = (function () {
                             Graphics_Canvas.setFillStyle("#000000")(con2d)();
                             Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_693) {
                                 var toop = beatloc(_693.value1.value0.onbeat);
-                                var _841 = _693.value0 === curchordidx;
-                                if (_841) {
-                                    return function __do() {
+                                return function __do() {
+                                    Graphics_Canvas.setLineWidth(2)(con2d)();
+                                    Graphics_Canvas.beginPath(con2d)();
+                                    Graphics_Canvas.moveTo(con2d)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop))();
+                                    Graphics_Canvas.lineTo(con2d)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 25)();
+                                    Graphics_Canvas.stroke(con2d)();
+                                    var _842 = _693.value0 === curchordidx;
+                                    if (_842) {
                                         Graphics_Canvas.setFillStyle("#FF0000")(con2d)();
                                         Graphics_Canvas.fillText(con2d)(_693.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10)();
                                         return Graphics_Canvas.setFillStyle("#000000")(con2d)();
                                     };
+                                    if (!_842) {
+                                        return Graphics_Canvas.fillText(con2d)(_693.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10)();
+                                    };
+                                    throw new Error("Failed pattern match");
                                 };
-                                if (!_841) {
-                                    return Graphics_Canvas.fillText(con2d)(_693.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10);
-                                };
-                                throw new Error("Failed pattern match");
                             })(dexedacs)();
                             Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (xidx) {
                                 var toop = beatloc(xidx);
                                 var a = {
-                                    x: Data_Tuple.fst(toop), 
+                                    x: Data_Tuple.fst(toop) + 5, 
                                     y: Data_Tuple.snd(toop), 
                                     r: 5, 
                                     start: 0, 
@@ -2665,19 +2707,18 @@ PS.Main = (function () {
                             return Graphics_Canvas.fillText(_93)(_687.value0.name)(25)(25)();
                         };
                     })(mbcurchord)();
-                    var cdh = _92.height * 0.5;
                     var chrect = {
                         x: 0, 
-                        y: cdh, 
+                        y: 160, 
                         w: _92.width, 
-                        h: cdh
+                        h: _92.height - 160
                     };
                     var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_688) {
                         return function (sum) {
                             return sum + _688.value0.beats;
                         };
                     })(0)(acs);
-                    var beatloc = gridBeatLoc(chrect)(30)(_91)(acs);
+                    var beatloc = gridBeatLoc(chrect)(40)(_91 + 15)(acs);
                     Graphics_Canvas.clearRect(_93)(chrect)();
                     drawMsChordGrid(_93)(beatloc)(beattot)(curchordidx)(acs)();
                     Graphics_Canvas.setFillStyle("#FF0000")(_93)();
@@ -2776,40 +2817,32 @@ PS.Main = (function () {
         };
     };
     var animate = function (canelt) {
-        return function (songduration) {
-            return function (begin) {
-                return function (beatms) {
-                    return function (windowms) {
-                        return function (acs) {
-                            return function __do() {
-                                var _89 = Graphics_Canvas.getContext2D(canelt)();
-                                var _88 = Data_Date.nowEpochMilliseconds();
-                                return (function () {
-                                    var modnow = msMod(Prelude["-"](Data_Time.ringMilliseconds)(_88)(begin))(songduration);
-                                    var acnows = Prelude["<$>"](Data_Array.functorArray)(function (_682) {
-                                        return new Data_Tuple.Tuple(timeToChord(modnow)(_682.value0.time)(songduration), new AniChord(_682.value0));
-                                    })(acs);
-                                    var drawAcs = Data_Array.filter(function (_683) {
-                                        return Prelude["<"](Data_Time.ordMilliseconds)(_683.value0)(windowms);
-                                    })(acnows);
-                                    return function __do() {
-                                        Graphics_Canvas.setFont("20px sans-serif")(_89)();
-                                        var _87 = Graphics_Canvas.getCanvasDimensions(canelt)();
-                                        return (function () {
-                                            var dr = {
-                                                x: 0, 
-                                                y: 100, 
-                                                w: _87.width, 
-                                                h: 60
-                                            };
-                                            return function __do() {
-                                                drawAniChords(_89)(dr)(modnow)(windowms)(drawAcs)();
-                                                drawAniDots(_89)(dr)(begin)(beatms)(windowms)(_88)();
-                                                return Prelude.unit;
-                                            };
-                                        })()();
-                                    };
-                                })()();
+        return function (drawrect) {
+            return function (songduration) {
+                return function (begin) {
+                    return function (beatms) {
+                        return function (windowms) {
+                            return function (acs) {
+                                return function __do() {
+                                    var _89 = Graphics_Canvas.getContext2D(canelt)();
+                                    var _88 = Data_Date.nowEpochMilliseconds();
+                                    return (function () {
+                                        var modnow = msMod(Prelude["-"](Data_Time.ringMilliseconds)(_88)(begin))(songduration);
+                                        var acnows = Prelude["<$>"](Data_Array.functorArray)(function (_682) {
+                                            return new Data_Tuple.Tuple(timeToChord(modnow)(_682.value0.time)(songduration), new AniChord(_682.value0));
+                                        })(acs);
+                                        var drawAcs = Data_Array.filter(function (_683) {
+                                            return Prelude["<"](Data_Time.ordMilliseconds)(_683.value0)(windowms);
+                                        })(acnows);
+                                        return function __do() {
+                                            Graphics_Canvas.setFont("20px sans-serif")(_89)();
+                                            var _87 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                                            drawAniChords(_89)(drawrect)(modnow)(windowms)(drawAcs)();
+                                            drawAniDots(_89)(drawrect)(begin)(beatms)(windowms)(_88)();
+                                            return Prelude.unit;
+                                        };
+                                    })()();
+                                };
                             };
                         };
                     };
@@ -2857,13 +2890,19 @@ PS.Main = (function () {
                     var _83 = Graphics_Canvas.getCanvasDimensions(canelt)();
                     var _82 = Graphics_Canvas.getContext2D(canelt)();
                     return (function () {
-                        var cdh = _83.height * 0.5;
+                        var dr = {
+                            x: 0, 
+                            y: 100, 
+                            w: _83.width, 
+                            h: 60
+                        };
                         var chrect = {
                             x: 0, 
-                            y: cdh, 
+                            y: 160, 
                             w: _83.width, 
-                            h: cdh
+                            h: _83.height - 160
                         };
+                        var cdh = _83.height * 0.5;
                         var beatms = tempoToBeatMs(_696.value0.wsTempo);
                         var songduration = Data_Foldable.foldl(Data_Foldable.foldableArray)(function (sum) {
                             return function (_677) {
@@ -2880,9 +2919,9 @@ PS.Main = (function () {
                                 var bms = (function (_679) {
                                     return _679;
                                 })(beatms);
-                                var beatloc = gridBeatLoc(chrect)(30)(_81)(anichords);
+                                var beatloc = gridBeatLoc(chrect)(40)(_81 + 15)(anichords);
                                 return function __do() {
-                                    var _80 = Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(40)(animate(canelt)(songduration)(Prelude["-"](Data_Time.ringMilliseconds)(_84)(curchordtime))(beatms)(5000)(anichords))();
+                                    var _80 = Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(40)(animate(canelt)(dr)(songduration)(Prelude["-"](Data_Time.ringMilliseconds)(_84)(curchordtime))(beatms)(5000)(anichords))();
                                     var _79 = Data_DOM_Simple_Window.setInterval(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)(bms)(anibeat(canelt)(songduration)(Prelude["-"](Data_Time.ringMilliseconds)(_84)(curchordtime))(beatms)(beatloc))();
                                     return new Data_Tuple.Tuple(_80, _79);
                                 };
@@ -2911,8 +2950,7 @@ PS.Main = (function () {
                             if (wm instanceof Data_Either.Right) {
                                 if (wm.value0 instanceof WmSong) {
                                     return function __do() {
-                                        Debug_Trace.trace("song")();
-                                        Debug_Trace.trace(wm.value0.value0.value0.wsName)();
+                                        Debug_Trace.trace("song loaded: " + wm.value0.value0.value0.wsName)();
                                         Control_Monad_Eff_Ref.writeRef(songref)(new WebSong(wm.value0.value0.value0))();
                                         var _64 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
                                         var _63 = Data_DOM_Simple_Element.getElementById(Data_DOM_Simple_Document.htmlDocumentElement)("songname")(_64)();
@@ -2971,7 +3009,6 @@ PS.Main = (function () {
         };
     };
     var enlode = function __do() {
-        Debug_Trace.trace("enlode")();
         var _101 = Data_DOM_Simple_Window.document(Data_DOM_Simple_Window.htmlWindow)(Data_DOM_Simple_Window.globalWindow)();
         var _100 = documentUrl();
         return (function () {
@@ -2990,7 +3027,6 @@ PS.Main = (function () {
                     WebSocket.onMessage(_99)(enmessage(_97)(_96)(_98.value0))();
                     sizeCanvas(_98.value0)();
                     Data_DOM_Simple_Events.addUIEventListener(Data_DOM_Simple_Events.uiEventTargetHTMLWindow)(Data_DOM_Simple_Events.uiEventDOMEvent)(Data_DOM_Simple_Events.ResizeEvent.value)(sizeCanvasEvt(_98.value0))(Data_DOM_Simple_Window.globalWindow)();
-                    Debug_Trace.trace("enlode end")();
                     return Prelude.unit;
                 };
                 throw new Error("Failed pattern match");
@@ -3011,6 +3047,7 @@ PS.Main = (function () {
         timeToChord: timeToChord, 
         drawMsChordGrid: drawMsChordGrid, 
         gridBeatLoc: gridBeatLoc, 
+        posmod: posmod, 
         maxChordWidth: maxChordWidth, 
         onChordDraw: onChordDraw, 
         drawAniDots: drawAniDots, 
