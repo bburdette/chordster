@@ -135,8 +135,7 @@ enmessage songref timeoutref canelt msg = do
   case wm of 
     Right wm -> case wm of 
       WmSong (WebSong ws) -> do
-        trace "song"
-        trace ws.wsName 
+        trace $ "song loaded: " ++ ws.wsName 
         writeRef songref (WebSong ws)
         doc <- document globalWindow
         wat <- getElementById "songname" doc
@@ -372,6 +371,14 @@ maxChordWidth con2d chords = do
     chords
   return $ foldr (\a b -> if a > b then a else b) 0 widths 
 
+posmod x a =  
+  let b = x % a in 
+  if (b < 0)
+   then
+     b + a
+   else
+     b
+
 gridBeatLoc :: Rectangle -> Number -> Number -> [AniChord] -> (Number -> (Tuple Number Number))
 gridBeatLoc { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth acs = 
   -- how many beats are we talking?
@@ -384,7 +391,7 @@ gridBeatLoc { x: x, y: y, w: xw, h: yw } rowheight maxchordwidth acs =
       -- rowheight = yw / rows
       -- hspace = xw / numperrow
       drawloc numperrow rowheight hspace index = 
-        let inum = (index % beattot) / numperrow
+        let inum = (posmod index beattot) / numperrow
             row = floor inum
             col = (inum - row) * numperrow
          in 
@@ -438,7 +445,6 @@ enlode :: forall e. Eff (now :: Data.Date.Now, dom :: DOM, ref :: Ref, canvas ::
 --  -> Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
    
 enlode = do
-  trace "enlode"
   doc <- document globalWindow
   myurl <- documentUrl
   let wsurl = replace "https:" "wss:" (replace "http:" "ws:" myurl)
@@ -450,7 +456,6 @@ enlode = do
   WS.onMessage ws (enmessage songref ref canvas)
   sizeCanvas canvas
   E.addUIEventListener E.ResizeEvent (sizeCanvasEvt canvas) globalWindow
-  trace "enlode end"
   return unit
 
 -- boilerplate to get url for websockets.
