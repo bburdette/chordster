@@ -107,6 +107,7 @@ postPlaySongR sid = do
       redirect SongsR
     Just _ -> do 
       app <- getYesod 
+      -- to do: make this whole thing atomic.
       oldinfo <- liftIO $ readIORef $ playThread $ songControl app
       case oldinfo of 
         Nothing -> return ()
@@ -115,4 +116,5 @@ postPlaySongR sid = do
           (liftIO . atomically) $ 
             writeTChan (songLine app) (toJsonText $ toJSON (WsStop (fromSqlKey sid)))
           lift $ killThread tid 
+          liftIO $ writeIORef (playThread $ songControl app) $ Nothing 
       redirect SongsR
