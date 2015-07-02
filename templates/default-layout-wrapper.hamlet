@@ -25,6 +25,7 @@ $newline never
     <body onLoad="PS.Main.enlode()">
         <div class="container">
             <header>
+             <a href=@{HomeR}> main
             <div id="main" role="main">
               ^{pageBody pc}
             <footer>
