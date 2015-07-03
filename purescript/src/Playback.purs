@@ -101,6 +101,14 @@ data AniChord = AniChord
   , onbeat :: Number      -- how many beats until now in the song.
   }
 
+data AniSong = AniSong
+  { name :: String
+  , tempo :: Number
+  , beatms :: Milliseconds
+  , anichords :: [AniChord]
+  , duration :: Milliseconds
+  }
+
 makeAniChords :: WebSong -> [AniChord]
 makeAniChords (WebSong ws) = 
   snd $ foldl accum (Tuple 0 []) ws.wsChords
@@ -115,28 +123,54 @@ makeAniChords (WebSong ws) =
                         beats: wc.wcDuration,
                         onbeat: totebeats })))
 
+makeAniSong :: WebSong -> AniSong
+makeAniSong (WebSong ws) = 
+   let bms = tempoToBeatMs ws.wsTempo in
+     AniSong 
+     { name: ws.wsName
+     , tempo: ws.wsTempo
+     , beatms: bms 
+     , anichords: makeAniChords (WebSong ws)
+     , duration: songduration ws.wsChords bms
+     }
+
+songduration :: [WebChord] -> Milliseconds-> Milliseconds
+songduration wc beatms = foldl 
+    (\sum (WebChord wc) -> 
+      sum + (Milliseconds wc.wcDuration) * beatms) 
+    (Milliseconds 0) 
+    wc
+ 
 -- in this callback function we process a message from the websocket.
-enmessage :: forall e. RefVal WebSong -> RefVal (Maybe (Tuple Timeout Timeout)) -> CanvasElement -> WS.Message -> Eff (ref :: Ref, 
-      canvas :: Canvas, 
-      ws :: WS.WebSocket,
-      now :: Data.Date.Now,
-      dom :: DOM,
-      trace :: Trace | e) Unit
-enmessage songref timeoutref canelt msg = do 
+enmessage :: forall e. 
+  RefVal AniSong -> 
+  RefVal (Maybe (Tuple Timeout Timeout)) -> 
+  RefVal (Number -> (Tuple Number Number)) -> 
+  CanvasElement -> 
+  WS.Message -> Eff (ref :: Ref, 
+    canvas :: Canvas, 
+    ws :: WS.WebSocket,
+    now :: Data.Date.Now,
+    dom :: DOM,
+    trace :: Trace | e) Unit
+enmessage songref timeoutref beatlocref canelt msg = do 
   -- trace "received msg: "
   -- trace msg
+  {-
   con2d <- getContext2D canelt
   candims <- getCanvasDimensions canelt
   let wholerect = { h: candims.height
                   , w: candims.width
                   , x: 0
                   , y: 0 }
+  -}
   let wm = readJSON msg :: F WebMessage
   case wm of 
     Right wm -> case wm of 
       WmSong (WebSong ws) -> do
         trace $ "song loaded: " ++ ws.wsName 
-        writeRef songref (WebSong ws)
+        let as = makeAniSong (WebSong ws)
+        writeRef songref as
         doc <- document globalWindow
         wat <- getElementById "songname" doc
         traverse (setTextContent ws.wsName) wat 
@@ -145,22 +179,22 @@ enmessage songref timeoutref canelt msg = do
           clearTimeout globalWindow tmo1 
           clearTimeout globalWindow tmo2)
           mbt
-        timeouts <- startAnimation canelt (WebSong ws) 0
+        timeouts <- startAnimation canelt as beatlocref 0
         writeRef timeoutref $ Just timeouts 
         return unit
       WmIndex (WsIndex wi) -> do
         -- trace "index"
         -- trace (show wi.wiIndex)
-        (WebSong ws) <- readRef songref
+        (AniSong as) <- readRef songref
         mbt <- readRef timeoutref
         traverse (\(Tuple tmo1 tmo2) -> do 
           clearTimeout globalWindow tmo1 
           clearTimeout globalWindow tmo2)
           mbt
-        timeouts <- startAnimation canelt (WebSong ws) wi.wiIndex 
+        timeouts <- startAnimation canelt (AniSong as) beatlocref wi.wiIndex 
         writeRef timeoutref $ Just timeouts
-        let anichords = makeAniChords (WebSong ws)
-        onChordDraw canelt wi.wiIndex anichords
+        -- let anichords = makeAniChords (WebSong ws)
+        onChordDraw canelt wi.wiIndex (AniSong as)
         return unit
       WmStop (WsStop ws) -> do 
         -- if there's an animation running, stop it.
@@ -175,12 +209,26 @@ enmessage songref timeoutref canelt msg = do
     Left _ -> do 
         trace "message read failed"
 
-sizeCanvasEvt :: forall e. CanvasElement -> DOMEvent ->
-  Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
-sizeCanvasEvt canelt _ = sizeCanvas canelt 
+sizeCanvasEvt :: forall e. RefVal AniSong -> RefVal (Number -> Tuple Number Number) -> CanvasElement -> DOMEvent ->
+  Eff (ref :: Ref, canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
+sizeCanvasEvt asref beatlocref canelt _ = do 
+  -- resize the canvas
+  cdims <- sizeCanvas canelt 
+  -- make a new beatloc with the new canvas dims.
+  (AniSong as) <- readRef asref
+  con2d <- getContext2D canelt
+  setFont "20px sans-serif" con2d 
+  mcw <- maxChordWidth con2d as.anichords
+  trace $ "sce: " ++ show cdims.height ++ " " ++ show cdims.width ++ " " ++ show mcw
+  let bl = makeBeatLoc (AniSong as) cdims mcw
+  writeRef beatlocref bl
+  return unit
+
+-- makeBeatLoc :: AniSong -> Dimensions -> Number -> (Number -> (Tuple Number Number))
+-- makeBeatLoc (AniSong as) cdims maxchordwidth = 
 
 sizeCanvas :: forall e. CanvasElement -> 
-  Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
+  Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Dimensions
 sizeCanvas canelt = do 
   -- con2d <- getContext2D canelt
   globw <- innerWidth globalWindow
@@ -195,11 +243,12 @@ sizeCanvas canelt = do
       odims <- getCanvasDimensions canelt
       let canh = odims.height + globh - bodh 
           canw = mainw
-          -- canw = bodw - (globw - bodw) 
-      setCanvasDimensions {height: canh, 
-                           width: canw } canelt  
-      return unit
-    _ -> return unit
+          -- canw = bodw - (globw - bodw)
+          cdims = {height: canh, 
+                    width: canw } 
+      setCanvasDimensions cdims canelt  
+      return cdims
+    _ -> return { height: 0, width: 0 }
 
 -- compute milliseconds per beat
 tempoToBeatMs :: Number -> Milliseconds
@@ -212,38 +261,56 @@ tempoToBeatMs tempo =
       let minute = 1000 * 60 in 
         Milliseconds (minute / tempo)
 
-startAnimation canelt (WebSong ws) chordindex = do 
+--  mcw <- maxChordWidth con2d anichords
+
+makeBeatLoc :: AniSong -> Dimensions -> Number -> (Number -> (Tuple Number Number))
+makeBeatLoc (AniSong as) cdims maxchordwidth = 
+  let -- anichords = makeAniChords (WebSong as)
+      -- beatms = tempoToBeatMs as.asTempo
+      -- curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (as.anichords A.!! chordindex) 
+      -- cdh = (cdims.height * 0.5)
+      dr = { x: 0, y: 100, w: cdims.width, h: 60 }
+      chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+      rowheight = 40
+   in
+    gridBeatLoc chrect rowheight (maxchordwidth + 15) as.anichords 
+
+startAnimation canelt (AniSong as) beatlocref chordindex = do 
   begin <- nowEpochMilliseconds
   cdims <- getCanvasDimensions canelt
   con2d <- getContext2D canelt
-  let anichords = makeAniChords (WebSong ws)
-      beatms = tempoToBeatMs ws.wsTempo
-      songduration :: Milliseconds
-      songduration = foldl 
-          (\sum (WebChord wc) -> 
-            sum + (Milliseconds wc.wcDuration) * beatms) 
-          (Milliseconds 0) 
-          ws.wsChords
-      curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (anichords A.!! chordindex) 
+  -- beatloc <- readRef beatlocref
+  let -- anichords = makeAniChords (WebSong ws)
+      -- beatms = tempoToBeatMs ws.wsTempo
+      -- songduration :: Milliseconds
+      -- songduration = foldl 
+      --    (\sum (WebChord wc) -> 
+      --      sum + (Milliseconds wc.wcDuration) * beatms) 
+      --    (Milliseconds 0) 
+      --    ws.wsChords
+      curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (as.anichords A.!! chordindex) 
       cdh = (cdims.height * 0.5)
       dr = { x: 0, y: 100, w: cdims.width, h: 60 }
       chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
       rowheight = 40
-  mcw <- maxChordWidth con2d anichords
-  let beatloc = gridBeatLoc chrect rowheight (mcw + 15) anichords 
-      bms = (\(Milliseconds ms) -> ms) beatms
+  setFont "20px sans-serif" con2d 
+  mcw <- maxChordWidth con2d as.anichords
+  writeRef beatlocref $ makeBeatLoc (AniSong as) cdims mcw
+   -- let beatloc = gridBeatLoc chrect rowheight (mcw + 15) anichords 
+  let bms = (\(Milliseconds ms) -> ms) as.beatms
   meh1 <- setInterval globalWindow 40 
-    (animate canelt dr songduration (begin - curchordtime) beatms (Milliseconds 5000) anichords)
+    (animate canelt dr as.duration (begin - curchordtime) as.beatms (Milliseconds 5000) as.anichords)
   meh2 <- setInterval globalWindow bms
-    (anibeat canelt songduration (begin - curchordtime) beatms beatloc)
+    (anibeat canelt as.duration (begin - curchordtime) as.beatms beatlocref)
   return $ Tuple meh1 meh2
 
-anibeat :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> (Number -> (Tuple Number Number)) -> 
-  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-anibeat canelt songduration begin beatms beatloc = do 
+anibeat :: forall eff. CanvasElement -> Milliseconds -> Milliseconds -> Milliseconds -> RefVal (Number -> (Tuple Number Number)) -> 
+  Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace, ref :: Ref | eff) Unit
+anibeat canelt songduration begin beatms beatlocref = do 
   con2d <- getContext2D canelt
   now <- nowEpochMilliseconds
-  -- compute current and previous beat number.
+  beatloc <- readRef beatlocref
+  -- compute beat number.
   let tobeat :: Milliseconds -> Number
       tobeat nowms = 
         let modnow = msMod (now - begin) songduration 
@@ -251,6 +318,7 @@ anibeat canelt songduration begin beatms beatloc = do
             floor $ 0.5 + ((\(Milliseconds nowms) (Milliseconds bms) -> nowms / bms) modnow beatms) 
       nowbeat = tobeat now
   -- black dot on prev beat, red dot on nowbeat.
+  trace $ "nowbeatloc: " ++ show (beatloc nowbeat)
   setFillStyle "#000000" con2d
   drawbeat beatloc con2d (nowbeat - 1)
   setFillStyle "#FF0000" con2d
@@ -340,25 +408,27 @@ drawAniDots con2d { x: x, y: y, w: xw, h: yw } (Milliseconds begin) (Millisecond
     dotsms
   return unit
   
-onChordDraw :: forall eff. CanvasElement -> Number -> [AniChord] -> 
+onChordDraw :: forall eff. CanvasElement -> Number -> AniSong -> 
   Eff (now :: Data.Date.Now, dom :: DOM, canvas :: Canvas, trace :: Trace | eff) Unit
-onChordDraw canelt curchordidx acs = do 
+onChordDraw canelt curchordidx (AniSong as) = do 
   con2d <- getContext2D canelt
   cdims <- getCanvasDimensions canelt
   setFont "20px sans-serif" con2d 
-  let mbcurchord = acs A.!! curchordidx
-  mcw <- maxChordWidth con2d acs
+  mcw <- maxChordWidth con2d as.anichords
+  let mbcurchord = as.anichords A.!! curchordidx
   -- draw current chord.
   traverse (\(AniChord ac) -> do 
     tm <- measureText con2d ac.name
-    clearRect con2d { x: 25, y: 5, w: mcw, h: 25 }
-    fillText con2d (ac.name) 25 25) mbcurchord 
+    clearRect con2d { x: 5, y: 5, w: mcw, h: 25 }
+    fillText con2d (ac.name) 5 25) mbcurchord 
+  trace $ "onchorddraw: " ++ show cdims.height ++ " " ++ show cdims.width ++ " " ++ show mcw
   let chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
-      rowheight = 40
-      beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 acs
-      beatloc = gridBeatLoc chrect rowheight (mcw + 15) acs 
+      -- rowheight = 40
+      beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 as.anichords
+      -- beatloc = gridBeatLoc chrect rowheight (mcw + 15) acs 
+      beatloc = makeBeatLoc (AniSong as) cdims mcw
   clearRect con2d chrect
-  drawMsChordGrid con2d beatloc beattot curchordidx acs
+  drawMsChordGrid con2d beatloc beattot curchordidx as.anichords
   setFillStyle "#FF0000" con2d
   traverse (\(AniChord ac) -> drawbeat beatloc con2d ac.onbeat) mbcurchord
   return unit
@@ -441,19 +511,24 @@ timeToChord modnow chordtime duration =
 -- registers the onMessage callback.
 enlode :: forall e. Eff (now :: Data.Date.Now, dom :: DOM, ref :: Ref, canvas :: Canvas, ws :: WS.WebSocket, trace :: Trace | e) Unit
 --  -> Eff (canvas :: Canvas, trace :: Trace, dom :: DOM | e) Unit
-   
 enlode = do
   doc <- document globalWindow
   myurl <- documentUrl
+  Just canelt <- getCanvasElementById "canvas"
+  cdims <- getCanvasDimensions canelt
+  con2d <- getContext2D canelt
   let wsurl = replace "https:" "wss:" (replace "http:" "ws:" myurl)
+      anisawng = makeAniSong $ WebSong { wsId: 0, wsName: "", wsChords: [], wsTempo: 0 }
+      as = (\(AniSong a) -> a) anisawng
   ws <- WS.mkWebSocket wsurl
-  Just canvas <- getCanvasElementById "canvas"
+  mcw <- maxChordWidth con2d as.anichords
   --songref <- newRef $ WebSong { wsName: "", wsChords: [] }
-  songref <- newRef $ WebSong { wsId: 0, wsName: "", wsChords: [], wsTempo: 0 }
+  songref <- newRef $ anisawng 
   ref <- newRef $ Nothing
-  WS.onMessage ws (enmessage songref ref canvas)
-  sizeCanvas canvas
-  E.addUIEventListener E.ResizeEvent (sizeCanvasEvt canvas) globalWindow
+  beatlocref <- newRef $ makeBeatLoc (AniSong as) cdims mcw
+  WS.onMessage ws (enmessage songref ref beatlocref canelt)
+  sizeCanvas canelt
+  E.addUIEventListener E.ResizeEvent (sizeCanvasEvt songref beatlocref canelt) globalWindow
   return unit
 
 -- boilerplate to get url for websockets.
