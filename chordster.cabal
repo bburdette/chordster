@@ -36,6 +36,9 @@ library
                      Handler.ImportSong
                      Handler.ChatTest
                      Handler.CurrentSong
+                     Handler.SongSequence
+                     Handler.SongSequences
+                     Handler.AddSongSequence
                      SongControl
                      PlaySong
                      ForkeyOpen

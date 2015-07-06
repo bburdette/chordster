@@ -21,3 +21,6 @@
 /importsong/ ImportSongR GET POST
 /chattest/ ChatTestR GET POST
 /currentsong/ CurrentSongR GET
+/songsequence/#SongSequenceId SongSequenceR GET POST
+/songsequences/ SongSequencesR GET POST
+/addsongsequence/ AddSongSequenceR GET POST

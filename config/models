@@ -30,6 +30,15 @@ Song
   name Text
   tempo Int
   deriving Show
+SongSequence
+  name Text
+  deriving Show
+SongSeqItem
+  songsequence SongSequenceId
+  song SongId
+  reps Int
+  seqnum Int
+  deriving Show
 OSCDest
   name Text
   ip Text

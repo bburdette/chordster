@@ -48,6 +48,9 @@ import Handler.ExportSong
 import Handler.ImportSong
 import Handler.ChatTest
 import Handler.CurrentSong
+import Handler.SongSequence
+import Handler.SongSequences
+import Handler.AddSongSequence
 import ForkeyOpen
 
 
