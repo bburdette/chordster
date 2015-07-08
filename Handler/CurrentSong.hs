@@ -12,5 +12,5 @@ getCurrentSongR = do
   wat <- liftIO $ readIORef $ whateverThread $ songControl app
   case wat of 
     Just (_,WhatSong songid) -> redirect $ PlaySongR songid
-    Just (_,WhatSongSequence _) -> error "current songsequene unimplemented" 
+    Just (_,WhatSongSequence songseqid) -> redirect $ PlaySongSequenceR songseqid
     Nothing -> error "no song is playing right now."

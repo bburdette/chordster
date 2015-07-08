@@ -1,4 +1,4 @@
-<h1 id="songname"> Song Playback: #{songName song}
+<h1 id="songname"> Song Playback
 <form method=post>
   <input type=submit name="stop" value="stop">
 

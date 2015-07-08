@@ -42,6 +42,7 @@ library
                      Handler.PlaySongSequence
                      SongControl
                      PlaySong
+                     PlayWhatever
                      ForkeyOpen
 
     if flag(dev) || flag(library-only)

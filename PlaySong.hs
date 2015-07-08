@@ -6,7 +6,7 @@ module PlaySong where
 import Import
 import Control.Concurrent
 import Sound.OSC.FD
-import Control.Monad.Loops
+import Control.Monad
 import SongControl
 import Data.Ratio
 import Data.List
@@ -140,8 +140,20 @@ playSong textchan song chords chorddests lightdests = do
   let websong = toWebSong 0 song chords
       wsjs = toJSON websong
   (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
-  iterateWhile (\_ -> True) 
-    (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0)
+  forever (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0)
+
+playSongSequence :: TChan Text -> [(Song, Int, [PlaySongChord])] -> [(String,Int)] -> [(String,Int)] -> IO ()
+playSongSequence textchan songchords chorddests lightdests = do
+  chordcons <- mapM (\(ip,port) -> openUDP ip port) chorddests
+  lightcons <- mapM (\(ip,port) -> openUDP ip port) lightdests
+  setupLights lightcons
+  forever (mapM (\(song, reps, chords) -> do
+                  let websong = toWebSong 0 song chords
+                      wsjs = toJSON websong
+                  (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
+                  replicateM_ reps 
+                    (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0))
+                songchords)
 
 chordnotes :: Int -> [Rational] -> [Int]
 chordnotes _ [] = []
@@ -181,4 +193,5 @@ playit textchan ccons lcons beattime (psc:pscs) count =
     threadDelay beattime)
     (take (songChordDuration (songChord psc)) [0..])
   playit textchan ccons lcons beattime pscs (count + 1)
+
 

@@ -16,7 +16,7 @@ getSongSequencesR = do
          <td> 
            <a href=@{SongSequenceR ssid}>  #{songSequenceName seq}
          <td> 
-           play
+           <a href=@{PlaySongSequenceR ssid}> play
   <a href=@{AddSongSequenceR}>Add new song sequence
   |]
 
