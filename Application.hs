@@ -51,6 +51,7 @@ import Handler.CurrentSong
 import Handler.SongSequence
 import Handler.SongSequences
 import Handler.AddSongSequence
+import Handler.PlaySongSequence
 import ForkeyOpen
 
 
@@ -95,7 +96,8 @@ makeFoundation conf = do
     (getter, _) <- clockDateCacher
 
     ir <- newIORef Nothing
-    let sctrl = SongControl { playThread = ir }
+    wt <- newIORef Nothing
+    let sctrl = SongControl { playThread = ir, whateverThread = wt }
     tc <- liftIO $ atomically newTChan
     sl <- liftIO $ atomically newTChan
 

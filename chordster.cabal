@@ -39,6 +39,7 @@ library
                      Handler.SongSequence
                      Handler.SongSequences
                      Handler.AddSongSequence
+                     Handler.PlaySongSequence
                      SongControl
                      PlaySong
                      ForkeyOpen

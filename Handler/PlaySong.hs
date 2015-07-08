@@ -18,6 +18,77 @@ import Yesod.WebSockets
 import Text.Julius
 import Database.Persist.Sql 
 
+-- startWhateverThread :: TChan Text -> Handler ThreadId
+-- startWhateverThread textchan = do
+-- playSong :: TChan Text -> Song -> [PlaySongChord] -> [(String,Int)] -> [(String,Int)] -> IO ()
+
+playWhateverWs :: (TChan Text -> IO ()) -> Maybe Text -> Whatever -> WebSocketsT Handler ()
+playWhateverWs whateverftn mbnewthreadtext whateverid = do 
+  app <- getYesod
+  let writeChan = songLine app
+  readChan <- (liftIO . atomically) $ dupTChan writeChan
+  -- info for old whatever currently playing.
+  oldinfo <- liftIO $ readIORef $ whateverThread $ songControl app
+  liftIO $ print $ "oldinfo: " ++ show oldinfo
+  case oldinfo of 
+    Just (tid, id) | id == whateverid -> do  
+      liftIO $ print $ "playwhatever thread exists; doing nothing. " ++ show (tid, id)
+      case mbnewthreadtext of
+        Just text -> do
+          liftIO $ print ("at sendtextdata: " ++ show text)
+          sendTextData text
+          return () 
+        _ -> return ()
+    Just (tid, _) -> do  
+      -- kill the old thread. 
+      liftIO $ print $ "killing old thread: " ++ show tid
+      liftIO $ TR.mapM (\(tid,_) -> killThread tid) oldinfo
+      -- start a new song thread
+      threadid <- liftIO $ forkIO $ whateverftn writeChan 
+      -- save the new thread id and song id in the MVar.
+      -- _ <- liftIO $ tryTakeMVar $ playThread $ songControl app
+      res <- liftIO $ writeIORef (whateverThread $ songControl app) $ Just (threadid, whateverid)
+      liftIO $ print $ "res= " ++ show res
+      return ()
+    Nothing -> do 
+      liftIO $ print $ "starting new song thread"  
+      -- start a new song thread
+      threadid <- liftIO $ forkIO $ whateverftn writeChan 
+      -- save the new thread id and song id in the MVar.
+      res <- liftIO $ writeIORef (whateverThread $ songControl app) $ Just (threadid, whateverid)
+      liftIO $ print $ "nothing res= " ++ show res
+      return ()
+  liftIO $ print "pre readTChan, etc"
+  (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
+  liftIO $ print "post readTChan, etc"
+  return ()
+
+playSongWhateverWs :: SongId -> WebSocketsT Handler ()
+playSongWhateverWs sid = do 
+  -- info for new song to play.
+  mbsonginfo <- lift $ getSongInfo sid 
+  case mbsonginfo of 
+    Just (song, chords) -> do  
+      -- liftIO $ print $ "song thread exists; doing nothing. " ++ show (tid, id)
+      -- actually, send song info if here.
+      let websong = toWebSong 0 song chords
+          wsjs = toJSON websong
+      -- sendTextData (toJsonText wsjs)
+      chorddests <- lift $ runDB $ selectList [OSCDestType ==. T.pack "chords"] [] 
+      lightdests <- lift $ runDB $ selectList [OSCDestType ==. T.pack "lights"] [] 
+      let chordips = map (\(Entity _ dest) -> 
+                            (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
+                          chorddests
+          lightips = map (\(Entity _ dest) -> 
+                            (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
+                          lightdests
+          whateverid = WhatSong sid
+          whateverftn tc = playSong tc song chords chordips lightips
+      playWhateverWs whateverftn (Just (toJsonText wsjs)) whateverid     
+    _ -> 
+      return ()
+
+  
 playSongWs :: SongId -> WebSocketsT Handler ()
 playSongWs sid = do 
   app <- getYesod
@@ -65,7 +136,7 @@ playSongWs sid = do
 
 getPlaySongR :: SongId -> Handler Html
 getPlaySongR sid = do
-  webSockets $ playSongWs sid
+  webSockets $ playSongWhateverWs sid
   mbsong <- runDB $ get sid
   let _ = $(juliusFileReload "templates/playback.julius")
   case mbsong of 
@@ -108,7 +179,7 @@ postPlaySongR sid = do
     Just _ -> do 
       app <- getYesod 
       -- to do: make this whole thing atomic.
-      oldinfo <- liftIO $ readIORef $ playThread $ songControl app
+      oldinfo <- liftIO $ readIORef $ whateverThread $ songControl app
       case oldinfo of 
         Nothing -> return ()
         Just (tid,_) -> do
@@ -116,5 +187,5 @@ postPlaySongR sid = do
           (liftIO . atomically) $ 
             writeTChan (songLine app) (toJsonText $ toJSON (WsStop (fromSqlKey sid)))
           lift $ killThread tid 
-          liftIO $ writeIORef (playThread $ songControl app) $ Nothing 
+          liftIO $ writeIORef (whateverThread $ songControl app) $ Nothing 
       redirect SongsR

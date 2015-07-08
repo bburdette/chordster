@@ -24,3 +24,4 @@
 /songsequence/#SongSequenceId SongSequenceR GET POST
 /songsequences/ SongSequencesR GET POST
 /addsongsequence/ AddSongSequenceR GET POST
+/playsongsequence/#SongSequenceId PlaySongSequenceR GET POST

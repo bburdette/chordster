@@ -1,10 +1,11 @@
 Default: &defaults
   host: "*4" # any IPv4 host
   port: 3000
-  approot: "http://localhost:3000"
+  #approot: "http://localhost:3000"
+  #approot: "http://10.1.10.122:3000"
   #approot: "http://192.168.1.133:3000"
   #approot: "http://192.168.10.54:3000"
-  #approot: "http://192.168.8.214:3000"
+  approot: "http://192.168.8.214:3000"
   copyright: Insert copyright statement here
   #analytics: UA-YOURCODE
 
