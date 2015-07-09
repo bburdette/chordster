@@ -20,6 +20,5 @@ getSongSequencesR = do
   <a href=@{AddSongSequenceR}>Add new song sequence
   |]
 
-
 postSongSequencesR :: Handler Html
 postSongSequencesR = error "Not yet implemented: postSongSequencesR"

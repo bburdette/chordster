@@ -23,6 +23,7 @@ import PlayWhatever
 playSongWhateverWs :: SongId -> WebSocketsT Handler ()
 playSongWhateverWs sid = do 
   -- info for new song to play.
+  app <- getYesod
   mbsonginfo <- lift $ getSongInfo sid 
   case mbsonginfo of 
     Just (song, chords) -> do  
@@ -33,67 +34,10 @@ playSongWhateverWs sid = do
           wsjs = toJSON websong
       -- sendTextData (toJsonText wsjs)
           whateverid = WhatSong sid
-          whateverftn tc = playSong tc song chords chordips lightips
+          whateverftn tc = playSong sid ((currentSong . songControl) app) tc song chords chordips lightips
       playWhateverWs whateverftn (Just (toJsonText wsjs)) whateverid     
     _ -> 
       return ()
-
-getDests :: Handler ([(String,Int)], [(String,Int)])
-getDests = do 
-  chorddests <- runDB $ selectList [OSCDestType ==. T.pack "chords"] [] 
-  lightdests <- runDB $ selectList [OSCDestType ==. T.pack "lights"] [] 
-  let chordips = map (\(Entity _ dest) -> 
-                        (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
-                      chorddests
-      lightips = map (\(Entity _ dest) -> 
-                        (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
-                      lightdests
-  return (chordips, lightips)
-   
-playSongWs :: SongId -> WebSocketsT Handler ()
-playSongWs sid = do 
-  app <- getYesod
-  let writeChan = songLine app
-  readChan <- (liftIO . atomically) $ dupTChan writeChan
-  -- info for new song to play.
-  mbsonginfo <- lift $ getSongInfo sid 
-  -- info for old song currenty playing.
-  oldinfo <- liftIO $ readIORef $ playThread $ songControl app
-  liftIO $ print $ "oldinfo: " ++ show oldinfo
-  case (mbsonginfo, oldinfo) of 
-    (Nothing, _) -> do
-      liftIO $ print $ "song not found: " ++ show sid 
-      return ()
-    (Just (song, chords), Just (tid, id)) | id == sid -> do  
-      liftIO $ print $ "song thread exists; doing nothing. " ++ show (tid, id)
-      -- actually, send song info if here.
-      let websong = toWebSong 0 song chords
-          wsjs = toJSON websong
-      sendTextData (toJsonText wsjs)
-      return () 
-    (Just (song, chords), Just (tid, _)) -> do  
-      -- kill the old song thread. 
-      liftIO $ print $ "killing old thread: " ++ show tid
-      liftIO $ TR.mapM (\(tid,_) -> killThread tid) oldinfo
-      -- start a new song thread
-      threadid <- lift $ startSongThread writeChan song chords 
-      -- save the new thread id and song id in the MVar.
-      -- _ <- liftIO $ tryTakeMVar $ playThread $ songControl app
-      res <- liftIO $ writeIORef (playThread $ songControl app) $ Just (threadid, sid)
-      liftIO $ print $ "res= " ++ show res
-      return ()
-    (Just (song, chords), Nothing) -> do 
-      liftIO $ print $ "starting new song thread"  
-      -- start a new song thread
-      threadid <- lift $ startSongThread writeChan song chords 
-      -- save the new thread id and song id in the MVar.
-      res <- liftIO $ writeIORef (playThread $ songControl app) $ Just (threadid, sid)
-      liftIO $ print $ "nothing res= " ++ show res
-      return ()
-  liftIO $ print "pre readTChan, etc"
-  (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
-  liftIO $ print "post readTChan, etc"
-  return ()
 
 getPlaySongR :: SongId -> Handler Html
 getPlaySongR sid = do
@@ -107,29 +51,6 @@ getPlaySongR sid = do
         setTitle "Song Playback!"
         $(widgetFile "playback")
     Nothing -> error "song not found"
- 
-getSongInfo :: SongId -> Handler (Maybe (Song, [PlaySongChord]))
-getSongInfo sid = do
-  app <- getYesod 
-  mbsong <- runDB $ get sid
-  chords <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
-  songchords <- makePscs (map entityVal chords)
-  case mbsong of 
-    (Just song) -> return (Just (song, catMaybes songchords))
-    Nothing -> return Nothing
-
-startSongThread :: TChan Text -> Song -> [PlaySongChord] -> Handler ThreadId
-startSongThread textchan song chords = do
-  chorddests <- runDB $ selectList [OSCDestType ==. T.pack "chords"] [] 
-  lightdests <- runDB $ selectList [OSCDestType ==. T.pack "lights"] [] 
-  let chordips = map (\(Entity _ dest) -> 
-                        (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
-                      chorddests
-      lightips = map (\(Entity _ dest) -> 
-                        (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
-                      lightdests
-  liftIO $ forkIO $ 
-    playSong textchan song chords chordips lightips
 
 postPlaySongR :: SongId -> Handler Html
 postPlaySongR sid = do 

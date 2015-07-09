@@ -16,6 +16,7 @@ import Control.Concurrent
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
 import qualified Data.Text as T
+import PlaySong
 
 playWhateverWs :: (TChan Text -> IO ()) -> Maybe Text -> Whatever -> WebSocketsT Handler ()
 playWhateverWs whateverftn mbnewthreadtext whateverid = do 
@@ -56,6 +57,14 @@ playWhateverWs whateverftn mbnewthreadtext whateverid = do
   liftIO $ print "pre readTChan, etc"
   (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
   liftIO $ print "post readTChan, etc"
+  return ()
+
+listenWs :: WebSocketsT Handler ()
+listenWs  = do 
+  app <- getYesod
+  let writeChan = songLine app
+  readChan <- (liftIO . atomically) $ dupTChan writeChan
+  (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
   return ()
 
 

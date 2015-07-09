@@ -95,9 +95,9 @@ makeFoundation conf = do
     loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, _) <- clockDateCacher
 
-    ir <- newIORef Nothing
+    cs <- newIORef Nothing
     wt <- newIORef Nothing
-    let sctrl = SongControl { playThread = ir, whateverThread = wt }
+    let sctrl = SongControl { whateverThread = wt, currentSong = cs }
     tc <- liftIO $ atomically newTChan
     sl <- liftIO $ atomically newTChan
 

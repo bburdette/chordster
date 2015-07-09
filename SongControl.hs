@@ -12,8 +12,8 @@ data Whatever = WhatSong SongId
   deriving (Eq, Show)
 
 data SongControl = SongControl 
-  { playThread :: IORef (Maybe (ThreadId, SongId))
-  , whateverThread :: IORef (Maybe (ThreadId, Whatever))
+  { whateverThread :: IORef (Maybe (ThreadId, Whatever))
+  , currentSong :: IORef (Maybe SongId)
   }
 
 

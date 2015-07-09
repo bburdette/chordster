@@ -30,7 +30,7 @@ playSongSeqWhateverWs ssid = do
     mapM (\(Entity _ sseq) -> do 
             mbsonginfo <- getSongInfo (songSeqItemSong sseq)
             case mbsonginfo of 
-              Just (song, chords) -> return $ Just (song, (songSeqItemReps sseq), chords)
+              Just (song, chords) -> return $ Just (song, (songSeqItemSong sseq), (songSeqItemReps sseq), chords)
               Nothing -> return $ Nothing)
             -- return $ TR.traverse (\(song, chords) -> (song, (songSeqItemReps sseq), chords)) mbsonginfo)
           songseqs
@@ -42,6 +42,7 @@ playSongSeqWhateverWs ssid = do
   -- sendTextData (toJsonText wsjs)
   chorddests <- lift $ runDB $ selectList [OSCDestType ==. T.pack "chords"] [] 
   lightdests <- lift $ runDB $ selectList [OSCDestType ==. T.pack "lights"] [] 
+  app <- getYesod
   let chordips = map (\(Entity _ dest) -> 
                         (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
                       chorddests
@@ -49,7 +50,7 @@ playSongSeqWhateverWs ssid = do
                         (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
                       lightdests
       whateverid = WhatSongSequence ssid
-      whateverftn tc = playSongSequence tc songrepchords chordips lightips
+      whateverftn tc = playSongSequence ((currentSong . songControl) app) tc songrepchords chordips lightips
   playWhateverWs whateverftn Nothing whateverid     
 --  return ()
 

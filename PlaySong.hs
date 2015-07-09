@@ -12,6 +12,8 @@ import Data.Ratio
 import Data.List
 import Data.Int
 import Data.Maybe
+import Data.IORef
+import qualified Data.Text as T
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
 import GHC.Generics
@@ -132,27 +134,27 @@ setArrayColor conn arrayindex color = do
         [0..23::Int]
   return ()
 
-playSong :: TChan Text -> Song -> [PlaySongChord] -> [(String,Int)] -> [(String,Int)] -> IO ()
-playSong textchan song chords chorddests lightdests = do
+playSong :: SongId -> IORef (Maybe SongId) -> TChan Text -> Song -> [PlaySongChord] -> [(String,Int)] -> [(String,Int)] -> IO ()
+playSong sid iorsid textchan song chords chorddests lightdests = do
   chordcons <- mapM (\(ip,port) -> openUDP ip port) chorddests
   lightcons <- mapM (\(ip,port) -> openUDP ip port) lightdests
   setupLights lightcons
   let websong = toWebSong 0 song chords
       wsjs = toJSON websong
   (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
-  forever (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0)
+  forever (playit sid iorsid textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0)
 
-playSongSequence :: TChan Text -> [(Song, Int, [PlaySongChord])] -> [(String,Int)] -> [(String,Int)] -> IO ()
-playSongSequence textchan songchords chorddests lightdests = do
+playSongSequence :: IORef (Maybe SongId) -> TChan Text -> [(Song, SongId, Int, [PlaySongChord])] -> [(String,Int)] -> [(String,Int)] -> IO ()
+playSongSequence iorsid textchan songchords chorddests lightdests = do
   chordcons <- mapM (\(ip,port) -> openUDP ip port) chorddests
   lightcons <- mapM (\(ip,port) -> openUDP ip port) lightdests
   setupLights lightcons
-  forever (mapM (\(song, reps, chords) -> do
+  forever (mapM (\(song, sid, reps, chords) -> do
                   let websong = toWebSong 0 song chords
                       wsjs = toJSON websong
                   (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
                   replicateM_ reps 
-                    (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0))
+                    (playit sid iorsid textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0))
                 songchords)
 
 chordnotes :: Int -> [Rational] -> [Int]
@@ -163,9 +165,9 @@ chordnotes den rats =
     in
   (den : notes)
   
-playit :: TChan Text -> [UDP] -> [UDP] -> Int -> [PlaySongChord] -> Int -> IO ()
-playit textchan ccons lcons beattime [] count = return ()
-playit textchan ccons lcons beattime (psc:pscs) count = 
+playit :: SongId -> IORef (Maybe SongId) -> TChan Text -> [UDP] -> [UDP] -> Int -> [PlaySongChord] -> Int -> IO ()
+playit sid iorsid textchan ccons lcons beattime [] count = return ()
+playit sid iorsid textchan ccons lcons beattime (psc:pscs) count = 
   -- on chord change, set the root and the scale.
   let rootmsg = Message "root" (map d_put [(chordRootNumer (chordRoot psc)), 
                                 (chordRootDenom (chordRoot psc))])
@@ -174,6 +176,8 @@ playit textchan ccons lcons beattime (psc:pscs) count =
       wsi = WsIndex { wiIndex = count } 
       wsijs = toJSON wsi
     in do
+  -- set current song id.
+  writeIORef iorsid (Just sid)
   -- send root and scale msgs to all destinations.
   _ <- mapM (\conn -> do 
           sendOSC conn rootmsg
@@ -192,6 +196,27 @@ playit textchan ccons lcons beattime (psc:pscs) count =
     -- delay for a beat.
     threadDelay beattime)
     (take (songChordDuration (songChord psc)) [0..])
-  playit textchan ccons lcons beattime pscs (count + 1)
+  playit sid iorsid textchan ccons lcons beattime pscs (count + 1)
 
+getSongInfo :: SongId -> Handler (Maybe (Song, [PlaySongChord]))
+getSongInfo sid = do
+  app <- getYesod 
+  mbsong <- runDB $ get sid
+  chords <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
+  songchords <- makePscs (map entityVal chords)
+  case mbsong of 
+    (Just song) -> return (Just (song, catMaybes songchords))
+    Nothing -> return Nothing
 
+getDests :: Handler ([(String,Int)], [(String,Int)])
+getDests = do 
+  chorddests <- runDB $ selectList [OSCDestType ==. T.pack "chords"] [] 
+  lightdests <- runDB $ selectList [OSCDestType ==. T.pack "lights"] [] 
+  let chordips = map (\(Entity _ dest) -> 
+                        (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
+                      chorddests
+      lightips = map (\(Entity _ dest) -> 
+                        (T.unpack $ oSCDestIp dest, oSCDestPort dest)) 
+                      lightdests
+  return (chordips, lightips)
+ 
