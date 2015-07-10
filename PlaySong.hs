@@ -142,7 +142,9 @@ playSong sid iorsid textchan song chords chorddests lightdests = do
   let websong = toWebSong 0 song chords
       wsjs = toJSON websong
   (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
-  forever (playit sid iorsid textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0)
+  -- set current song id.
+  writeIORef iorsid (Just sid)
+  forever (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0)
 
 playSongSequence :: IORef (Maybe SongId) -> TChan Text -> [(Song, SongId, Int, [PlaySongChord])] -> [(String,Int)] -> [(String,Int)] -> IO ()
 playSongSequence iorsid textchan songchords chorddests lightdests = do
@@ -153,8 +155,10 @@ playSongSequence iorsid textchan songchords chorddests lightdests = do
                   let websong = toWebSong 0 song chords
                       wsjs = toJSON websong
                   (liftIO . atomically) $ writeTChan textchan (toJsonText wsjs)
+                  -- set current song id.
+                  writeIORef iorsid (Just sid)
                   replicateM_ reps 
-                    (playit sid iorsid textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0))
+                    (playit textchan chordcons lightcons ((tempoToBeattime . songTempo) song) chords 0))
                 songchords)
 
 chordnotes :: Int -> [Rational] -> [Int]
@@ -165,9 +169,9 @@ chordnotes den rats =
     in
   (den : notes)
   
-playit :: SongId -> IORef (Maybe SongId) -> TChan Text -> [UDP] -> [UDP] -> Int -> [PlaySongChord] -> Int -> IO ()
-playit sid iorsid textchan ccons lcons beattime [] count = return ()
-playit sid iorsid textchan ccons lcons beattime (psc:pscs) count = 
+playit :: TChan Text -> [UDP] -> [UDP] -> Int -> [PlaySongChord] -> Int -> IO ()
+playit textchan ccons lcons beattime [] count = return ()
+playit textchan ccons lcons beattime (psc:pscs) count = 
   -- on chord change, set the root and the scale.
   let rootmsg = Message "root" (map d_put [(chordRootNumer (chordRoot psc)), 
                                 (chordRootDenom (chordRoot psc))])
@@ -176,8 +180,6 @@ playit sid iorsid textchan ccons lcons beattime (psc:pscs) count =
       wsi = WsIndex { wiIndex = count } 
       wsijs = toJSON wsi
     in do
-  -- set current song id.
-  writeIORef iorsid (Just sid)
   -- send root and scale msgs to all destinations.
   _ <- mapM (\conn -> do 
           sendOSC conn rootmsg
@@ -196,7 +198,7 @@ playit sid iorsid textchan ccons lcons beattime (psc:pscs) count =
     -- delay for a beat.
     threadDelay beattime)
     (take (songChordDuration (songChord psc)) [0..])
-  playit sid iorsid textchan ccons lcons beattime pscs (count + 1)
+  playit textchan ccons lcons beattime pscs (count + 1)
 
 getSongInfo :: SongId -> Handler (Maybe (Song, [PlaySongChord]))
 getSongInfo sid = do
