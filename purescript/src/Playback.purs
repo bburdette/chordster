@@ -381,7 +381,10 @@ onChordDraw canelt curchordidx (AniSong as) = do
   -- draw current chord.
   traverse (\(AniChord ac) -> do 
     tm <- measureText con2d ac.name
-    clearRect con2d { x: 5, y: 5, w: mcw, h: 25 }
+    setFillStyle "#FF00F0" con2d
+    --clearRect con2d { x: 5, y: 5, w: mcw, h: 25 }
+    fillRect con2d { x: 5, y: 5, w: mcw, h: 25 }
+    setFillStyle "#000000" con2d
     fillText con2d (ac.name) 5 25) mbcurchord 
   -- trace $ "onchorddraw: " ++ show cdims.height ++ " " ++ show cdims.width ++ " " ++ show mcw
   let chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }

@@ -40,6 +40,7 @@ library
                      Handler.SongSequences
                      Handler.AddSongSequence
                      Handler.PlaySongSequence
+                     Handler.DeleteChord
                      SongControl
                      PlaySong
                      PlayWhatever

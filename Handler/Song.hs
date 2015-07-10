@@ -86,6 +86,7 @@ getSongR sid = do
       <form method=post enctype=#{etype}>
         ^{widget}
         <input type=submit name="updated" value="update">
+        <a href=@{DeleteChordR sid scid}>delete
     <form method=post enctype=#{enctype}>
       ^{scwidget}
       <input type=submit name="addchord" value="add chord">
@@ -94,10 +95,10 @@ getSongR sid = do
 postSongR :: SongId -> Handler Html 
 postSongR sid = do 
   addc <- lookupPostParam "addchord"
-  update <- lookupPostParam "updated"
+  updatec <- lookupPostParam "updated"
   oksong <- lookupPostParam "oksong"
   deletesong <- lookupPostParam "deletesong"
-  case (oksong,deletesong,addc,update) of 
+  case (oksong,deletesong,addc,updatec) of 
     (Just _, _, _, _) -> do 
       ((res, widget),enctype) <- runFormPost (songForm Nothing)
       case res of 
@@ -138,4 +139,5 @@ postSongR sid = do
         _ -> defaultLayout [whamlet|meh!|]
     _ -> do
       redirect SongsR
+
 

@@ -10,11 +10,6 @@ PS.Prelude = (function () {
     }
     ;
     
-    function showNumberImpl(n) {
-      return n.toString();
-    }
-    ;
-    
     function numAdd(n1) {
       return function(n2) {
         return n1 + n2;
@@ -293,7 +288,6 @@ PS.Prelude = (function () {
     };
     var unsafeCompare = unsafeCompareImpl(LT.value)(EQ.value)(GT.value);
     var unit = {};
-    var showNumber = new Show(showNumberImpl);
     var show = function (dict) {
         return dict.show;
     };
@@ -444,7 +438,6 @@ PS.Prelude = (function () {
         "<<<": $less$less$less, 
         flip: flip, 
         semigroupoidArr: semigroupoidArr, 
-        showNumber: showNumber, 
         semiringNumber: semiringNumber, 
         ringNumber: ringNumber, 
         moduloSemiringNumber: moduloSemiringNumber, 
@@ -1572,13 +1565,6 @@ PS.Data_Tuple = (function () {
     var snd = function (_398) {
         return _398.value1;
     };
-    var showTuple = function (__dict_Show_120) {
-        return function (__dict_Show_121) {
-            return new Prelude.Show(function (_402) {
-                return "Tuple (" + (Prelude.show(__dict_Show_120)(_402.value0) + (") (" + (Prelude.show(__dict_Show_121)(_402.value1) + ")")));
-            });
-        };
-    };
     var fst = function (_397) {
         return _397.value0;
     };
@@ -1586,8 +1572,7 @@ PS.Data_Tuple = (function () {
         Tuple: Tuple, 
         zip: zip, 
         snd: snd, 
-        fst: fst, 
-        showTuple: showTuple
+        fst: fst
     };
 })();
 var PS = PS || {};
@@ -2089,8 +2074,8 @@ PS.Data_Traversable = (function () {
                 return Prelude.pure(__dict_Applicative_340)([  ]);
             };
             if (_531.length >= 1) {
-                var _798 = _531.slice(1);
-                return Prelude["<*>"](__dict_Applicative_340["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_340["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(_531[0]))(sequence(traversableArray)(__dict_Applicative_340)(_798));
+                var _795 = _531.slice(1);
+                return Prelude["<*>"](__dict_Applicative_340["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_340["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(_531[0]))(sequence(traversableArray)(__dict_Applicative_340)(_795));
             };
             throw new Error("Failed pattern match");
         };
@@ -2101,8 +2086,8 @@ PS.Data_Traversable = (function () {
                     return Prelude.pure(__dict_Applicative_339)([  ]);
                 };
                 if (_530.length >= 1) {
-                    var _802 = _530.slice(1);
-                    return Prelude["<*>"](__dict_Applicative_339["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_339["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(f(_530[0])))(traverse(traversableArray)(__dict_Applicative_339)(f)(_802));
+                    var _799 = _530.slice(1);
+                    return Prelude["<*>"](__dict_Applicative_339["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((__dict_Applicative_339["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Prelude[":"])(f(_530[0])))(traverse(traversableArray)(__dict_Applicative_339)(f)(_799));
                 };
                 throw new Error("Failed pattern match");
             };
@@ -2233,6 +2218,7 @@ PS.Graphics_Canvas = (function () {
     function moveTo(ctx) {  return function(x) {    return function(y) {      return function() {        ctx.moveTo(x, y);        return ctx;      };    };  };};
     function arc(ctx) {  return function(a) {    return function() {      ctx.arc(a.x, a.y, a.r, a.start, a.end);      return ctx;    };  };};
     function rect(ctx) {  return function(r) {    return function() {      ctx.rect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
+    function fillRect(ctx) {  return function(r) {    return function() {      ctx.fillRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function clearRect(ctx) {  return function(r) {    return function() {      ctx.clearRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function setFont(fontspec) {  return function(ctx) {    return function() {      ctx.font = fontspec;      return ctx;    };  };};
     function fillText(ctx) {  return function(text) {    return function(x) {      return function(y) {        return function() {          ctx.fillText(text, x, y);          return ctx;        };      };    };  };};
@@ -2274,6 +2260,7 @@ PS.Graphics_Canvas = (function () {
         fillText: fillText, 
         setFont: setFont, 
         clearRect: clearRect, 
+        fillRect: fillRect, 
         rect: rect, 
         arc: arc, 
         fillPath: fillPath, 
@@ -2493,11 +2480,11 @@ PS.Main = (function () {
         return function (chordtime) {
             return function (duration) {
                 var ct = Prelude["-"](Data_Time.ringMilliseconds)(chordtime)(modnow);
-                var _814 = Prelude["<"](Data_Time.ordMilliseconds)(ct)(0);
-                if (_814) {
+                var _811 = Prelude["<"](Data_Time.ordMilliseconds)(ct)(0);
+                if (_811) {
                     return Prelude["+"](Data_Time.semiringMilliseconds)(ct)(duration);
                 };
-                if (!_814) {
+                if (!_811) {
                     return ct;
                 };
                 throw new Error("Failed pattern match");
@@ -2505,11 +2492,11 @@ PS.Main = (function () {
         };
     };
     var tempoToBeatMs = function (tempo) {
-        var _815 = tempo === 0;
-        if (_815) {
+        var _812 = tempo === 0;
+        if (_812) {
             return 0;
         };
-        if (!_815) {
+        if (!_812) {
             var minute = 1000 * 60;
             return minute / tempo;
         };
@@ -2560,11 +2547,11 @@ PS.Main = (function () {
     var posmod = function (x) {
         return function (a) {
             var b = x % a;
-            var _828 = b < 0;
-            if (_828) {
+            var _825 = b < 0;
+            if (_825) {
                 return b + a;
             };
-            if (!_828) {
+            if (!_825) {
                 return b;
             };
             throw new Error("Failed pattern match");
@@ -2586,11 +2573,11 @@ PS.Main = (function () {
                 })(chords)();
                 return Data_Foldable.foldr(Data_Foldable.foldableArray)(function (a) {
                     return function (b) {
-                        var _835 = a > b;
-                        if (_835) {
+                        var _832 = a > b;
+                        if (_832) {
                             return a;
                         };
-                        if (!_835) {
+                        if (!_832) {
                             return b;
                         };
                         throw new Error("Failed pattern match");
@@ -2686,10 +2673,13 @@ PS.Main = (function () {
                         var _70 = Graphics_Canvas.getContext2D(canelt)();
                         Graphics_Canvas.setFont("20px sans-serif")(_70)();
                         var _69 = maxChordWidth(_70)(_71.value0.anichords)();
-                        Debug_Trace.trace("sce: " + (Prelude.show(Prelude.showNumber)(_72.height) + (" " + (Prelude.show(Prelude.showNumber)(_72.width) + (" " + Prelude.show(Prelude.showNumber)(_69))))))();
-                        var bl = makeBeatLoc(new AniSong(_71.value0))(_72)(_69);
-                        Control_Monad_Eff_Ref.writeRef(beatlocref)(bl)();
-                        return Prelude.unit;
+                        return (function () {
+                            var bl = makeBeatLoc(new AniSong(_71.value0))(_72)(_69);
+                            return function __do() {
+                                Control_Monad_Eff_Ref.writeRef(beatlocref)(bl)();
+                                return Prelude.unit;
+                            };
+                        })()();
                     };
                 };
             };
@@ -2732,13 +2722,13 @@ PS.Main = (function () {
                                     Graphics_Canvas.moveTo(con2d)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop))();
                                     Graphics_Canvas.lineTo(con2d)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 25)();
                                     Graphics_Canvas.stroke(con2d)();
-                                    var _871 = _700.value0 === curchordidx;
-                                    if (_871) {
+                                    var _868 = _700.value0 === curchordidx;
+                                    if (_868) {
                                         Graphics_Canvas.setFillStyle("#FF0000")(con2d)();
                                         Graphics_Canvas.fillText(con2d)(_700.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10)();
                                         return Graphics_Canvas.setFillStyle("#000000")(con2d)();
                                     };
-                                    if (!_871) {
+                                    if (!_868) {
                                         return Graphics_Canvas.fillText(con2d)(_700.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10)();
                                     };
                                     throw new Error("Failed pattern match");
@@ -2780,16 +2770,17 @@ PS.Main = (function () {
                             Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_694) {
                                 return function __do() {
                                     var _93 = Graphics_Canvas.measureText(_96)(_694.value0.name)();
-                                    Graphics_Canvas.clearRect(_96)({
+                                    Graphics_Canvas.setFillStyle("#FF00F0")(_96)();
+                                    Graphics_Canvas.fillRect(_96)({
                                         x: 5, 
                                         y: 5, 
                                         w: _94, 
                                         h: 25
                                     })();
+                                    Graphics_Canvas.setFillStyle("#000000")(_96)();
                                     return Graphics_Canvas.fillText(_96)(_694.value0.name)(5)(25)();
                                 };
                             })(mbcurchord)();
-                            Debug_Trace.trace("onchorddraw: " + (Prelude.show(Prelude.showNumber)(_95.height) + (" " + (Prelude.show(Prelude.showNumber)(_95.width) + (" " + Prelude.show(Prelude.showNumber)(_94))))))();
                             var chrect = {
                                 x: 0, 
                                 y: 160, 
@@ -2955,7 +2946,6 @@ PS.Main = (function () {
                                 };
                                 var nowbeat = tobeat(_88);
                                 return function __do() {
-                                    Debug_Trace.trace("nowbeatloc: " + Prelude.show(Data_Tuple.showTuple(Prelude.showNumber)(Prelude.showNumber))(_87(nowbeat)))();
                                     Graphics_Canvas.setFillStyle("#000000")(_89)();
                                     drawbeat(_87)(_89)(nowbeat - 1)();
                                     Graphics_Canvas.setFillStyle("#FF0000")(_89)();

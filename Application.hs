@@ -52,6 +52,7 @@ import Handler.SongSequence
 import Handler.SongSequences
 import Handler.AddSongSequence
 import Handler.PlaySongSequence
+import Handler.DeleteChord
 import ForkeyOpen
 
 

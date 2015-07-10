@@ -25,3 +25,4 @@
 /songsequences/ SongSequencesR GET POST
 /addsongsequence/ AddSongSequenceR GET POST
 /playsongsequence/#SongSequenceId PlaySongSequenceR GET POST
+/deletechord/#SongId/#SongChordId DeleteChordR GET
