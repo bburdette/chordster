@@ -210,7 +210,6 @@ sizeCanvasEvt asref beatlocref canelt _ = do
   con2d <- getContext2D canelt
   setFont "20px sans-serif" con2d 
   mcw <- maxChordWidth con2d as.anichords
-  trace $ "sce: " ++ show cdims.height ++ " " ++ show cdims.width ++ " " ++ show mcw
   let bl = makeBeatLoc (AniSong as) cdims mcw
   writeRef beatlocref bl
   return unit
@@ -288,7 +287,6 @@ anibeat canelt songduration begin beatms beatlocref = do
             floor $ 0.5 + ((\(Milliseconds nowms) (Milliseconds bms) -> nowms / bms) modnow beatms) 
       nowbeat = tobeat now
   -- black dot on prev beat, red dot on nowbeat.
-  trace $ "nowbeatloc: " ++ show (beatloc nowbeat)
   setFillStyle "#000000" con2d
   drawbeat beatloc con2d (nowbeat - 1)
   setFillStyle "#FF0000" con2d
@@ -385,7 +383,7 @@ onChordDraw canelt curchordidx (AniSong as) = do
     tm <- measureText con2d ac.name
     clearRect con2d { x: 5, y: 5, w: mcw, h: 25 }
     fillText con2d (ac.name) 5 25) mbcurchord 
-  trace $ "onchorddraw: " ++ show cdims.height ++ " " ++ show cdims.width ++ " " ++ show mcw
+  -- trace $ "onchorddraw: " ++ show cdims.height ++ " " ++ show cdims.width ++ " " ++ show mcw
   let chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
       beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 as.anichords
       beatloc = makeBeatLoc (AniSong as) cdims mcw
