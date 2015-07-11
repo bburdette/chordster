@@ -249,8 +249,9 @@ tempoToBeatMs tempo =
 makeBeatLoc :: AniSong -> Dimensions -> Number -> (Number -> (Tuple Number Number))
 makeBeatLoc (AniSong as) cdims maxchordwidth = 
   let dr = { x: 0, y: 100, w: cdims.width, h: 60 }
-      chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+      chrect = { x: 0, y: 160 + vfudge, w: cdims.width, h: cdims.height - (160 + vfudge) }
       rowheight = 40
+      vfudge = 5
    in
     gridBeatLoc chrect rowheight (maxchordwidth + 15) as.anichords 
 
@@ -340,10 +341,16 @@ drawAniChords con2d { x: x, y: y, w: xw, h: yw } now window acs = do
   setFillStyle "#000000" con2d
   traverse (\(Tuple x (Tuple _ (AniChord ac))) -> do
     fillText con2d (ac.name) x (y - 10)
+    beginPath con2d 
+    moveTo con2d x y 
+    lineTo con2d x (y - yw)
+    stroke con2d
+    {-
     let a = { x: x, y: y - 35, r: 10, start: 0, end: twoPi }
     beginPath con2d
     arc con2d a
     fill con2d
+    -}
     )
     (zip xes acs)
   -- unclip
@@ -390,7 +397,10 @@ onChordDraw canelt curchordidx (AniSong as) = do
   let chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
       beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 as.anichords
       beatloc = makeBeatLoc (AniSong as) cdims mcw
-  clearRect con2d chrect
+  setFillStyle "#F0F0F0" con2d
+  fillRect con2d chrect
+  setFillStyle "#000000" con2d
+  -- clearRect con2d chrect
   drawMsChordGrid con2d beatloc beattot curchordidx as.anichords
   setFillStyle "#FF0000" con2d
   traverse (\(AniChord ac) -> drawbeat beatloc con2d ac.onbeat) mbcurchord

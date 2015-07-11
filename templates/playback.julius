@@ -2219,7 +2219,6 @@ PS.Graphics_Canvas = (function () {
     function arc(ctx) {  return function(a) {    return function() {      ctx.arc(a.x, a.y, a.r, a.start, a.end);      return ctx;    };  };};
     function rect(ctx) {  return function(r) {    return function() {      ctx.rect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function fillRect(ctx) {  return function(r) {    return function() {      ctx.fillRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
-    function clearRect(ctx) {  return function(r) {    return function() {      ctx.clearRect(r.x, r.y, r.w, r.h);      return ctx;    };  };};
     function setFont(fontspec) {  return function(ctx) {    return function() {      ctx.font = fontspec;      return ctx;    };  };};
     function fillText(ctx) {  return function(text) {    return function(x) {      return function(y) {        return function() {          ctx.fillText(text, x, y);          return ctx;        };      };    };  };};
     function measureText(ctx) {  return function(text) {    return function() {      return ctx.measureText(text);    };  };};
@@ -2259,7 +2258,6 @@ PS.Graphics_Canvas = (function () {
         measureText: measureText, 
         fillText: fillText, 
         setFont: setFont, 
-        clearRect: clearRect, 
         fillRect: fillRect, 
         rect: rect, 
         arc: arc, 
@@ -2655,9 +2653,9 @@ PS.Main = (function () {
                 };
                 var chrect = {
                     x: 0, 
-                    y: 160, 
+                    y: 160 + 5, 
                     w: cdims.width, 
-                    h: cdims.height - 160
+                    h: cdims.height - (160 + 5)
                 };
                 return gridBeatLoc(chrect)(40)(maxchordwidth + 15)(_705.value0.anichords);
             };
@@ -2793,7 +2791,9 @@ PS.Main = (function () {
                                 };
                             })(0)(_715.value0.anichords);
                             var beatloc = makeBeatLoc(new AniSong(_715.value0))(_95)(_94);
-                            Graphics_Canvas.clearRect(_96)(chrect)();
+                            Graphics_Canvas.setFillStyle("#F0F0F0")(_96)();
+                            Graphics_Canvas.fillRect(_96)(chrect)();
+                            Graphics_Canvas.setFillStyle("#000000")(_96)();
                             drawMsChordGrid(_96)(beatloc)(beattot)(curchordidx)(_715.value0.anichords)();
                             Graphics_Canvas.setFillStyle("#FF0000")(_96)();
                             Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_696) {
@@ -2872,16 +2872,10 @@ PS.Main = (function () {
                             Data_Traversable.traverse(Data_Traversable.traversableArray)(Control_Monad_Eff.applicativeEff)(function (_693) {
                                 return function __do() {
                                     Graphics_Canvas.fillText(con2d)(_693.value1.value1.value0.name)(_693.value0)(_709.y - 10)();
-                                    var a = {
-                                        x: _693.value0, 
-                                        y: _709.y - 35, 
-                                        r: 10, 
-                                        start: 0, 
-                                        end: twoPi
-                                    };
                                     Graphics_Canvas.beginPath(con2d)();
-                                    Graphics_Canvas.arc(con2d)(a)();
-                                    return Graphics_Canvas.fill(con2d)();
+                                    Graphics_Canvas.moveTo(con2d)(_693.value0)(_709.y)();
+                                    Graphics_Canvas.lineTo(con2d)(_693.value0)(_709.y - _709.h)();
+                                    return Graphics_Canvas.stroke(con2d)();
                                 };
                             })(Data_Tuple.zip(xes)(acs))();
                             Graphics_Canvas.restore(con2d)();
