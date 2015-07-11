@@ -82,11 +82,13 @@ getSongR sid = do
       ^{swidget}
       <input type=submit name="oksong" value="OK">
       <input type=submit name="deletesong" value="delete song">
+      <a href=@{CopySongR sid}>copy
     $forall (scid, (widget,etype)) <- chordforms
       <form method=post enctype=#{etype}>
         ^{widget}
         <input type=submit name="updated" value="update">
         <a href=@{DeleteChordR sid scid}>delete
+        <a href=@{CopyChordR scid}>copy
     <form method=post enctype=#{enctype}>
       ^{scwidget}
       <input type=submit name="addchord" value="add chord">

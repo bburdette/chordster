@@ -26,3 +26,5 @@
 /addsongsequence/ AddSongSequenceR GET POST
 /playsongsequence/#SongSequenceId PlaySongSequenceR GET POST
 /deletechord/#SongId/#SongChordId DeleteChordR GET
+/copysong/#SongId CopySongR GET
+/copychord/#SongChordId CopyChordR GET

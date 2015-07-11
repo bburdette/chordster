@@ -41,6 +41,8 @@ library
                      Handler.AddSongSequence
                      Handler.PlaySongSequence
                      Handler.DeleteChord
+                     Handler.CopySong
+                     Handler.CopyChord
                      SongControl
                      PlaySong
                      PlayWhatever
