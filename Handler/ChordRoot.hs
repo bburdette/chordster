@@ -17,6 +17,7 @@ getChordRootR crid = do
     <form method=post enctype=#{etype}>
       ^{widg}
       <input type=submit value="OK">
+    <a href=@{ DeleteChordRootR crid }>delete
     |]
 
 postChordRootR :: ChordRootId -> Handler Html

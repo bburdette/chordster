@@ -65,7 +65,7 @@ getSongR sid = do
   mbsong <- runDB $ get sid
   (swidget,enctype) <- generateFormPost $ songForm mbsong
   chordz <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
-  chordroots <- runDB $ selectList [] []
+  chordroots <- runDB $ selectList [] [Asc ChordRootName]
   notesets <- runDB $ selectList [] [] 
   let rootz = map (\(Entity crid cr) -> (chordRootName cr, crid)) chordroots
       nsetz = map (\(Entity nsid ns) -> (noteSetName ns, nsid)) notesets 
@@ -114,7 +114,7 @@ postSongR sid = do
       redirect SongsR
     (_, _, Just _, _) -> do 
       chordz <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
-      chordroots <- runDB $ selectList [] []
+      chordroots <- runDB $ selectList [] [Asc ChordRootName]
       notesets <- runDB $ selectList [] [] 
       let rootz = map (\(Entity crid cr) -> (chordRootName cr, crid)) chordroots
           nsetz = map (\(Entity nsid ns) -> (noteSetName ns, nsid)) notesets 
@@ -127,7 +127,7 @@ postSongR sid = do
         _ -> defaultLayout [whamlet|meh!|]
     (_, _, _, Just _) -> do 
       chordz <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
-      chordroots <- runDB $ selectList [] []
+      chordroots <- runDB $ selectList [] [Asc ChordRootName]
       notesets <- runDB $ selectList [] [] 
       let rootz = map (\(Entity crid cr) -> (chordRootName cr, crid)) chordroots
           nsetz = map (\(Entity nsid ns) -> (noteSetName ns, nsid)) notesets 

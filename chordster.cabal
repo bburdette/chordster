@@ -43,6 +43,7 @@ library
                      Handler.DeleteChord
                      Handler.CopySong
                      Handler.CopyChord
+                     Handler.DeleteChordRoot
                      SongControl
                      PlaySong
                      PlayWhatever

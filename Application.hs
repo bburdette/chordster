@@ -55,6 +55,7 @@ import Handler.PlaySongSequence
 import Handler.DeleteChord
 import Handler.CopySong
 import Handler.CopyChord
+import Handler.DeleteChordRoot
 import ForkeyOpen
 
 

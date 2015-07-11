@@ -28,3 +28,4 @@
 /deletechord/#SongId/#SongChordId DeleteChordR GET
 /copysong/#SongId CopySongR GET
 /copychord/#SongChordId CopyChordR GET
+/deletechordroot/#ChordRootId DeleteChordRootR GET

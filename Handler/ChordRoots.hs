@@ -4,7 +4,7 @@ import Import
 
 getChordRootsR :: Handler Html
 getChordRootsR = do 
-  chordroots <- runDB $ selectList [] []
+  chordroots <- runDB $ selectList [] [Asc ChordRootName]
   defaultLayout $ [whamlet|
     <h1> Chord Roots
     $forall Entity crid chordroot <- chordroots
