@@ -10,6 +10,7 @@ getChordRootsR = do
     $forall Entity crid chordroot <- chordroots
       <li> 
         <a href=@{ChordRootR crid}> #{chordRootName chordroot}
+        #{ show (chordRootNumer chordroot) }/#{show (chordRootDenom chordroot) }
     <a href=@{AddChordRootR}>Add chord root
     |]
 
