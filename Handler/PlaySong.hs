@@ -1,22 +1,15 @@
 module Handler.PlaySong where
 
 import Import
-import Control.Concurrent.MVar
 import SongControl
-import qualified Data.Text as T
-import Control.Monad (forever)
-import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
 import Data.IORef
-import Data.Maybe
 import Database.Persist.Sql
-import Data.Traversable as TR
 import PlaySong
 import Yesod.WebSockets
 import Text.Julius
-import Database.Persist.Sql 
 import PlayWhatever
 
 
@@ -45,9 +38,8 @@ getPlaySongR sid = do
   mbsong <- runDB $ get sid
   let _ = $(juliusFileReload "templates/playback.julius")
   case mbsong of 
-    (Just song) ->
+    (Just _) ->
       defaultLayout $ do
-        aDomId <- newIdent
         setTitle "Song Playback!"
         $(widgetFile "playback")
     Nothing -> error "song not found"

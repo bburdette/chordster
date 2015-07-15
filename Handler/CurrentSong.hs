@@ -1,8 +1,6 @@
 module Handler.CurrentSong where
 
 import Import
-import Control.Concurrent.MVar
-import PlaySong
 import SongControl
 import Data.IORef
 import Yesod.WebSockets
@@ -21,7 +19,6 @@ getCurrentSongR = do
       webSockets $ listenWs 
       let _ = $(juliusFileReload "templates/playback.julius")
       defaultLayout $ do
-        aDomId <- newIdent
         setTitle "Song Playback!"
         $(widgetFile "playback")
 

@@ -26,11 +26,28 @@ data PlaySongChord = PlaySongChord
   }
   deriving Show
 
+{-
 data TextSong = TextSong 
   { song :: Song
   , chords :: [PlaySongChord]
   }
   deriving Show
+
+loadTextSong :: SongId -> Handler (Maybe TextSong)
+loadTextSong sid = do
+  mbsong <- runDB $ get sid
+  chords <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
+  pscs <- makePscs (map entityVal chords)
+  case mbsong of 
+    Nothing -> return Nothing
+    Just sng -> return $ Just $ TextSong sng (catMaybes pscs)
+
+tsToWebSong :: TextSong -> WebSong
+tsToWebSong ts = WebSong { 
+    wsName = songName (song ts)
+  , wsChords = (\psc -> name psc) <$> (chords ts)
+  }
+-}
 
 data WebSong = WebSong
   { wsId :: Int64
@@ -60,14 +77,6 @@ data WsStop = WsStop
 
 instance ToJSON WsStop 
 
-{-
-tsToWebSong :: TextSong -> WebSong
-tsToWebSong ts = WebSong { 
-    wsName = songName (song ts)
-  , wsChords = (\psc -> name psc) <$> (chords ts)
-  }
--}
-
 toWebSong :: Int64 -> Song -> [PlaySongChord] -> WebSong
 toWebSong sid song chords = WebSong { 
     wsId = sid 
@@ -79,15 +88,6 @@ toWebSong sid song chords = WebSong {
       <$> chords 
   , wsTempo = songTempo song 
   }
-
-loadTextSong :: SongId -> Handler (Maybe TextSong)
-loadTextSong sid = do
-  mbsong <- runDB $ get sid
-  chords <- runDB $ selectList [SongChordSong ==. sid] [Asc SongChordSeqnum]
-  pscs <- makePscs (map entityVal chords)
-  case mbsong of 
-    Nothing -> return Nothing
-    Just sng -> return $ Just $ TextSong sng (catMaybes pscs)
 
 makePscs :: [SongChord] -> Handler [Maybe PlaySongChord]
 makePscs scs = do

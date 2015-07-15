@@ -55,11 +55,11 @@ ssifForm mbssif songs = renderTable $ Ssif
   <*> areq hiddenField "" (ssiid <$> mbssif)
 
 newSsiForm :: SongSequenceId -> Int -> [(Text,Key Song)] -> Form SongSeqItem
-newSsiForm ssid seqnum songs = renderTable $ SongSeqItem 
+newSsiForm ssid seqno songs = renderTable $ SongSeqItem 
   <$> areq hiddenField "" (Just ssid)
   <*> areq (selectFieldList songs) "Song" Nothing 
   <*> areq intField "Reps" Nothing
-  <*> areq hiddenField "" (Just seqnum)
+  <*> areq hiddenField "" (Just seqno)
 
 getSongSequenceR :: SongSequenceId -> Handler Html
 getSongSequenceR ssid = do
@@ -73,7 +73,7 @@ getSongSequenceR ssid = do
                       (generateFormPost $ 
                         ssifForm (Just $ toSsif ssiid seqitem) songz))
                   seqitems
-  (scwidget,scetype) <- 
+  (scwidget,_) <- 
     generateFormPost $ newSsiForm ssid (length seqitems) songz 
   defaultLayout $ [whamlet|
     <h1> Song Sequence
@@ -94,15 +94,15 @@ getSongSequenceR ssid = do
 postSongSequenceR :: SongSequenceId -> Handler Html
 postSongSequenceR ssid = do 
   addsi <- lookupPostParam "addseqitem"
-  update <- lookupPostParam "updated"
+  updated <- lookupPostParam "updated"
   oksongseq <- lookupPostParam "oksongseq"
   deletesongseq <- lookupPostParam "deletesongseq"
-  case (oksongseq,deletesongseq,addsi,update) of 
+  case (oksongseq,deletesongseq,addsi,updated) of 
     (Just _, _, _, _) -> do 
-      ((res, widget),enctype) <- runFormPost (songSequenceForm Nothing)
+      ((res, _),_) <- runFormPost (songSequenceForm Nothing)
       case res of 
         FormSuccess songseq -> do
-          res2 <- runDB $ replace ssid songseq
+          _ <- runDB $ replace ssid songseq
           redirect $ SongSequenceR ssid
         _ -> defaultLayout [whamlet|fale!|]
     (_, Just _, _, _) -> do 
@@ -113,18 +113,18 @@ postSongSequenceR ssid = do
       ssiz <- runDB $ selectList [SongSeqItemSongsequence ==. ssid] [Asc SongSeqItemSeqnum]
       songs <- runDB $ selectList [] []
       let songz = map (\(Entity sid song) -> (songName song, sid)) songs
-      ((res, widget),enctype) <- 
+      ((res, _),_) <- 
         runFormPost $ newSsiForm ssid (length ssiz) songz 
       case res of 
         FormSuccess songsequence -> do
-          res2 <- runDB $ insert songsequence 
+          _ <- runDB $ insert songsequence 
           redirect (SongSequenceR ssid)
         _ -> defaultLayout [whamlet|meh!|]
     (_, _, _, Just _) -> do 
-      ssiz <- runDB $ selectList [SongSeqItemSongsequence ==. ssid] [Asc SongSeqItemSeqnum]
+      _ <- runDB $ selectList [SongSeqItemSongsequence ==. ssid] [Asc SongSeqItemSeqnum]
       songs <- runDB $ selectList [] []
       let songz = map (\(Entity sid song) -> (songName song, sid)) songs
-      ((res, widget),enctype) <- 
+      ((res, _),_) <- 
         runFormPost $ ssifForm Nothing songz 
       case res of 
         FormSuccess ssif -> do

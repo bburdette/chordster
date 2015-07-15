@@ -86,6 +86,7 @@ library
                  , template-haskell
                  , shakespeare                   >= 2.0        && < 2.1
                  , hjsmin                        >= 0.1        && < 0.2
+                 , foreign-store
                  , monad-control                 >= 0.3        && < 0.4
                  , wai-extra                     >= 3.0        && < 3.1
                  , yaml                          >= 0.8        && < 0.9

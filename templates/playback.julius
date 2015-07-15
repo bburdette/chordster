@@ -2642,47 +2642,6 @@ PS.Main = (function () {
             };
         };
     };
-    var makeBeatLoc = function (_705) {
-        return function (cdims) {
-            return function (maxchordwidth) {
-                var dr = {
-                    x: 0, 
-                    y: 100, 
-                    w: cdims.width, 
-                    h: 60
-                };
-                var chrect = {
-                    x: 0, 
-                    y: 160 + 5, 
-                    w: cdims.width, 
-                    h: cdims.height - (160 + 5)
-                };
-                return gridBeatLoc(chrect)(40)(maxchordwidth + 15)(_705.value0.anichords);
-            };
-        };
-    };
-    var sizeCanvasEvt = function (asref) {
-        return function (beatlocref) {
-            return function (canelt) {
-                return function (_704) {
-                    return function __do() {
-                        var _72 = sizeCanvas(canelt)();
-                        var _71 = Control_Monad_Eff_Ref.readRef(asref)();
-                        var _70 = Graphics_Canvas.getContext2D(canelt)();
-                        Graphics_Canvas.setFont("20px sans-serif")(_70)();
-                        var _69 = maxChordWidth(_70)(_71.value0.anichords)();
-                        return (function () {
-                            var bl = makeBeatLoc(new AniSong(_71.value0))(_72)(_69);
-                            return function __do() {
-                                Control_Monad_Eff_Ref.writeRef(beatlocref)(bl)();
-                                return Prelude.unit;
-                            };
-                        })()();
-                    };
-                };
-            };
-        };
-    };
     var drawbeat = function (beatloc) {
         return function (con2d) {
             return function (beat) {
@@ -2720,13 +2679,13 @@ PS.Main = (function () {
                                     Graphics_Canvas.moveTo(con2d)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop))();
                                     Graphics_Canvas.lineTo(con2d)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 25)();
                                     Graphics_Canvas.stroke(con2d)();
-                                    var _868 = _700.value0 === curchordidx;
-                                    if (_868) {
+                                    var _855 = _700.value0 === curchordidx;
+                                    if (_855) {
                                         Graphics_Canvas.setFillStyle("#FF0000")(con2d)();
                                         Graphics_Canvas.fillText(con2d)(_700.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10)();
                                         return Graphics_Canvas.setFillStyle("#000000")(con2d)();
                                     };
-                                    if (!_868) {
+                                    if (!_855) {
                                         return Graphics_Canvas.fillText(con2d)(_700.value1.value0.name)(Data_Tuple.fst(toop))(Data_Tuple.snd(toop) - 10)();
                                     };
                                     throw new Error("Failed pattern match");
@@ -2750,58 +2709,6 @@ PS.Main = (function () {
                             return Prelude.unit;
                         };
                     };
-                };
-            };
-        };
-    };
-    var onChordDraw = function (canelt) {
-        return function (curchordidx) {
-            return function (_715) {
-                return function __do() {
-                    var _96 = Graphics_Canvas.getContext2D(canelt)();
-                    var _95 = Graphics_Canvas.getCanvasDimensions(canelt)();
-                    Graphics_Canvas.setFont("20px sans-serif")(_96)();
-                    var _94 = maxChordWidth(_96)(_715.value0.anichords)();
-                    return (function () {
-                        var mbcurchord = Data_Array["!!"](_715.value0.anichords)(curchordidx);
-                        return function __do() {
-                            Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_694) {
-                                return function __do() {
-                                    var _93 = Graphics_Canvas.measureText(_96)(_694.value0.name)();
-                                    Graphics_Canvas.setFillStyle("#FF00F0")(_96)();
-                                    Graphics_Canvas.fillRect(_96)({
-                                        x: 5, 
-                                        y: 5, 
-                                        w: _94, 
-                                        h: 25
-                                    })();
-                                    Graphics_Canvas.setFillStyle("#000000")(_96)();
-                                    return Graphics_Canvas.fillText(_96)(_694.value0.name)(5)(25)();
-                                };
-                            })(mbcurchord)();
-                            var chrect = {
-                                x: 0, 
-                                y: 160, 
-                                w: _95.width, 
-                                h: _95.height - 160
-                            };
-                            var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_695) {
-                                return function (sum) {
-                                    return sum + _695.value0.beats;
-                                };
-                            })(0)(_715.value0.anichords);
-                            var beatloc = makeBeatLoc(new AniSong(_715.value0))(_95)(_94);
-                            Graphics_Canvas.setFillStyle("#F0F0F0")(_96)();
-                            Graphics_Canvas.fillRect(_96)(chrect)();
-                            Graphics_Canvas.setFillStyle("#000000")(_96)();
-                            drawMsChordGrid(_96)(beatloc)(beattot)(curchordidx)(_715.value0.anichords)();
-                            Graphics_Canvas.setFillStyle("#FF0000")(_96)();
-                            Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_696) {
-                                return drawbeat(beatloc)(_96)(_696.value0.onbeat);
-                            })(mbcurchord)();
-                            return Prelude.unit;
-                        };
-                    })()();
                 };
             };
         };
@@ -2882,6 +2789,100 @@ PS.Main = (function () {
                             return Prelude.unit;
                         };
                     };
+                };
+            };
+        };
+    };
+    var chrY = 100;
+    var makeBeatLoc = function (_705) {
+        return function (cdims) {
+            return function (maxchordwidth) {
+                var dr = {
+                    x: 0, 
+                    y: 100, 
+                    w: cdims.width, 
+                    h: 60
+                };
+                var chrect = {
+                    x: 0, 
+                    y: chrY + 5, 
+                    w: cdims.width, 
+                    h: cdims.height - (chrY + 5)
+                };
+                return gridBeatLoc(chrect)(40)(maxchordwidth + 15)(_705.value0.anichords);
+            };
+        };
+    };
+    var sizeCanvasEvt = function (asref) {
+        return function (beatlocref) {
+            return function (canelt) {
+                return function (_704) {
+                    return function __do() {
+                        var _72 = sizeCanvas(canelt)();
+                        var _71 = Control_Monad_Eff_Ref.readRef(asref)();
+                        var _70 = Graphics_Canvas.getContext2D(canelt)();
+                        Graphics_Canvas.setFont("20px sans-serif")(_70)();
+                        var _69 = maxChordWidth(_70)(_71.value0.anichords)();
+                        return (function () {
+                            var bl = makeBeatLoc(new AniSong(_71.value0))(_72)(_69);
+                            return function __do() {
+                                Control_Monad_Eff_Ref.writeRef(beatlocref)(bl)();
+                                return Prelude.unit;
+                            };
+                        })()();
+                    };
+                };
+            };
+        };
+    };
+    var onChordDraw = function (canelt) {
+        return function (curchordidx) {
+            return function (_715) {
+                return function __do() {
+                    var _96 = Graphics_Canvas.getContext2D(canelt)();
+                    var _95 = Graphics_Canvas.getCanvasDimensions(canelt)();
+                    Graphics_Canvas.setFont("20px sans-serif")(_96)();
+                    var _94 = maxChordWidth(_96)(_715.value0.anichords)();
+                    return (function () {
+                        var mbcurchord = Data_Array["!!"](_715.value0.anichords)(curchordidx);
+                        return function __do() {
+                            Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_694) {
+                                return function __do() {
+                                    var _93 = Graphics_Canvas.measureText(_96)(_694.value0.name)();
+                                    Graphics_Canvas.setFillStyle("#FF00F0")(_96)();
+                                    Graphics_Canvas.fillRect(_96)({
+                                        x: 5, 
+                                        y: 5, 
+                                        w: _94, 
+                                        h: 25
+                                    })();
+                                    Graphics_Canvas.setFillStyle("#000000")(_96)();
+                                    return Graphics_Canvas.fillText(_96)(_694.value0.name)(5)(25)();
+                                };
+                            })(mbcurchord)();
+                            var chrect = {
+                                x: 0, 
+                                y: chrY, 
+                                w: _95.width, 
+                                h: _95.height - chrY
+                            };
+                            var beattot = Data_Foldable.foldr(Data_Foldable.foldableArray)(function (_695) {
+                                return function (sum) {
+                                    return sum + _695.value0.beats;
+                                };
+                            })(0)(_715.value0.anichords);
+                            var beatloc = makeBeatLoc(new AniSong(_715.value0))(_95)(_94);
+                            Graphics_Canvas.setFillStyle("#F0F0F0")(_96)();
+                            Graphics_Canvas.fillRect(_96)(chrect)();
+                            Graphics_Canvas.setFillStyle("#000000")(_96)();
+                            drawMsChordGrid(_96)(beatloc)(beattot)(curchordidx)(_715.value0.anichords)();
+                            Graphics_Canvas.setFillStyle("#FF0000")(_96)();
+                            Data_Traversable.traverse(Data_Traversable.traversableMaybe)(Control_Monad_Eff.applicativeEff)(function (_696) {
+                                return drawbeat(beatloc)(_96)(_696.value0.onbeat);
+                            })(mbcurchord)();
+                            return Prelude.unit;
+                        };
+                    })()();
                 };
             };
         };
@@ -2973,9 +2974,9 @@ PS.Main = (function () {
                             })(Data_Array["!!"](_706.value0.anichords)(chordindex));
                             var chrect = {
                                 x: 0, 
-                                y: 160, 
+                                y: chrY, 
                                 w: _85.width, 
-                                h: _85.height - 160
+                                h: _85.height - chrY
                             };
                             var cdh = _85.height * 0.5;
                             return function __do() {
@@ -3120,6 +3121,7 @@ PS.Main = (function () {
         anibeat: anibeat, 
         startAnimation: startAnimation, 
         makeBeatLoc: makeBeatLoc, 
+        chrY: chrY, 
         tempoToBeatMs: tempoToBeatMs, 
         sizeCanvas: sizeCanvas, 
         sizeCanvasEvt: sizeCanvasEvt, 

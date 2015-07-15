@@ -16,7 +16,8 @@ import Network.Wai.Middleware.RequestLogger
 import qualified Network.Wai.Middleware.RequestLogger as RequestLogger
 import qualified Database.Persist
 import Database.Persist.Sql (runMigration)
-import Database.Persist.Sqlite (createSqlitePool, sqlDatabase, sqlPoolSize)
+-- import Database.Persist.Sqlite (createSqlitePool, sqlDatabase, sqlPoolSize)
+import Database.Persist.Sqlite (sqlDatabase, sqlPoolSize)
 import Network.HTTP.Client.Conduit (newManager)
 import Control.Monad.Logger (runLoggingT)
 import System.Log.FastLogger (newStdoutLoggerSet, defaultBufSize)
@@ -24,7 +25,6 @@ import Network.Wai.Logger (clockDateCacher)
 import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
 import SongControl
-import Control.Concurrent.MVar
 import Control.Concurrent.STM.TChan
 import Control.Monad.STM
 import Data.IORef

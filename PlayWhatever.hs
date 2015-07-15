@@ -3,26 +3,18 @@ module PlayWhatever where
 import Import
 import SongControl
 import Control.Concurrent
-import Model 
 import Data.IORef
-import Data.Maybe
-import Text.Show
-import Data.Eq
 import Data.Traversable as TR
 import Yesod.WebSockets
 import Control.Monad (forever)
-import Control.Applicative
-import Control.Concurrent
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
-import qualified Data.Text as T
-import PlaySong
 
 playWhateverWs :: (TChan Text -> IO ()) -> Maybe Text -> Whatever -> WebSocketsT Handler ()
 playWhateverWs whateverftn mbnewthreadtext whateverid = do 
   app <- getYesod
-  let writeChan = songLine app
-  readChan <- (liftIO . atomically) $ dupTChan writeChan
+  let writeChannel = songLine app
+  readChannel <- (liftIO . atomically) $ dupTChan writeChannel
   -- info for old whatever currently playing.
   oldinfo <- liftIO $ readIORef $ whateverThread $ songControl app
   liftIO $ print $ "oldinfo: " ++ show oldinfo
@@ -38,9 +30,9 @@ playWhateverWs whateverftn mbnewthreadtext whateverid = do
     Just (tid, _) -> do  
       -- kill the old thread. 
       liftIO $ print $ "killing old thread: " ++ show tid
-      liftIO $ TR.mapM (\(tid,_) -> killThread tid) oldinfo
+      _ <- liftIO $ TR.mapM (\(tid,_) -> killThread tid) oldinfo
       -- start a new song thread
-      threadid <- liftIO $ forkIO $ whateverftn writeChan 
+      threadid <- liftIO $ forkIO $ whateverftn writeChannel 
       -- save the new thread id and song id in the MVar.
       -- _ <- liftIO $ tryTakeMVar $ playThread $ songControl app
       res <- liftIO $ writeIORef (whateverThread $ songControl app) $ Just (threadid, whateverid)
@@ -49,22 +41,22 @@ playWhateverWs whateverftn mbnewthreadtext whateverid = do
     Nothing -> do 
       liftIO $ print $ "starting new song thread"  
       -- start a new song thread
-      threadid <- liftIO $ forkIO $ whateverftn writeChan 
+      threadid <- liftIO $ forkIO $ whateverftn writeChannel 
       -- save the new thread id and song id in the MVar.
       res <- liftIO $ writeIORef (whateverThread $ songControl app) $ Just (threadid, whateverid)
       liftIO $ print $ "nothing res= " ++ show res
       return ()
   liftIO $ print "pre readTChan, etc"
-  (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
+  _ <- (forever $ (liftIO . atomically) (readTChan readChannel) >>= sendTextData)
   liftIO $ print "post readTChan, etc"
   return ()
 
 listenWs :: WebSocketsT Handler ()
 listenWs  = do 
   app <- getYesod
-  let writeChan = songLine app
-  readChan <- (liftIO . atomically) $ dupTChan writeChan
-  (forever $ (liftIO . atomically) (readTChan readChan) >>= sendTextData)
+  let writeChannel = songLine app
+  readChannel <- (liftIO . atomically) $ dupTChan writeChannel
+  _ <- (forever $ (liftIO . atomically) (readTChan readChannel) >>= sendTextData)
   return ()
 
 
