@@ -246,10 +246,12 @@ tempoToBeatMs tempo =
       let minute = 1000 * 60 in 
         Milliseconds (minute / tempo)
 
+chrY = 100
+
 makeBeatLoc :: AniSong -> Dimensions -> Number -> (Number -> (Tuple Number Number))
 makeBeatLoc (AniSong as) cdims maxchordwidth = 
   let dr = { x: 0, y: 100, w: cdims.width, h: 60 }
-      chrect = { x: 0, y: 160 + vfudge, w: cdims.width, h: cdims.height - (160 + vfudge) }
+      chrect = { x: 0, y: chrY + vfudge, w: cdims.width, h: cdims.height - (chrY + vfudge) }
       rowheight = 40
       vfudge = 5
    in
@@ -262,7 +264,7 @@ startAnimation canelt (AniSong as) beatlocref chordindex = do
   let curchordtime = maybe (Milliseconds 0) (\(AniChord x) -> x.time) (as.anichords A.!! chordindex) 
       cdh = (cdims.height * 0.5)
       dr = { x: 0, y: 100, w: cdims.width, h: 60 }
-      chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+      chrect = { x: 0, y: chrY, w: cdims.width, h: cdims.height - chrY }
       rowheight = 40
   setFont "20px sans-serif" con2d 
   mcw <- maxChordWidth con2d as.anichords
@@ -394,7 +396,7 @@ onChordDraw canelt curchordidx (AniSong as) = do
     setFillStyle "#000000" con2d
     fillText con2d (ac.name) 5 25) mbcurchord 
   -- trace $ "onchorddraw: " ++ show cdims.height ++ " " ++ show cdims.width ++ " " ++ show mcw
-  let chrect = { x: 0, y: 160, w: cdims.width, h: cdims.height - 160 }
+  let chrect = { x: 0, y: chrY, w: cdims.width, h: cdims.height - chrY }
       beattot = foldr (\(AniChord ac) sum -> sum + ac.beats) 0 as.anichords
       beatloc = makeBeatLoc (AniSong as) cdims mcw
   setFillStyle "#F0F0F0" con2d
