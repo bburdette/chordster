@@ -31,6 +31,16 @@ import Data.IORef
 import Foreign.Store
 import Network.Wai.Handler.Warp
 
+-- added by BTB
+import System.IO
+import Control.Monad
+import Data.Function
+import Data.Maybe
+-- end added by BTB
+
+
+
+
 -- | Start or restart the server.
 -- A Store holds onto some data across ghci reloads
 update :: IO ()
