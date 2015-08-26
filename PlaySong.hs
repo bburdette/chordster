@@ -187,8 +187,8 @@ playit textchan ccons lcons beattime (psc:pscs) count =
       ccons 
   (liftIO . atomically) $ writeTChan textchan (toJsonText wsijs)
   -- delay N times for N beats, flashing the lights each time.  
-  let flashmsg1 = Message "fadeto" (map d_put [0::Int,20])
-      flashmsg2 = Message "fadeto" (map d_put [1::Int,20])
+  let flashmsg1 = Message "fadeto" (map d_put [1::Int,20])
+      flashmsg2 = Message "fadeto" (map d_put [0::Int,20])
   _ <- mapM (\_ -> do 
     -- send light flash msgs
     _ <- mapM (\conn -> do 
