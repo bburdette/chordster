@@ -1,0 +1,12 @@
+[Unit]
+Description=start the cyclophone programs.
+After=multi-user.target
+
+[Service]
+Type=oneshot
+User=bananapi
+ExecStart=/bin/sh -c "/home/bananapi/chordster/chordster.sh"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

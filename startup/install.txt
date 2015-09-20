@@ -1,0 +1,15 @@
+On arch, installation is like this:
+
+- have a user named 'bananapi'
+- install the chordster executables and etc into /home/bananapi/chordster/
+- copy the chordster.service file to /etc/systemd/system/
+- execute:
+> sudo systemctl enable chordster
+
+- then, it should start on boot.  to start right away:
+
+> sudo systemctl start chordster
+
+and to stop:
+
+> sudo systemctl stop chordster
