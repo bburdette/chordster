@@ -1,4 +1,4 @@
 
 cd /home/bananapi/chordster/
-screen -dmS chordster sh -c './chordster Production; exec bash'
+screen -dmS chordster sh -c './chordster +RTS -I0 -RTS Production; exec bash'
 
